@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily check for Proser Tailscale TLS certificate renewal
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=1h
+Unit=proser-tailscale-cert-renew.service
+
+[Install]
+WantedBy=timers.target

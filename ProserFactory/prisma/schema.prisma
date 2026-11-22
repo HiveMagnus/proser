@@ -1,0 +1,1782 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model DatabaseCutoverReceipt {
+  operationId              String   @id @map("operation_id")
+  sourceSha256             String   @unique(map: "_proser_cutover_receipts_source_sha256_key") @map("source_sha256")
+  postgresCheckpointSha256 String   @map("postgres_checkpoint_sha256")
+  sourceReportHash         String   @map("source_report_hash")
+  targetReportHash         String   @map("target_report_hash")
+  report                   Json
+  evidenceSignature        String   @map("evidence_signature")
+  recordedAt               DateTime @default(now()) @map("recorded_at")
+
+  @@map("_proser_cutover_receipts")
+}
+
+model BrowserRun {
+  id                   String                   @id
+  receiptId            String                   @unique @map("receipt_id")
+  issuer               String
+  audience             String
+  requestId            String                   @map("request_id")
+  evaluationId         String                   @unique @map("evaluation_id")
+  packageId            String                   @map("package_id")
+  packageRevision      Int                      @map("package_revision")
+  packageDigest        String                   @map("package_digest")
+  surface              String
+  targetOrigin         String                   @map("target_origin")
+  targetServiceId      String                   @map("target_service_id")
+  runnerBuildSha256    String                   @map("runner_build_sha256")
+  fixtureSha256        String                   @map("fixture_sha256")
+  casePlan             Json                     @map("case_plan")
+  casePlanSha256       String                   @map("case_plan_sha256")
+  startedAt            DateTime                 @map("started_at")
+  createdAt            DateTime                 @default(now()) @map("created_at")
+  caseResults          BrowserRunCaseResult[]
+  terminal             BrowserRunTerminal?
+  receipt              BrowserRunReceipt?
+
+  @@index([requestId, evaluationId], map: "idx_browser_runs_request_evaluation")
+  @@map("browser_runs")
+}
+
+model BrowserRunCaseResult {
+  browserRunId   String     @map("browser_run_id")
+  caseId         String     @map("case_id")
+  status         String
+  evidenceSha256 String     @map("evidence_sha256")
+  observedAt     DateTime   @map("observed_at")
+  createdAt      DateTime   @default(now()) @map("created_at")
+  browserRun     BrowserRun @relation(fields: [browserRunId], references: [id], onDelete: Restrict, map: "browser_run_case_results_run_fkey")
+
+  @@id([browserRunId, caseId])
+  @@map("browser_run_case_results")
+}
+
+model BrowserRunTerminal {
+  browserRunId      String     @id @map("browser_run_id")
+  observedAt        DateTime   @map("observed_at")
+  outcome           String
+  cases             Json
+  caseCohortSha256  String     @map("case_cohort_sha256")
+  resultSha256      String     @map("result_sha256")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  browserRun        BrowserRun @relation(fields: [browserRunId], references: [id], onDelete: Restrict, map: "browser_run_terminals_run_fkey")
+
+  @@map("browser_run_terminals")
+}
+
+model BrowserRunReceipt {
+  browserRunId  String     @id @map("browser_run_id")
+  receiptId     String     @unique @map("receipt_id")
+  keyId         String     @map("key_id")
+  signature     String
+  canonicalJson String     @map("canonical_json")
+  receiptSha256 String     @unique @map("receipt_sha256")
+  expiresAt     DateTime   @map("expires_at")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  browserRun    BrowserRun @relation(fields: [browserRunId], references: [id], onDelete: Restrict, map: "browser_run_receipts_run_fkey")
+
+  @@map("browser_run_receipts")
+}
+
+model User {
+  id                   Int                           @id @default(autoincrement())
+  githubId             String                        @unique @map("github_id")
+  username             String
+  email                String?
+  avatarUrl            String?                       @map("avatar_url")
+  createdAt            DateTime?                     @default(now()) @map("created_at")
+  updatedAt            DateTime?                     @default(now()) @updatedAt @map("updated_at")
+  books                Book[]
+  generationHistory    GenerationHistory[]
+  images               ImageAsset[]
+  proseTraces          ProseTrace[]
+  proseActions         ProseAction[]
+  workflowRuns         WorkflowRun[]
+  workflowCheckpoints  WorkflowCheckpoint[]          @relation("WorkflowCheckpointDecider")
+  editorialProfiles    EditorialProfile[]
+  editorialPreferences EditorialPreferenceEvidence[]
+  evaluationRuns       EvaluationRun[]
+
+  @@map("users")
+}
+
+model Book {
+  id                Int          @id @default(autoincrement())
+  userId            Int          @map("user_id")
+  title             String?
+  summary           String?
+  genre             String?
+  targetAudience    String?      @map("target_audience")
+  draftStatus       String?      @default("draft") @map("draft_status")
+  createdAt         DateTime?    @default(now()) @map("created_at")
+  updatedAt         DateTime?    @default(now()) @updatedAt @map("updated_at")
+  tagline           String?
+  storyOutline      String?      @map("story_outline")
+  storyArchetypeKey String?      @map("story_archetype_key")
+  selectedImageId   Int          @default(0) @map("selected_image_id")
+  deletedAt         DateTime?    @map("deleted_at")
+  acts              Act[]
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codexEntries      CodexEntry[]
+
+  notes                Note[]
+  images               ImageAsset[]
+  proseTraces          ProseTrace[]
+  proseActions         ProseAction[]
+  workflowRuns         WorkflowRun[]
+  manuscriptRevisions  ManuscriptRevision[]
+  qualityReviewRuns    QualityReviewRun[]
+  editorialRuns        EditorialRun[]
+  editorialProfiles    EditorialProfile[]
+  editorialPreferences EditorialPreferenceEvidence[]
+  styleFingerprints    StyleFingerprint[]
+  evaluationRuns       EvaluationRun[]
+
+  @@index([userId], map: "idx_books_user_id")
+  @@map("books")
+}
+
+model NovaResourceClaim {
+  id         String   @id @default(uuid())
+  kind       String
+  resourceId String   @map("resource_id")
+  requestId  String   @map("request_id")
+  caller     String
+  grantId    String   @map("grant_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([kind, resourceId], map: "uniq_nova_resource_claim")
+  @@index([requestId, caller, kind], map: "idx_nova_resource_request")
+  @@map("nova_resource_claims")
+}
+
+model SharedResourceFence {
+  resourceKey       String   @id @map("resource_key")
+  highestGeneration BigInt   @map("highest_generation")
+  operationId       String   @map("operation_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@index([operationId], map: "idx_shared_resource_fence_operation")
+  @@map("shared_resource_fences")
+}
+
+model SharedResourceOperation {
+  operationId         String    @id @map("operation_id")
+  leaseId             String    @map("lease_id")
+  claimJson           String    @map("claim_json")
+  claimSha256         String    @map("claim_sha256")
+  requestSha256       String    @map("request_sha256")
+  evidenceDomain      String    @map("evidence_domain")
+  method              String
+  route                String
+  bodySha256           String    @map("body_sha256")
+  state                String    @default("admitted")
+  responseStatus       Int?      @map("response_status")
+  responseJson         String?   @map("response_json")
+  resultJson           String?   @map("result_json")
+  evidenceSha256       String?   @map("evidence_sha256")
+  terminalEvidenceJson String?   @map("terminal_evidence_json")
+  executionKind       String?    @map("execution_kind")
+  executionId         String?    @map("execution_id")
+  generationIdempotencyKey String? @map("generation_idempotency_key")
+  generationRequestHash String? @map("generation_request_hash")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  startedAt            DateTime? @map("started_at")
+  completedAt          DateTime? @map("completed_at")
+
+  @@index([leaseId], map: "idx_shared_resource_operation_lease")
+  @@index([state, createdAt], map: "idx_shared_resource_operation_state")
+  @@unique([executionKind, executionId], map: "uniq_shared_resource_execution")
+  @@map("shared_resource_operations")
+}
+
+model CodexEntry {
+  id               Int               @id @default(autoincrement())
+  bookId           Int               @map("book_id")
+  entryType        String            @map("entry_type")
+  entryName        String            @map("entry_name")
+  entryDescription String?           @map("entry_description")
+  attributes       String?
+  createdAt        DateTime?         @default(now()) @map("created_at")
+  updatedAt        DateTime?         @default(now()) @updatedAt @map("updated_at")
+  deletedAt        DateTime?         @map("deleted_at")
+  book             Book              @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  sceneUsages      SceneCodexUsage[]
+
+  @@index([bookId, entryType], map: "idx_codex_book_entry_type")
+  @@map("codex_entries")
+}
+
+model Act {
+  id              Int          @id @default(autoincrement())
+  bookId          Int          @map("book_id")
+  actNumber       Int          @map("act_number")
+  title           String?
+  summary         String?
+  createdAt       DateTime?    @default(now()) @map("created_at")
+  updatedAt       DateTime?    @default(now()) @updatedAt @map("updated_at")
+  selectedImageId Int          @default(0) @map("selected_image_id")
+  deletedAt       DateTime?    @map("deleted_at")
+  book            Book         @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  chapters        Chapter[]
+  proseTraces     ProseTrace[]
+
+  @@unique([bookId, actNumber], map: "uniq_act_book_act_number")
+  @@index([bookId], map: "idx_acts_book_id")
+  @@map("acts")
+}
+
+model Chapter {
+  id              Int          @id @default(autoincrement())
+  actId           Int          @map("act_id")
+  chapterNumber   Int          @map("chapter_number")
+  title           String?
+  summary         String?
+  createdAt       DateTime?    @default(now()) @map("created_at")
+  updatedAt       DateTime?    @default(now()) @updatedAt @map("updated_at")
+  selectedImageId Int          @default(0) @map("selected_image_id")
+  deletedAt       DateTime?    @map("deleted_at")
+  act             Act          @relation(fields: [actId], references: [id], onDelete: Cascade)
+  scenes          Scene[]
+  proseTraces     ProseTrace[]
+
+  @@unique([actId, chapterNumber], map: "uniq_chapter_act_chapter_number")
+  @@index([actId], map: "idx_chapters_act_id")
+  @@map("chapters")
+}
+
+model Scene {
+  id              Int               @id @default(autoincrement())
+  chapterId       Int               @map("chapter_id")
+  sceneNumber     Int               @map("scene_number")
+  outline         String?
+  beatsMeta       Json?             @map("beats_meta")
+  summary         String?
+  prose           String?
+  wordCount       Int?              @default(0) @map("word_count")
+  createdAt       DateTime?         @default(now()) @map("created_at")
+  updatedAt       DateTime?         @default(now()) @updatedAt @map("updated_at")
+  selectedImageId Int               @default(0) @map("selected_image_id")
+  deletedAt       DateTime?         @map("deleted_at")
+  chapter         Chapter           @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  codexUsages     SceneCodexUsage[]
+  proseTraces     ProseTrace[]
+  proseActions    ProseAction[]
+
+  @@unique([chapterId, sceneNumber], map: "uniq_scene_chapter_scene_number")
+  @@index([chapterId], map: "idx_scenes_chapter_id")
+  @@map("scenes")
+}
+
+model SceneCodexUsage {
+  id        Int       @id @default(autoincrement())
+  sceneId   Int       @map("scene_id")
+  codexId   Int       @map("codex_id")
+  usedAt    DateTime? @default(now()) @map("used_at")
+  rationale String?
+  deletedAt DateTime? @map("deleted_at")
+
+  scene Scene      @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  codex CodexEntry @relation(fields: [codexId], references: [id], onDelete: Cascade)
+
+  @@unique([sceneId, codexId], map: "uniq_scu_scene_codex")
+  @@index([sceneId], map: "idx_scu_scene")
+  @@index([codexId], map: "idx_scu_codex")
+  @@map("scene_codex_usage")
+}
+
+model GenerationHistory {
+  id               Int       @id @default(autoincrement())
+  userId           Int       @map("user_id")
+  entityType       String    @map("entity_type")
+  entityId         Int?      @map("entity_id")
+  prompt           String
+  generatedContent String    @map("generated_content")
+  modelUsed        String?   @map("model_used")
+  createdAt        DateTime? @default(now()) @map("created_at")
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, entityType], map: "idx_generation_history_user_entity_type")
+  @@map("generation_history")
+}
+
+model ProseTrace {
+  id                      Int                   @id @default(autoincrement())
+  traceId                 String                @unique @map("trace_id")
+  userId                  Int                   @map("user_id")
+  bookId                  Int                   @map("book_id")
+  actId                   Int?                  @map("act_id")
+  chapterId               Int?                  @map("chapter_id")
+  sceneId                 Int?                  @map("scene_id")
+  status                  String                @default("pending")
+  judgeStatus             String?               @map("judge_status")
+  recipeVersion           String?               @map("recipe_version")
+  genreKey                String?               @map("genre_key")
+  adapterUsed             String?               @map("adapter_used")
+  modelUsed               String?               @map("model_used")
+  promptText              String?               @map("prompt_text")
+  brief                   String?
+  promptContextJson       String?               @map("prompt_context_json")
+  validatorResultsJson    String?               @map("validator_results_json")
+  judgeSummaryJson        String?               @map("judge_summary_json")
+  trainerTrainingRunId    String?               @map("trainer_training_run_id")
+  trainerPreferencePairId String?               @map("trainer_preference_pair_id")
+  trainerOnlineRunId      String?               @map("trainer_online_run_id")
+  errorMessage            String?               @map("error_message")
+  createdAt               DateTime?             @default(now()) @map("created_at")
+  updatedAt               DateTime?             @default(now()) @updatedAt @map("updated_at")
+  user                    User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book                    Book                  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  act                     Act?                  @relation(fields: [actId], references: [id], onDelete: SetNull)
+  chapter                 Chapter?              @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  scene                   Scene?                @relation(fields: [sceneId], references: [id], onDelete: SetNull)
+  candidates              ProseTraceCandidate[]
+  findings                ProseFinding[]
+  compareCards            ProseCompareCard[]
+  actions                 ProseAction[]
+
+  @@index([userId, createdAt], map: "idx_prose_traces_user_created")
+  @@index([bookId, createdAt], map: "idx_prose_traces_book_created")
+  @@index([sceneId, createdAt], map: "idx_prose_traces_scene_created")
+  @@map("prose_traces")
+}
+
+model ProseTraceCandidate {
+  id             Int        @id @default(autoincrement())
+  proseTraceId   Int        @map("prose_trace_id")
+  ordinal        Int
+  stage          String
+  candidateType  String     @map("candidate_type")
+  selectionLabel String?    @map("selection_label")
+  accepted       Boolean?
+  rejected       Boolean?
+  outputText     String     @map("output_text")
+  wordCount      Int        @default(0) @map("word_count")
+  overallScore   Float?     @map("overall_score")
+  tier           String?
+  metadataJson   String?    @map("metadata_json")
+  createdAt      DateTime?  @default(now()) @map("created_at")
+  updatedAt      DateTime?  @default(now()) @updatedAt @map("updated_at")
+  proseTrace     ProseTrace @relation(fields: [proseTraceId], references: [id], onDelete: Cascade)
+
+  @@unique([proseTraceId, ordinal], map: "uniq_prose_trace_candidates_trace_ordinal")
+  @@index([proseTraceId, stage], map: "idx_prose_trace_candidates_trace_stage")
+  @@map("prose_trace_candidates")
+}
+
+model ProseFinding {
+  id           Int                @id @default(autoincrement())
+  proseTraceId Int                @map("prose_trace_id")
+  source       String
+  findingType  String             @map("finding_type")
+  severity     String
+  title        String?
+  message      String
+  excerpt      String?
+  suggestion   String?
+  rationale    String?
+  fromOffset   Int?               @map("from_offset")
+  toOffset     Int?               @map("to_offset")
+  metadataJson String?            @map("metadata_json")
+  dismissedAt  DateTime?          @map("dismissed_at")
+  createdAt    DateTime?          @default(now()) @map("created_at")
+  updatedAt    DateTime?          @default(now()) @updatedAt @map("updated_at")
+  proseTrace   ProseTrace         @relation(fields: [proseTraceId], references: [id], onDelete: Cascade)
+  compareCards ProseCompareCard[]
+  actions      ProseAction[]
+
+  @@index([proseTraceId, source], map: "idx_prose_findings_trace_source")
+  @@map("prose_findings")
+}
+
+model ProseCompareCard {
+  id                Int           @id @default(autoincrement())
+  proseTraceId      Int           @map("prose_trace_id")
+  proseFindingId    Int?          @map("prose_finding_id")
+  title             String
+  message           String
+  excerpt           String?
+  optionALabel      String        @default("Keep") @map("option_a_label")
+  optionAText       String        @map("option_a_text")
+  optionBLabel      String        @default("Revise") @map("option_b_label")
+  optionBText       String        @map("option_b_text")
+  recommendedOption String?       @map("recommended_option")
+  rationale         String?
+  fromOffset        Int?          @map("from_offset")
+  toOffset          Int?          @map("to_offset")
+  status            String        @default("open")
+  metadataJson      String?       @map("metadata_json")
+  createdAt         DateTime?     @default(now()) @map("created_at")
+  updatedAt         DateTime?     @default(now()) @updatedAt @map("updated_at")
+  proseTrace        ProseTrace    @relation(fields: [proseTraceId], references: [id], onDelete: Cascade)
+  proseFinding      ProseFinding? @relation(fields: [proseFindingId], references: [id], onDelete: SetNull)
+  actions           ProseAction[]
+
+  @@index([proseTraceId, status], map: "idx_prose_compare_cards_trace_status")
+  @@map("prose_compare_cards")
+}
+
+model ProseAction {
+  id                 Int               @id @default(autoincrement())
+  proseTraceId       Int               @map("prose_trace_id")
+  userId             Int               @map("user_id")
+  bookId             Int               @map("book_id")
+  sceneId            Int?              @map("scene_id")
+  proseFindingId     Int?              @map("prose_finding_id")
+  proseCompareCardId Int?              @map("prose_compare_card_id")
+  actionType         String            @map("action_type")
+  metadataJson       String?           @map("metadata_json")
+  createdAt          DateTime?         @default(now()) @map("created_at")
+  proseTrace         ProseTrace        @relation(fields: [proseTraceId], references: [id], onDelete: Cascade)
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book               Book              @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  scene              Scene?            @relation(fields: [sceneId], references: [id], onDelete: SetNull)
+  proseFinding       ProseFinding?     @relation(fields: [proseFindingId], references: [id], onDelete: SetNull)
+  proseCompareCard   ProseCompareCard? @relation(fields: [proseCompareCardId], references: [id], onDelete: SetNull)
+
+  @@index([proseTraceId, createdAt], map: "idx_prose_actions_trace_created")
+  @@index([sceneId, createdAt], map: "idx_prose_actions_scene_created")
+  @@map("prose_actions")
+}
+
+model Note {
+  id        Int       @id @default(autoincrement())
+  bookId    Int       @map("book_id")
+  title     String
+  content   String
+  createdAt DateTime? @default(now()) @map("created_at")
+  updatedAt DateTime? @default(now()) @updatedAt @map("updated_at")
+  book      Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@index([bookId], map: "idx_notes_book_id")
+  @@map("notes")
+}
+
+model ImageAsset {
+  id         Int       @id @default(autoincrement())
+  userId     Int       @map("user_id")
+  bookId     Int?      @map("book_id")
+  name       String
+  url        String
+  configJson String?   @map("config_json")
+  source     String?
+  createdAt  DateTime? @default(now()) @map("created_at")
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book       Book?     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@index([bookId], map: "idx_images_book_id")
+  @@index([userId], map: "idx_images_user_id")
+  @@map("images")
+}
+
+// Factory runner tables
+// State values: queued, running, paused, error, done, stalled
+
+// State values: pending, running, completed, error, cancelled, skipped
+
+model AICache {
+  id            Int      @id @default(autoincrement())
+  model         String
+  recipeVersion String   @map("recipe_version")
+  promptHash    String   @map("prompt_hash")
+  value         String
+  ttlSec        Int      @default(604800) @map("ttl_sec")
+  hitCount      Int      @default(0) @map("hit_count")
+  createdAt     DateTime @default(now()) @map("created_at")
+  lastHitAt     DateTime @map("last_hit_at")
+
+  @@unique([model, recipeVersion, promptHash], map: "uniq_ai_cache_key")
+  @@index([createdAt], map: "idx_ai_cache_created")
+  @@map("ai_cache")
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   Int?     @map("entity_id")
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId], map: "idx_audit_log_user")
+  @@index([entityType, entityId], map: "idx_audit_log_entity")
+  @@index([createdAt], map: "idx_audit_log_created")
+  @@map("audit_log")
+}
+
+model RagChunk {
+  id           Int      @id @default(autoincrement())
+  bookId       Int      @map("book_id")
+  sourceType   String   @map("source_type")
+  sourceId     String   @map("source_id")
+  chunkText    String   @map("chunk_text")
+  embedding    Json?
+  embedModel   String?  @map("embed_model")
+  embedVersion String?  @map("embed_version")
+  tokenCount   Int?     @map("token_count")
+  metadata     Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@index([bookId, sourceType], map: "idx_rag_chunks_book_source_type")
+  @@index([sourceId], map: "idx_rag_chunks_source_id")
+  @@index([bookId], map: "idx_rag_chunks_book_id")
+  @@map("rag_chunks")
+}
+
+model RagEvalResult {
+  id           Int      @id @default(autoincrement())
+  bookId       Int      @map("book_id")
+  sceneId      Int?     @map("scene_id")
+  evalType     String   @map("eval_type")
+  metrics      Json
+  orchestrator String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([bookId], map: "idx_rag_eval_book_id")
+  @@index([evalType], map: "idx_rag_eval_type")
+  @@index([createdAt], map: "idx_rag_eval_created")
+  @@map("rag_eval_results")
+}
+
+model SceneMemoryEvent {
+  id         Int      @id @default(autoincrement())
+  bookId     Int      @map("book_id")
+  sceneId    Int      @map("scene_id")
+  eventType  String   @map("event_type")
+  actors     Json
+  location   String?
+  summary    String
+  payload    Json?
+  confidence Float    @default(0.8)
+  ordering   Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@index([bookId], map: "idx_memory_events_book_id")
+  @@index([sceneId], map: "idx_memory_events_scene_id")
+  @@index([bookId, eventType], map: "idx_memory_events_book_type")
+  @@map("scene_memory_events")
+}
+
+model CharacterState {
+  id         Int      @id @default(autoincrement())
+  bookId     Int      @map("book_id")
+  codexId    Int      @map("codex_id")
+  sceneId    Int      @map("scene_id")
+  stateKey   String   @map("state_key")
+  stateValue String   @map("state_value")
+  confidence Float    @default(0.8)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@unique([bookId, codexId, sceneId, stateKey], map: "uniq_char_state")
+  @@index([bookId, codexId], map: "idx_char_state_book_codex")
+  @@index([sceneId], map: "idx_char_state_scene")
+  @@index([bookId, stateKey], map: "idx_char_state_book_key")
+  @@map("character_states")
+}
+
+model PlotThread {
+  id           Int      @id @default(autoincrement())
+  bookId       Int      @map("book_id")
+  threadKey    String   @map("thread_key")
+  question     String?
+  authorManaged Boolean @default(false) @map("author_managed")
+  version      Int      @default(0)
+  archivedAt   DateTime? @map("archived_at")
+  status       String   @default("open")
+  description  String?
+  firstSceneId Int?     @map("first_scene_id")
+  lastSceneId  Int?     @map("last_scene_id")
+  dueHorizon   String?  @map("due_horizon")
+  actors       Json?
+  notes        String?
+  confidence   Float    @default(0.8)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@unique([bookId, threadKey], map: "uniq_plot_thread")
+  @@index([bookId], map: "idx_plot_threads_book_id")
+  @@index([bookId, status], map: "idx_plot_threads_book_status")
+  @@map("plot_threads")
+}
+
+model PlotThreadEvidence {
+  id        String @id
+  bookId    Int @map("book_id")
+  threadId  Int @map("thread_id")
+  stage     String
+  source    Json
+  removedAt DateTime? @map("removed_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([bookId, threadId])
+  @@map("plot_thread_evidence")
+}
+
+model PlotThreadReview {
+  id             String @id
+  bookId         Int @map("book_id")
+  userId         Int @map("user_id")
+  threadId       Int @map("thread_id")
+  requestHash    String @map("request_hash")
+  request        Json
+  snapshot       Json
+  status         String @default("pending")
+  result         Json?
+  errorCode      String? @map("error_code")
+  assessment     String?
+  notes          String?
+  startedAt      DateTime? @map("started_at")
+  completedAt    DateTime? @map("completed_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  @@index([bookId, threadId, createdAt])
+  @@map("plot_thread_reviews")
+}
+
+model PlotThreadMutation {
+  id          String @id
+  bookId      Int @map("book_id")
+  userId      Int @map("user_id")
+  requestHash String @map("request_hash")
+  receipt     Json
+  createdAt   DateTime @default(now()) @map("created_at")
+  @@index([bookId, userId])
+  @@map("plot_thread_mutations")
+}
+
+model SkillRun {
+  id        Int      @id @default(autoincrement())
+  bookId    Int      @map("book_id")
+  sceneId   Int?     @map("scene_id")
+  skillName String   @map("skill_name")
+  version   String
+  status    String   @default("completed")
+  latencyMs Int?     @map("latency_ms")
+  findings  Json?
+  inputHash String?  @map("input_hash")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([bookId], map: "idx_skill_runs_book_id")
+  @@index([sceneId], map: "idx_skill_runs_scene_id")
+  @@index([skillName], map: "idx_skill_runs_skill_name")
+  @@index([createdAt], map: "idx_skill_runs_created")
+  @@map("skill_runs")
+}
+
+model EvaluationCorpusCase {
+  id                     String             @id
+  name                   String             @unique
+  level                  String
+  genre                  String?
+  suiteKey               String             @default("legacy") @map("suite_key")
+  suiteVersion           String             @default("1.0.0") @map("suite_version")
+  caseVersion            String             @default("1.0.0") @map("case_version")
+  tags                   Json?
+  hidden                 Boolean            @default(false)
+  input                  Json
+  expected               Json
+  invariantRules         Json               @map("invariant_rules")
+  inputHash              String             @default("") @map("input_hash")
+  expectedHash           String             @default("") @map("expected_hash")
+  weight                 Float              @default(1)
+  updatedByBuildRevision String?            @map("updated_by_build_revision")
+  active                 Boolean            @default(true)
+  createdAt              DateTime           @default(now()) @map("created_at")
+  updatedAt              DateTime           @default(now()) @updatedAt @map("updated_at")
+  results                EvaluationResult[]
+
+  @@index([suiteKey, suiteVersion, active], map: "idx_evaluation_case_suite")
+  @@map("evaluation_corpus_cases")
+}
+
+model EvaluationRun {
+  id             String             @id
+  userId         Int                @map("user_id")
+  bookId         Int?               @map("book_id")
+  idempotencyKey String             @map("idempotency_key")
+  suiteKey       String             @map("suite_key")
+  suiteVersion   String             @map("suite_version")
+  status         String             @default("queued")
+  config         Json
+  codeRevision   String             @map("code_revision")
+  schemaRevision String             @map("schema_revision")
+  metrics        Json?
+  reportHash     String?            @map("report_hash")
+  report         Json?
+  startedAt      DateTime?          @map("started_at")
+  finishedAt     DateTime?          @map("finished_at")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @default(now()) @updatedAt @map("updated_at")
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book           Book?              @relation(fields: [bookId], references: [id], onDelete: SetNull)
+  results        EvaluationResult[]
+
+  @@unique([userId, idempotencyKey], map: "uniq_evaluation_run_idempotency")
+  @@index([suiteKey, suiteVersion, createdAt], map: "idx_evaluation_run_suite")
+  @@index([userId, status], map: "idx_evaluation_run_user_status")
+  @@map("evaluation_runs")
+}
+
+model EvaluationResult {
+  id               String               @id
+  evaluationRunId  String               @map("evaluation_run_id")
+  caseId           String               @map("case_id")
+  sourceRevisionId String?              @map("source_revision_id")
+  passKey          String               @map("pass_key")
+  passVersion      String               @map("pass_version")
+  model            String?
+  recipeVersion    String?              @map("recipe_version")
+  samplingHash     String?              @map("sampling_hash")
+  ragHash          String?              @map("rag_hash")
+  policyVersion    String               @map("policy_version")
+  profileVersion   String?              @map("profile_version")
+  judgeProfile     String?              @map("judge_profile")
+  verdict          String
+  expectedMatch    Boolean?             @map("expected_match")
+  hardInvariants   Json                 @map("hard_invariants")
+  metrics          Json
+  latencyMs        Int                  @map("latency_ms")
+  inferenceTokens  Int                  @default(0) @map("inference_tokens")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  evaluationRun    EvaluationRun        @relation(fields: [evaluationRunId], references: [id], onDelete: Cascade)
+  case             EvaluationCorpusCase @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  sourceRevision   ManuscriptRevision?  @relation(fields: [sourceRevisionId], references: [id], onDelete: SetNull)
+
+  @@unique([evaluationRunId, caseId, passKey, passVersion, model], map: "uniq_evaluation_result_matrix")
+  @@index([evaluationRunId, createdAt], map: "idx_evaluation_result_run")
+  @@index([caseId, passKey], map: "idx_evaluation_result_case_pass")
+  @@index([model], map: "idx_evaluation_result_model")
+  @@map("evaluation_results")
+}
+
+// Clean-slate multi-workflow book production platform.
+model WorkflowRun {
+  id                     String                  @id
+  workflowType           String                  @map("workflow_type")
+  parentRunId            String?                 @map("parent_run_id")
+  bookId                 Int                     @map("book_id")
+  userId                 Int                     @map("user_id")
+  sourceRevisionId       String?                 @map("source_revision_id")
+  resultRevisionId       String?                 @map("result_revision_id")
+  status                 String                  @default("queued")
+  statusVersion          Int                     @default(0) @map("status_version")
+  phase                  String                  @default("queued")
+  settings               Json
+  configHash             String                  @default("") @map("config_hash")
+  idempotencyKey         String                  @map("idempotency_key")
+  leaseOwner             String?                 @map("lease_owner")
+  leaseExpiresAt         DateTime?               @map("lease_expires_at")
+  executionParentRunId   String?                 @map("execution_parent_run_id")
+  recoveryLeaseOwner     String?                 @map("recovery_lease_owner")
+  recoveryLeaseExpiresAt DateTime?               @map("recovery_lease_expires_at")
+  progress               Json?
+  modelPolicy            Json?                   @map("model_policy")
+  attemptCount           Int                     @default(0) @map("attempt_count")
+  deliveryAttemptCount   Int                     @default(0) @map("delivery_attempt_count")
+  recoveryCount          Int                     @default(0) @map("recovery_count")
+  maxAttempts            Int                     @default(3) @map("max_attempts")
+  cancelRequested        Boolean                 @default(false) @map("cancel_requested")
+  failureReason          String?                 @map("failure_reason")
+  failureClass           String?                 @map("failure_class")
+  lastHeartbeatAt        DateTime?               @map("last_heartbeat_at")
+  startedAt              DateTime?               @map("started_at")
+  finishedAt             DateTime?               @map("finished_at")
+  createdAt              DateTime                @default(now()) @map("created_at")
+  updatedAt              DateTime                @default(now()) @updatedAt @map("updated_at")
+  parent                 WorkflowRun?            @relation("WorkflowChildren", fields: [parentRunId], references: [id], onDelete: Cascade)
+  children               WorkflowRun[]           @relation("WorkflowChildren")
+  book                   Book                    @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user                   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceRevision         ManuscriptRevision?     @relation("WorkflowSourceRevision", fields: [sourceRevisionId], references: [id], onDelete: SetNull)
+  resultRevision         ManuscriptRevision?     @relation("WorkflowResultRevision", fields: [resultRevisionId], references: [id], onDelete: SetNull)
+  producedRevisions      ManuscriptRevision[]    @relation("RevisionWorkflow")
+  tasks                  WorkflowTask[]
+  artifacts              WorkflowArtifact[]
+  checkpoints            WorkflowCheckpoint[]
+  events                 WorkflowEvent[]
+  reviewRun              QualityReviewRun?
+  implementedFindings    QualityFinding[]        @relation("FindingImplementationRun")
+  publicationPackages    PublicationPackage[]
+  narrativeLedgers       NarrativeLedger[]
+  enqueueOutbox          WorkflowEnqueueOutbox[]
+  editorialRun           EditorialRun?
+  campaignPlans          RevisionCampaignPlan[]
+
+  @@unique([userId, idempotencyKey], map: "uniq_workflow_idempotency")
+  @@index([bookId, createdAt], map: "idx_workflow_book_created")
+  @@index([userId, status], map: "idx_workflow_user_status")
+  @@index([parentRunId], map: "idx_workflow_parent")
+  @@index([userId, workflowType, configHash, status], map: "idx_workflow_dedupe")
+  @@index([status, leaseExpiresAt], map: "idx_workflow_lease")
+  @@index([parentRunId, status], map: "idx_workflow_parent_status")
+  @@map("workflow_runs")
+}
+
+model WorkflowTask {
+  id               String             @id
+  runId            String             @map("run_id")
+  taskKey          String             @map("task_key")
+  taskType         String             @map("task_type")
+  phase            String
+  scopeType        String             @map("scope_type")
+  scopeId          String?            @map("scope_id")
+  ordinal          Int
+  dependencies     Json
+  status           String             @default("pending")
+  attemptCount     Int                @default(0) @map("attempt_count")
+  maxAttempts      Int                @default(3) @map("max_attempts")
+  modelUsed        String?            @map("model_used")
+  inputRevisionId  String?            @map("input_revision_id")
+  outputRevisionId String?            @map("output_revision_id")
+  validationResult Json?              @map("validation_result")
+  errorCode        String?            @map("error_code")
+  errorMessage     String?            @map("error_message")
+  leaseOwner       String?            @map("lease_owner")
+  startedAt        DateTime?          @map("started_at")
+  finishedAt       DateTime?          @map("finished_at")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @default(now()) @updatedAt @map("updated_at")
+  run              WorkflowRun        @relation(fields: [runId], references: [id], onDelete: Cascade)
+  artifacts        WorkflowArtifact[]
+
+  @@unique([runId, taskKey], map: "uniq_workflow_task_key")
+  @@index([runId, status, ordinal], map: "idx_workflow_task_status")
+  @@index([inputRevisionId], map: "idx_workflow_task_input_revision")
+  @@index([outputRevisionId], map: "idx_workflow_task_output_revision")
+  @@map("workflow_tasks")
+}
+
+model WorkflowArtifact {
+  id               String        @id
+  runId            String        @map("run_id")
+  taskId           String?       @map("task_id")
+  artifactType     String        @map("artifact_type")
+  scopeType        String        @map("scope_type")
+  scopeId          String?       @map("scope_id")
+  contentHash      String        @map("content_hash")
+  sourceRevisionId String?       @map("source_revision_id")
+  resultRevisionId String?       @map("result_revision_id")
+  payload          Json
+  createdAt        DateTime      @default(now()) @map("created_at")
+  run              WorkflowRun   @relation(fields: [runId], references: [id], onDelete: Cascade)
+  task             WorkflowTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([runId, artifactType], map: "idx_workflow_artifact_type")
+  @@map("workflow_artifacts")
+}
+
+model WorkflowCheckpoint {
+  id             String      @id
+  runId          String      @map("run_id")
+  checkpointType String      @map("checkpoint_type")
+  status         String      @default("pending")
+  proposal       Json
+  decision       String?
+  reason         String?
+  decidedById    Int?        @map("decided_by_id")
+  decidedAt      DateTime?   @map("decided_at")
+  leaseOwner     String?     @map("lease_owner")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  run            WorkflowRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  decidedBy      User?       @relation("WorkflowCheckpointDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+
+  @@index([runId, status], map: "idx_workflow_checkpoint_status")
+  @@map("workflow_checkpoints")
+}
+
+model WorkflowEnqueueOutbox {
+  id             String      @id
+  runId          String      @map("run_id")
+  userId         Int         @map("user_id")
+  dedupeKey      String      @unique @map("dedupe_key")
+  reason         String
+  status         String      @default("pending")
+  attemptCount   Int         @default(0) @map("attempt_count")
+  availableAt    DateTime    @default(now()) @map("available_at")
+  leaseOwner     String?     @map("lease_owner")
+  leaseExpiresAt DateTime?   @map("lease_expires_at")
+  processedAt    DateTime?   @map("processed_at")
+  lastError      String?     @map("last_error")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @default(now()) @updatedAt @map("updated_at")
+  run            WorkflowRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([status, availableAt], map: "idx_workflow_outbox_pending")
+  @@map("workflow_enqueue_outbox")
+}
+
+model WorkflowEvent {
+  id        Int         @id @default(autoincrement())
+  runId     String      @map("run_id")
+  eventType String      @map("event_type")
+  data      Json?
+  createdAt DateTime    @default(now()) @map("created_at")
+  run       WorkflowRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId, id], map: "idx_workflow_event_cursor")
+  @@map("workflow_events")
+}
+
+model ManuscriptRevision {
+  id                     String               @id
+  bookId                 Int                  @map("book_id")
+  parentRevisionId       String?              @map("parent_revision_id")
+  workflowRunId          String?              @map("workflow_run_id")
+  leaseOwner             String?              @map("lease_owner")
+  contentHash            String               @map("content_hash")
+  wordCount              Int                  @map("word_count")
+  changedScopes          Json                 @map("changed_scopes")
+  snapshot               Json
+  createdAt              DateTime             @default(now()) @map("created_at")
+  book                   Book                 @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  parent                 ManuscriptRevision?  @relation("RevisionChildren", fields: [parentRevisionId], references: [id], onDelete: SetNull)
+  children               ManuscriptRevision[] @relation("RevisionChildren")
+  workflowRun            WorkflowRun?         @relation("RevisionWorkflow", fields: [workflowRunId], references: [id], onDelete: SetNull)
+  sourceForRuns          WorkflowRun[]        @relation("WorkflowSourceRevision")
+  resultForRuns          WorkflowRun[]        @relation("WorkflowResultRevision")
+  implementedFindings    QualityFinding[]     @relation("FindingImplementedRevision")
+  qualityReviewRuns      QualityReviewRun[]
+  sourceForEditorialRuns EditorialRun[]       @relation("EditorialSourceRevision")
+  resultForEditorialRuns EditorialRun[]       @relation("EditorialResultRevision")
+  editorialProposals     EditorialProposal[]
+  styleFingerprints      StyleFingerprint[]
+  evaluationResults      EvaluationResult[]
+
+  @@index([bookId, contentHash], map: "idx_revision_book_hash")
+  @@index([bookId, createdAt], map: "idx_revision_book_created")
+  @@map("manuscript_revisions")
+}
+
+model QualityReviewRun {
+  id               String             @id
+  workflowRunId    String             @unique @map("workflow_run_id")
+  bookId           Int                @map("book_id")
+  sourceRevisionId String             @map("source_revision_id")
+  modelUsed        String             @map("model_used")
+  rubricVersion    String             @map("rubric_version")
+  promptRecipe     String             @map("prompt_recipe")
+  scopeType        String             @map("scope_type")
+  scopeId          Int?               @map("scope_id")
+  coverage         Json
+  score            Float?
+  status           String             @default("queued")
+  startedAt        DateTime?          @map("started_at")
+  finishedAt       DateTime?          @map("finished_at")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  workflowRun      WorkflowRun        @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+  book             Book               @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  sourceRevision   ManuscriptRevision @relation(fields: [sourceRevisionId], references: [id], onDelete: Cascade)
+  findings         QualityFinding[]
+
+  @@index([bookId, createdAt], map: "idx_quality_review_book_created")
+  @@index([sourceRevisionId, modelUsed], map: "idx_quality_review_revision_model")
+  @@map("quality_review_runs_v1")
+}
+
+model QualityFinding {
+  id                        String              @id
+  reviewRunId               String              @map("review_run_id")
+  relatedFingerprint        String?             @map("related_fingerprint")
+  fingerprint               String
+  scopeType                 String              @map("scope_type")
+  scopeId                   Int?                @map("scope_id")
+  category                  String
+  severity                  String
+  confidence                Float
+  message                   String
+  evidence                  String?
+  recommendation            String?
+  implemented               Boolean             @default(false)
+  implementedAt             DateTime?           @map("implemented_at")
+  implementingWorkflowRunId String?             @map("implementing_workflow_run_id")
+  implementedRevisionId     String?             @map("implemented_revision_id")
+  changedScopes             Json?               @map("changed_scopes")
+  diffSummary               String?             @map("diff_summary")
+  verificationStatus        String              @default("not_implemented") @map("verification_status")
+  verificationEvidence      String?             @map("verification_evidence")
+  verifiedAt                DateTime?           @map("verified_at")
+  waived                    Boolean             @default(false)
+  waiverReason              String?             @map("waiver_reason")
+  stale                     Boolean             @default(false)
+  superseded                Boolean             @default(false)
+  detectorKey               String?             @map("detector_key")
+  detectorVersion           String?             @map("detector_version")
+  riskLevel                 String              @default("medium") @map("risk_level")
+  autofixEligible           Boolean             @default(false) @map("autofix_eligible")
+  editorialPassKey          String?             @map("editorial_pass_key")
+  editorialPassVersion      String?             @map("editorial_pass_version")
+  metadata                  Json?
+  createdAt                 DateTime            @default(now()) @map("created_at")
+  updatedAt                 DateTime            @default(now()) @updatedAt @map("updated_at")
+  reviewRun                 QualityReviewRun    @relation(fields: [reviewRunId], references: [id], onDelete: Cascade)
+  implementingWorkflowRun   WorkflowRun?        @relation("FindingImplementationRun", fields: [implementingWorkflowRunId], references: [id], onDelete: SetNull)
+  implementedRevision       ManuscriptRevision? @relation("FindingImplementedRevision", fields: [implementedRevisionId], references: [id], onDelete: SetNull)
+
+  @@unique([reviewRunId, fingerprint], map: "uniq_quality_finding_review_fingerprint")
+  @@index([reviewRunId, implemented, verificationStatus], map: "idx_quality_finding_state")
+  @@map("quality_findings_v1")
+}
+
+model EditorialRun {
+  id               String                        @id
+  workflowRunId    String                        @unique @map("workflow_run_id")
+  bookId           Int                           @map("book_id")
+  sourceRevisionId String                        @map("source_revision_id")
+  resultRevisionId String?                       @map("result_revision_id")
+  profileId        String?                       @map("profile_id")
+  profileVersion   String?                       @map("profile_version")
+  profileHash      String?                       @map("profile_hash")
+  passPackKey      String                        @map("pass_pack_key")
+  passPackVersion  String                        @map("pass_pack_version")
+  policyVersion    String                        @map("policy_version")
+  autonomy         String
+  scopeType        String                        @map("scope_type")
+  scopeId          Int?                          @map("scope_id")
+  status           String                        @default("queued")
+  outcome          String?
+  requestConfig    Json                          @map("request_config")
+  metrics          Json?
+  evidenceSummary  Json?                         @map("evidence_summary")
+  startedAt        DateTime?                     @map("started_at")
+  finishedAt       DateTime?                     @map("finished_at")
+  createdAt        DateTime                      @default(now()) @map("created_at")
+  updatedAt        DateTime                      @default(now()) @updatedAt @map("updated_at")
+  workflowRun      WorkflowRun                   @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+  book             Book                          @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  sourceRevision   ManuscriptRevision            @relation("EditorialSourceRevision", fields: [sourceRevisionId], references: [id], onDelete: Restrict)
+  resultRevision   ManuscriptRevision?           @relation("EditorialResultRevision", fields: [resultRevisionId], references: [id], onDelete: SetNull)
+  profile          EditorialProfile?             @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  proposals        EditorialProposal[]
+  preferences      EditorialPreferenceEvidence[]
+
+  @@index([bookId, createdAt], map: "idx_editorial_run_book_created")
+  @@index([sourceRevisionId], map: "idx_editorial_run_source_revision")
+  @@index([passPackKey, passPackVersion], map: "idx_editorial_run_pass")
+  @@map("editorial_runs")
+}
+
+model EditorialProposal {
+  id                   String                        @id
+  editorialRunId       String                        @map("editorial_run_id")
+  sourceRevisionId     String                        @map("source_revision_id")
+  bookId               Int                           @map("book_id")
+  scopeType            String                        @map("scope_type")
+  scopeId              Int?                          @map("scope_id")
+  passKey              String                        @map("pass_key")
+  passVersion          String                        @map("pass_version")
+  risk                 String
+  confidence           Float
+  status               String                        @default("pending")
+  skipReason           String?                       @map("skip_reason")
+  fingerprint          String
+  sourceHash           String                        @map("source_hash")
+  originalText         String                        @map("original_text")
+  beforeAnchor         String?                       @map("before_anchor")
+  afterAnchor          String?                       @map("after_anchor")
+  startOffset          Int                           @map("start_offset")
+  endOffset            Int                           @map("end_offset")
+  expectedBenefits     Json                          @map("expected_benefits")
+  protectedClaims      Json                          @map("protected_claims")
+  findingIds           Json                          @map("finding_ids")
+  detectorIds          Json                          @map("detector_ids")
+  autoApplied          Boolean                       @default(false) @map("auto_applied")
+  verificationStatus   String                        @default("pending") @map("verification_status")
+  verificationEvidence Json?                         @map("verification_evidence")
+  appliedRevisionId    String?                       @map("applied_revision_id")
+  createdAt            DateTime                      @default(now()) @map("created_at")
+  updatedAt            DateTime                      @default(now()) @updatedAt @map("updated_at")
+  editorialRun         EditorialRun                  @relation(fields: [editorialRunId], references: [id], onDelete: Cascade)
+  sourceRevision       ManuscriptRevision            @relation(fields: [sourceRevisionId], references: [id], onDelete: Restrict)
+  candidates           EditorialCandidate[]
+  evaluations          EditorialEvaluation[]
+  preferences          EditorialPreferenceEvidence[]
+
+  @@unique([editorialRunId, fingerprint], map: "uniq_editorial_proposal_fingerprint")
+  @@index([editorialRunId, status], map: "idx_editorial_proposal_run_status")
+  @@index([bookId, scopeType, scopeId], map: "idx_editorial_proposal_book_scope")
+  @@index([sourceRevisionId], map: "idx_editorial_proposal_source_revision")
+  @@map("editorial_proposals")
+}
+
+model EditorialCandidate {
+  id              String                        @id
+  proposalId      String                        @map("proposal_id")
+  ordinal         Int
+  candidateType   String                        @map("candidate_type")
+  producerProfile String?                       @map("producer_profile")
+  producerModel   String?                       @map("producer_model")
+  recipeVersion   String?                       @map("recipe_version")
+  samplingHash    String?                       @map("sampling_hash")
+  ragHash         String?                       @map("rag_hash")
+  outputText      String                        @map("output_text")
+  outputHash      String                        @map("output_hash")
+  wordCount       Int                           @map("word_count")
+  metadata        Json?
+  createdAt       DateTime                      @default(now()) @map("created_at")
+  proposal        EditorialProposal             @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  preferredBy     EditorialEvaluation[]         @relation("PreferredEditorialCandidate")
+  preferences     EditorialPreferenceEvidence[]
+
+  @@unique([proposalId, ordinal], map: "uniq_editorial_candidate_ordinal")
+  @@index([proposalId, candidateType], map: "idx_editorial_candidate_type")
+  @@map("editorial_candidates")
+}
+
+model EditorialEvaluation {
+  id                   String              @id
+  proposalId           String              @map("proposal_id")
+  evaluatorProfile     String              @map("evaluator_profile")
+  evaluatorVersion     String              @map("evaluator_version")
+  evaluatorModel       String?             @map("evaluator_model")
+  promptRecipe         String              @map("prompt_recipe")
+  candidateOrder       Json                @map("candidate_order")
+  verdict              String
+  preferredCandidateId String?             @map("preferred_candidate_id")
+  confidence           Float
+  preferenceMargin     Float               @map("preference_margin")
+  dimensionScores      Json                @map("dimension_scores")
+  rationale            String
+  hardCheckSummary     Json                @map("hard_check_summary")
+  metadata             Json?
+  createdAt            DateTime            @default(now()) @map("created_at")
+  proposal             EditorialProposal   @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  preferredCandidate   EditorialCandidate? @relation("PreferredEditorialCandidate", fields: [preferredCandidateId], references: [id], onDelete: SetNull)
+
+  @@index([proposalId, createdAt], map: "idx_editorial_evaluation_proposal")
+  @@index([evaluatorProfile, evaluatorVersion], map: "idx_editorial_evaluation_profile")
+  @@index([evaluatorModel], map: "idx_editorial_evaluation_model")
+  @@map("editorial_evaluations")
+}
+
+model EditorialProfile {
+  id         String             @id
+  userId     Int                @map("user_id")
+  bookId     Int?               @map("book_id")
+  parentId   String?            @map("parent_id")
+  name       String
+  version    String
+  active     Boolean            @default(false)
+  config     Json
+  configHash String             @map("config_hash")
+  createdAt  DateTime           @default(now()) @map("created_at")
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book       Book?              @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  parent     EditorialProfile?  @relation("EditorialProfileVersions", fields: [parentId], references: [id], onDelete: SetNull)
+  children   EditorialProfile[] @relation("EditorialProfileVersions")
+  runs       EditorialRun[]
+
+  @@unique([userId, name, version], map: "uniq_editorial_profile_version")
+  @@index([userId, active], map: "idx_editorial_profile_user_active")
+  @@index([bookId, active], map: "idx_editorial_profile_book_active")
+  @@map("editorial_profiles")
+}
+
+model EditorialPreferenceEvidence {
+  id             String              @id
+  userId         Int                 @map("user_id")
+  bookId         Int?                @map("book_id")
+  editorialRunId String?             @map("editorial_run_id")
+  proposalId     String?             @map("proposal_id")
+  candidateId    String?             @map("candidate_id")
+  actionId       Int?                @map("action_id")
+  evidenceType   String              @map("evidence_type")
+  passKey        String?             @map("pass_key")
+  featureVector  Json?               @map("feature_vector")
+  weight         Float
+  rationaleTags  Json?               @map("rationale_tags")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  deletedAt      DateTime?           @map("deleted_at")
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book           Book?               @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  editorialRun   EditorialRun?       @relation(fields: [editorialRunId], references: [id], onDelete: SetNull)
+  proposal       EditorialProposal?  @relation(fields: [proposalId], references: [id], onDelete: SetNull)
+  candidate      EditorialCandidate? @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt], map: "idx_editorial_preference_user")
+  @@index([bookId, passKey], map: "idx_editorial_preference_book_pass")
+  @@map("editorial_preference_evidence")
+}
+
+model StyleFingerprint {
+  id                 String             @id
+  bookId             Int                @map("book_id")
+  revisionId         String             @map("revision_id")
+  scopeType          String             @map("scope_type")
+  scopeId            Int?               @map("scope_id")
+  fingerprintVersion String             @map("fingerprint_version")
+  metrics            Json
+  vectorHash         String             @map("vector_hash")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  book               Book               @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  revision           ManuscriptRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+
+  @@index([revisionId, fingerprintVersion], map: "idx_style_fingerprint_revision")
+  @@index([bookId, scopeType, scopeId], map: "idx_style_fingerprint_book_scope")
+  @@map("style_fingerprints")
+}
+
+model NarrativeLedger {
+  id                String      @id
+  workflowRunId     String      @map("workflow_run_id")
+  bookId            Int         @map("book_id")
+  ledgerType        String      @map("ledger_type")
+  ledgerKey         String      @map("ledger_key")
+  status            String      @default("open")
+  introducedSceneId Int?        @map("introduced_scene_id")
+  dueSceneId        Int?        @map("due_scene_id")
+  resolvedSceneId   Int?        @map("resolved_scene_id")
+  payload           Json
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @default(now()) @updatedAt @map("updated_at")
+  workflowRun       WorkflowRun @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+
+  @@unique([workflowRunId, ledgerType, ledgerKey], map: "uniq_workflow_ledger_key")
+  @@index([bookId, ledgerType, status], map: "idx_workflow_ledger_book_state")
+  @@map("narrative_ledgers_v1")
+}
+
+// Structured documents are append-only. Integer resource IDs are validated
+// inside the same owned-book transaction; history survives resource tombstones.
+model SceneDocumentRevision {
+  id               String   @id
+  bookId           Int      @map("book_id")
+  sceneId          Int      @map("scene_id")
+  parentRevisionId String?  @map("parent_revision_id")
+  schemaVersion    Int      @map("schema_version")
+  contentHash      String   @map("content_hash")
+  document         Json
+  originalProse    String?  @map("original_prose")
+  actorId          Int      @map("actor_id")
+  origin           String
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([bookId, sceneId, createdAt])
+  @@map("scene_document_revisions")
+}
+
+model BookDocumentHead {
+  bookId     Int      @id @map("book_id")
+  revisionId String   @map("revision_id")
+  manifest   Json
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("book_document_heads")
+}
+
+model BookDocumentRevision {
+  id               String   @id
+  bookId           Int      @map("book_id")
+  parentRevisionId String?  @map("parent_revision_id")
+  contentHash      String   @map("content_hash")
+  manifest         Json
+  actorId          Int      @map("actor_id")
+  operationId      String   @map("operation_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([bookId, createdAt])
+  @@map("book_document_revisions")
+}
+
+model BookDocumentScopeRevision {
+  id               String   @id
+  bookId           Int      @map("book_id")
+  kind             String
+  parentRevisionId String?  @map("parent_revision_id")
+  contentHash      String   @map("content_hash")
+  content          Json
+  actorId          Int      @map("actor_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([bookId, kind, createdAt])
+  @@map("book_document_scope_revisions")
+}
+
+model DocumentLegacyRevisionMapping {
+  legacyRevisionId String   @id @map("legacy_revision_id")
+  bookId           Int      @map("book_id")
+  documentRevisionId String @map("document_revision_id")
+  legacyContentHash String  @map("legacy_content_hash")
+  fidelity         Json
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([bookId])
+  @@map("document_legacy_revision_mappings")
+}
+
+model DocumentOperation {
+  id          String   @id
+  bookId      Int      @map("book_id")
+  userId      Int      @map("user_id")
+  requestHash String   @map("request_hash")
+  receipt     Json
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([bookId, userId])
+  @@map("document_operations")
+}
+
+model DocumentOriginal {
+  id           String   @id
+  bookId       Int      @map("book_id")
+  userId       Int      @map("user_id")
+  sha256       String
+  storageKey   String   @map("storage_key")
+  filename     String
+  byteSize     Int      @map("byte_size")
+  fidelity     Json
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([bookId, userId])
+  @@map("document_originals")
+}
+
+model DocumentPublication {
+  id           String   @id
+  bookId       Int      @map("book_id")
+  userId       Int      @map("user_id")
+  revisionId   String   @map("revision_id")
+  status       String
+  options      Json
+  manifest     Json
+  errorCode    String?  @map("error_code")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([bookId, userId, createdAt])
+  @@map("document_publications")
+}
+
+model PublicationPackage {
+  id               String      @id
+  workflowRunId    String      @map("workflow_run_id")
+  status           String      @default("draft")
+  gateReport       Json        @map("gate_report")
+  artifactManifest Json        @map("artifact_manifest")
+  validationReport Json        @map("validation_report")
+  approvedById     Int?        @map("approved_by_id")
+  approvedAt       DateTime?   @map("approved_at")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  workflowRun      WorkflowRun @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+
+  @@index([workflowRunId, status], map: "idx_publication_v1_run_status")
+  @@map("publication_packages_v1")
+}
+
+model DocumentInferenceOperation {
+  id                 String    @id
+  bookId             Int       @map("book_id")
+  userId             Int       @map("user_id")
+  sceneId            Int       @map("scene_id")
+  requestHash        String    @map("request_hash")
+  request            Json
+  sourceBookRevision String    @map("source_book_revision")
+  sourceSceneRevision String   @map("source_scene_revision")
+  sourceContentHash  String    @map("source_content_hash")
+  status             String    @default("pending")
+  result             Json?
+  errorCode          String?   @map("error_code")
+  startedAt          DateTime? @map("started_at")
+  completedAt        DateTime? @map("completed_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  @@index([bookId, userId, createdAt])
+  @@map("document_inference_operations")
+}
+
+model DocumentDiscussion {
+  id          String   @id
+  bookId      Int      @map("book_id")
+  userId      Int      @map("user_id")
+  sceneId     Int      @map("scene_id")
+  sessionId   String   @map("session_id")
+  requestHash String   @map("request_hash")
+  request     Json
+  snapshot    Json
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([bookId, userId, createdAt])
+  @@map("document_discussions")
+}
+
+model DocumentProposal {
+  id                     String    @id
+  discussionId           String    @map("discussion_id")
+  bookId                 Int       @map("book_id")
+  userId                 Int       @map("user_id")
+  sceneId                Int       @map("scene_id")
+  requestHash            String    @map("request_hash")
+  request                Json
+  status                 String    @default("pending")
+  result                 Json?
+  errorCode              String?   @map("error_code")
+  applicationOperationId String?   @map("application_operation_id")
+  startedAt              DateTime? @map("started_at")
+  completedAt            DateTime? @map("completed_at")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  @@index([bookId, userId, createdAt])
+  @@index([discussionId, createdAt])
+  @@map("document_proposals")
+}
+
+model DocumentProposalValidation {
+  id              String   @id
+  proposalId      String   @map("proposal_id")
+  bookId          Int      @map("book_id")
+  userId          Int      @map("user_id")
+  bookRevisionId  String   @map("book_revision_id")
+  sceneRevisionId String   @map("scene_revision_id")
+  contentHash     String   @map("content_hash")
+  targets         Json
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([proposalId, createdAt])
+  @@map("document_proposal_validations")
+}
+
+model DocumentTraceAnalysis {
+  id                 String    @id
+  traceId            String    @unique @map("trace_id")
+  bookId             Int       @map("book_id")
+  userId             Int       @map("user_id")
+  sceneId            Int       @map("scene_id")
+  sourceBookRevision String    @map("source_book_revision")
+  sourceSceneRevision String   @map("source_scene_revision")
+  sourceContentHash  String    @map("source_content_hash")
+  snapshot           Json
+  payload            Json
+  status             String    @default("pending")
+  result             Json?
+  errorCode          String?   @map("error_code")
+  startedAt          DateTime? @map("started_at")
+  completedAt        DateTime? @map("completed_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  @@index([bookId, userId, sceneId, createdAt])
+  @@map("document_trace_analyses")
+}
+
+model DocumentTraceTarget {
+  id            String @id
+  analysisId    String @map("analysis_id")
+  bookId        Int    @map("book_id")
+  userId        Int    @map("user_id")
+  sceneId       Int    @map("scene_id")
+  traceId       String @map("trace_id")
+  findingId     Int?   @map("finding_id")
+  compareCardId Int?   @unique @map("compare_card_id")
+  target        Json?
+  reason        String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([analysisId, createdAt])
+  @@map("document_trace_targets")
+}
+
+model DocumentCompareValidation {
+  id              String @id
+  targetId        String @map("target_id")
+  bookId          Int    @map("book_id")
+  userId          Int    @map("user_id")
+  bookRevisionId  String @map("book_revision_id")
+  sceneRevisionId String @map("scene_revision_id")
+  contentHash     String @map("content_hash")
+  target          Json
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([targetId, createdAt])
+  @@map("document_compare_validations")
+}
+
+model DocumentImportOriginal {
+  id          String @id
+  bookId      Int @map("book_id")
+  userId      Int @map("user_id")
+  format      String
+  sha256      String
+  byteLength  Int @map("byte_length")
+  bytes       Bytes
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([bookId, userId, createdAt])
+  @@map("document_import_originals")
+}
+
+model DocumentImportPreview {
+  id                 String @id
+  originalId         String @map("original_id")
+  bookId             Int @map("book_id")
+  userId             Int @map("user_id")
+  sourceBookRevision String @map("source_book_revision")
+  requestHash        String @map("request_hash")
+  conversion         Json
+  report             Json
+  reportHash         String @map("report_hash")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  @@index([bookId, userId, createdAt])
+  @@map("document_import_previews")
+}
+
+model DocumentWorkflowEffect {
+  id                 String @id
+  runId              String @map("run_id")
+  effectKey          String @map("effect_key")
+  userId             Int @map("user_id")
+  bookId             Int @map("book_id")
+  sceneId            Int? @map("scene_id")
+  sourceBookRevision String @map("source_book_revision")
+  sourceContentHash  String @map("source_content_hash")
+  intentHash         String @map("intent_hash")
+  request            Json
+  requestHash        String @map("request_hash")
+  status             String @default("pending")
+  leaseOwner         String? @map("lease_owner")
+  timeoutMs          Int @map("timeout_ms")
+  result             Json?
+  errorCode          String? @map("error_code")
+  startedAt          DateTime? @map("started_at")
+  completedAt        DateTime? @map("completed_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@unique([runId, effectKey])
+  @@index([bookId, userId, createdAt])
+  @@map("document_workflow_effects")
+}
+
+model DocumentPublicationArtifact {
+  id            String   @id
+  publicationId String   @unique @map("publication_id")
+  bookId        Int      @map("book_id")
+  userId        Int      @map("user_id")
+  sha256        String
+  byteLength    Int      @map("byte_length")
+  mediaType     String   @map("media_type")
+  filename      String
+  bytes         Bytes
+  provenance    Json
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([bookId, userId, createdAt])
+  @@map("document_publication_artifacts")
+}
+
+model DocumentOperatorEffect {
+  id                 String   @id
+  userId             Int      @map("user_id")
+  bookId             Int      @map("book_id")
+  sceneId            Int?     @map("scene_id")
+  kind               String
+  intentHash         String   @map("intent_hash")
+  sourceBookRevision String   @map("source_book_revision")
+  sourceContentHash  String   @map("source_content_hash")
+  request            Json
+  requestHash        String   @map("request_hash")
+  timeoutMs          Int      @map("timeout_ms")
+  status             String   @default("pending")
+  result             Json?
+  errorCode          String?  @map("error_code")
+  startedAt          DateTime? @map("started_at")
+  completedAt        DateTime? @map("completed_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@index([bookId, userId, createdAt, id])
+  @@map("document_operator_effects")
+}
+
+// Immutable derived search evidence; no resource foreign keys: tombstoning or
+// deleting compatibility rows never erases historical search/review anchors.
+model SceneDocumentSearchIndex {
+  sceneRevisionId String @id @map("scene_revision_id")
+  bookId Int @map("book_id")
+  sceneId Int @map("scene_id")
+  contentHash String @map("content_hash")
+  projectionSha256 String @map("projection_sha256")
+  normalization String
+  wordCount Int @map("word_count")
+  payload Json
+  payloadHash String @map("payload_hash")
+  payloadBytes Int @map("payload_bytes")
+  sensitiveText String @map("sensitive_text")
+  foldedText String @map("folded_text")
+  sensitiveGrams String[] @map("sensitive_grams")
+  foldedGrams String[] @map("folded_grams")
+  sensitiveOverflow Boolean @map("sensitive_overflow")
+  foldedOverflow Boolean @map("folded_overflow")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([bookId, sceneId])
+  @@index([sensitiveGrams], type: Gin)
+  @@index([foldedGrams], type: Gin)
+  @@map("scene_document_search_indexes")
+}
+
+
+// Release admission authority is durable and independent of manuscript heads.
+model ReleaseAdmissionFence {
+  id Int @id
+  phase String @default("open")
+  generation Int @default(0)
+  releaseId String? @map("release_id")
+  candidateSha String? @map("candidate_sha")
+  proofSha String? @map("proof_sha")
+  cutoff DateTime?
+  operator String?
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  @@map("release_admission_fence")
+}
+model ReleaseFenceReceipt {
+  operationId String @id @map("operation_id")
+  releaseId String @map("release_id")
+  action String
+  requestHash String @map("request_hash")
+  expectedGeneration Int @map("expected_generation")
+  operator String
+  result Json
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([releaseId, createdAt])
+  @@map("release_fence_receipts")
+}
+model ReleaseMutationAdmission {
+  id String @id
+  instanceId String @map("instance_id")
+  userId Int? @map("user_id")
+  kind String
+  scope String
+  requestHash String @map("request_hash")
+  generation Int
+  acceptedAt DateTime @default(now()) @map("accepted_at")
+  @@index([acceptedAt, id])
+  @@map("release_mutation_admissions")
+}
+model ReleaseAdmissionBinding {
+  id String @id
+  admissionId String @map("admission_id")
+  domainKind String @map("domain_kind")
+  domainId String @map("domain_id")
+  sourceBookId Int? @map("source_book_id")
+  sourceRevisionId String? @map("source_revision_id")
+  sourceHash String? @map("source_hash")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@unique([admissionId, domainKind, domainId], map: "release_admission_bindings_admission_id_domain_kind_domain_id_k")
+  @@index([admissionId])
+  @@map("release_admission_bindings")
+}
+
+// Explicit owned ancillary-story discussion; no scene identity is fabricated.
+model DocumentStoryDiscussion {
+  id          String   @id
+  bookId      Int      @map("book_id")
+  userId      Int      @map("user_id")
+  storyId     String   @map("story_id")
+  sessionId   String   @map("session_id")
+  requestHash String   @map("request_hash")
+  request     Json
+  snapshot    Json
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([bookId, userId, createdAt])
+  @@map("document_story_discussions")
+}
+
+model DocumentStoryProposal {
+  id                     String    @id
+  discussionId           String    @map("discussion_id")
+  bookId                 Int       @map("book_id")
+  userId                 Int       @map("user_id")
+  storyId                String    @map("story_id")
+  requestHash            String    @map("request_hash")
+  request                Json
+  status                 String    @default("pending")
+  result                 Json?
+  errorCode              String?   @map("error_code")
+  applicationOperationId String?   @map("application_operation_id")
+  startedAt              DateTime? @map("started_at")
+  completedAt            DateTime? @map("completed_at")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  @@index([bookId, userId, createdAt])
+  @@index([discussionId, createdAt])
+  @@map("document_story_proposals")
+}
+
+model DocumentStoryProposalValidation {
+  id               String   @id
+  proposalId       String   @map("proposal_id")
+  bookId           Int      @map("book_id")
+  userId           Int      @map("user_id")
+  bookRevisionId   String   @map("book_revision_id")
+  layoutRevisionId String   @map("layout_revision_id")
+  storyId          String   @map("story_id")
+  contentHash      String   @map("content_hash")
+  targets          Json
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([proposalId, createdAt])
+  @@map("document_story_proposal_validations")
+}
+
+// Campaign records are side records; canonical prose remains in document revisions.
+model RevisionCampaign {
+  plans RevisionCampaignPlan[]
+  records RevisionCampaignRecord[]
+  id String @id
+  bookId Int @map("book_id")
+  userId Int @map("user_id")
+  version Int @default(1)
+  goal String
+  preset String
+  constraints Json
+  confirmed Boolean @default(false)
+  status String @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([bookId, userId])
+  @@map("revision_campaigns")
+}
+model RevisionCampaignPlan {
+  campaign RevisionCampaign @relation(fields: [campaignId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  run WorkflowRun @relation(fields: [runId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  records RevisionCampaignRecord[]
+  id String @id
+  campaignId String @map("campaign_id")
+  bookId Int @map("book_id")
+  userId Int @map("user_id")
+  campaignVersion Int @map("campaign_version")
+  runId String @unique @map("run_id")
+  snapshot Json
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([bookId, campaignId, createdAt])
+  @@map("revision_campaign_plans")
+}
+model RevisionCampaignRecord {
+  campaign RevisionCampaign @relation(fields: [campaignId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  plan RevisionCampaignPlan? @relation(fields: [planId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id String @id
+  campaignId String @map("campaign_id")
+  planId String? @map("plan_id")
+  bookId Int @map("book_id")
+  userId Int @map("user_id")
+  kind String
+  requestHash String @map("request_hash")
+  payload Json
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([bookId, campaignId, createdAt])
+  @@map("revision_campaign_records")
+}

@@ -1,0 +1,16 @@
+{
+  "unicodeVersion": "16.0.0",
+  "license": "Unicode-3.0",
+  "sources": [
+    {
+      "url": "https://www.unicode.org/Public/16.0.0/ucd/CaseFolding.txt",
+      "path": "16.0.0/CaseFolding.txt",
+      "sha256": "6f1f9c588eb4a5c718d9e8f93b782685e5c7fec872cf05e8e6878053599e09bb"
+    },
+    {
+      "url": "https://www.unicode.org/license.txt",
+      "path": "LICENSE.txt",
+      "sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96"
+    }
+  ]
+}

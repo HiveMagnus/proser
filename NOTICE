@@ -1,0 +1,8 @@
+Proser
+Copyright 2026 The Proser contributors
+
+Proser's first-party code is licensed under the Apache License, Version 2.0.
+
+Bundled third-party components retain their original license terms. Their
+license and attribution files are included with their source under
+ProserAuthor/packages/canvas-engine and ProserFactory/vendor.

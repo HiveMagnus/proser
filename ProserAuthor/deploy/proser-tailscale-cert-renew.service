@@ -1,0 +1,12 @@
+[Unit]
+Description=Renew the Proser Tailscale TLS certificate when needed
+
+[Service]
+Type=oneshot
+EnvironmentFile=-%h/.config/proser/tls.env
+Environment=PROSER_TLS_DIR=/var/lib/proser-tls
+Environment=PROSER_TLS_MIN_VALIDITY=720h
+ExecStart=%h/.local/bin/proser-tailscale-cert-renew
+
+[Install]
+WantedBy=default.target

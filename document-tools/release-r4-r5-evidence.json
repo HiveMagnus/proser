@@ -1,0 +1,404 @@
+{
+  "schemaVersion": 1,
+  "status": "isolated acceptance evidence; whole release candidate gates and production acceptance remain required",
+  "userDeferred": [
+    "R2 device/accessibility certification",
+    "R6 full performance acceptance"
+  ],
+  "productionModified": false,
+  "microsoftWord": "unverified",
+  "factory": {
+    "isolatedDatabase": "proser_canvas_ai_release_20261006",
+    "migrations": 21,
+    "redis": "localhost fixture port56441 DB12",
+    "corpusSuites": 12,
+    "corpusTests": 103,
+    "provider": "mocked; no live inference effect in this corpus",
+    "boundedDiscussion": [
+      "exact typed draft derivative",
+      "complete selected block disclosure",
+      "oversized complete block413 before inference",
+      "same operation flush/revalidation/tracked application",
+      "source/protected object/layout/identity forgery rejection",
+      "sparse exact operation recovery"
+    ],
+    "authorDiscussionTests": 6,
+    "ownedStoryDiscussion": {
+      "migrations": 22,
+      "scopedFactoryTests": 25,
+      "storyFactoryTests": 8,
+      "authorDiscussionAndCommentTests": 17,
+      "providers": "mocked; no live provider effects",
+      "checks": [
+        "genuine saved book/layout/story source, no scene substitute",
+        "bounded unsaved text/run/paragraph formatting and same UUID flush",
+        "tracked apply preserving scene and protected table",
+        "owner/layout/target stale rejection and cross-user denial",
+        "unknown effect no replay and cancelled late receipt retention",
+        "complete-block model budget413 before provider",
+        "pinned historical story read and history after removal",
+        "restored original draft UUID/op identities from immutable discussion after restart",
+        "applied operation recovery with exact retained manifest receipt"
+      ]
+    }
+  },
+  "codec": {
+    "tests": 36,
+    "lossesDetected": [
+      "native property revision identifier collisions",
+      "unsupported table alignment",
+      "conflicting explicit/theme font snapshots"
+    ],
+    "failClosed": [
+      "duplicate or misplaced native run property revision",
+      "comment targeting dynamic PAGE result"
+    ],
+    "pageCounter": "cached Word field results omitted from authored footer stories"
+  },
+  "independent": {
+    "imageId": "sha256:aef8ed2ac020e8c5716ddea5d468ecb529e02aeed36e5c83b135d8febd6b485c",
+    "network": "none",
+    "cpu": 2,
+    "memoryGiB": 2,
+    "OOXML": {
+      "count": 48,
+      "passed": true,
+      "files": [
+        {
+          "corpus": "proof-current",
+          "file": "final.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current",
+          "file": "original.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current",
+          "file": "retain-review.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/owned-stories",
+          "file": "final.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/owned-stories",
+          "file": "original.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/owned-stories",
+          "file": "retain-review.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/native-comments",
+          "file": "final.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/native-comments",
+          "file": "original.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/native-comments",
+          "file": "retain-review.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/native-paragraphs",
+          "file": "paragraphFormat-final.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/native-paragraphs",
+          "file": "paragraphFormat-original.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/native-paragraphs",
+          "file": "paragraphFormat-retain-review.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/native-paragraphs",
+          "file": "paragraphJoin-final.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/native-paragraphs",
+          "file": "paragraphJoin-original.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/native-paragraphs",
+          "file": "paragraphJoin-retain-review.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/native-paragraphs",
+          "file": "paragraphSplit-final.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/native-paragraphs",
+          "file": "paragraphSplit-original.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/native-paragraphs",
+          "file": "paragraphSplit-retain-review.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/named-styles",
+          "file": "final.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/named-styles",
+          "file": "original.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/named-styles",
+          "file": "retain-review.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/empty-line-fonts",
+          "file": "source.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/empty-line-fonts",
+          "file": "final.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/empty-line-fonts",
+          "file": "original.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/empty-line-fonts",
+          "file": "retain-review.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/theme-webp",
+          "file": "source.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/theme-webp",
+          "file": "final.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/theme-webp",
+          "file": "original.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/theme-webp",
+          "file": "retain-review.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/theme-webp",
+          "file": "final.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/paragraphs",
+          "file": "final.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/paragraphs",
+          "file": "original.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-current/paragraphs",
+          "file": "retain-review.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-publication",
+          "file": "final.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-publication",
+          "file": "original.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-publication",
+          "file": "retain-review.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-history-v2/historical-boundaries",
+          "file": "final.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-history-v2/historical-boundaries",
+          "file": "original.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-history-v2/historical-boundaries",
+          "file": "retain-review.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-history-v2/historical-boundaries",
+          "file": "accepted.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-history-v2/historical-boundaries",
+          "file": "rejected.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-roundtrip-rebuilt",
+          "file": "base.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-roundtrip-rebuilt",
+          "file": "comments.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-roundtrip-rebuilt",
+          "file": "join.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-roundtrip-rebuilt",
+          "file": "paragraph-format.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-roundtrip-rebuilt",
+          "file": "split.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-roundtrip-rebuilt",
+          "file": "stories.docx",
+          "passed": true
+        },
+        {
+          "corpus": "proof-roundtrip-rebuilt",
+          "file": "theme.docx",
+          "passed": true
+        }
+      ]
+    },
+    "EPUBCheck": {
+      "count": 17,
+      "passed": true
+    },
+    "PDFStructureAndText": {
+      "count": 59,
+      "passed": true
+    },
+    "chromiumVersion": "145.0.7632.6",
+    "tools": [
+      "8.0.425",
+      "LibreOffice 7.4.7.2 40(Build:2)",
+      "",
+      "qpdf version 11.3.0",
+      "Run qpdf --copyright to see copyright and license information.",
+      "epubcheck\t4.2.6-2",
+      "libreoffice-writer\t4:7.4.7-1+deb12u14",
+      "poppler-utils\t22.12.0-2+deb12u3",
+      "qpdf\t11.3.0-1+deb12u1",
+      "LiberationSerif-Regular.ttf: \"Liberation Serif\" \"Regular\"",
+      "DejaVuSans.ttf: \"DejaVu Sans\" \"Book\""
+    ],
+    "sourceAndOutputProofDirectory": "/tmp/proser-release-r5-20261006",
+    "testedCodecRelease": "1.0.0-proser.1; retained checkpoint source, release metadata now advances to proser.2 and requires final candidate checks"
+  },
+  "actualLibreOfficeSaveExchange": {
+    "attempts": 8,
+    "semanticPasses": 7,
+    "ambiguousExternalSourceRejected": 1,
+    "knownExternalSourceSchemaFailures": "LibreOffice7.4 generates invalid property IDs/enum/charset in these retained outputs; these failures remain recorded and do not weaken SDK checks. Converted/rebuilt seven packages pass SDK.",
+    "preserved": [
+      "exact final/original body and story text",
+      "revision kinds/attribution/dates",
+      "classic comment text/attribution/source text ranges"
+    ],
+    "reduced": "source schema details and font associations use explicit fidelity reports; exact cross-application typography not asserted"
+  },
+  "visualInspection": {
+    "images": 8,
+    "checked": [
+      "native comments and paragraph-format review",
+      "both renderers rich header/footer/table/image/review",
+      "noncollapsed blank line typography",
+      "WebP derived bitmap",
+      "named style glyphs and colors"
+    ],
+    "limitations": [
+      "LibreOffice and Chromium borders/reviewer colors/layout differ",
+      "header/footer native Word comments unsupported; explicit sidecars retain them",
+      "counter pseudo-node shaping not proven",
+      "full device/performance acceptance deferred by user"
+    ]
+  },
+  "sourceFilesSha256": {
+    "ProserFactory/vendor/canvas-docx-codec/src/import.ts": "78ec843ca5fa84358c636e58d49a78923f17157ba74d8c1a35015b4894f9c579",
+    "ProserFactory/src/documents/wordExchange.ts": "115de7b54f8a9a4dc48cd8b4db7e1f6e4aa4f88bcc799dd0ea34fcc375ee66ba",
+    "ProserFactory/src/documents/publicationRender.ts": "995df42ae1eccbb02f0048adbcc161ed9539c1a1d2391c900aa908682a4bbb23",
+    "ProserFactory/src/documents/proposalDraft.ts": "c71cc183cb7f875ff74bfaa3289babddabc0431356e525afeb47f2dbfdd79f8b",
+    "ProserFactory/src/documents/proposals.ts": "8ae4e033f5dcdab18c184bf91cd08f4ab151601319eade3977cb6fe1fe5749c6",
+    "document-tools/verify-historical-boundaries.sh": "fb5e07ddef54b898b174fc2f15a26853cc681f073706d6f21da74482b89a7b3f",
+    "ProserFactory/scripts/verify-libreoffice-roundtrips.ts": "bd0fe28f1fcb50255a80c8744129f530209ac2a795dc67f8bc3c032d297d4f54"
+  },
+  "retainedLogs": {
+    "factory": "/tmp/proser-release-ai-pub-tests5.log",
+    "codec": "/tmp/proser-release-r5-20261006/codec-tests6.log",
+    "independent": "/tmp/proser-release-r5-20261006/verify-current.log",
+    "historical": "/tmp/proser-release-r5-20261006/verify-history-v2.log",
+    "roundtripRebuild": "/tmp/proser-release-r5-20261006/roundtrip-rebuild3.log",
+    "storyFactory": "/tmp/proser-final-owned-backend-tests.log",
+    "storyFactoryFinalReadRecovery": "/tmp/proser-release-story-tests4.log",
+    "storyAuthor": "/tmp/proser-final-owned-author-tests.log"
+  },
+  "storySourceFilesSha256": {
+    "ProserFactory/src/documents/storyProposals.ts": "ee70531bba99027aff95c786e90d3ebe9625d686346195f3e79e335be3197380",
+    "ProserFactory/src/documents/storyProposalSources.ts": "67bb3bbbb42e6fa3c51c170eb0c124f2f82e9476ab41088aa2fc015f2b014f51",
+    "ProserFactory/prisma/migrations/20261006023000_owned_story_discussions/migration.sql": "97bb3a7ccb399539eae4616dbdc58a1fbd0b4e42b48f52c81cfe932b62c21053",
+    "ProserAuthor/apps/web/src/components/editor/document-story-discussion.tsx": "c0949f0fba12307e93b9108e66d40f60b307a5754cc526d99f79e754e9320c90",
+    "ProserAuthor/apps/web/src/lib/document-story-draft.ts": "1be9fd76f3dc8cda0a361381c5ee747bef450ba7461d05fb5e31134df90e6f5e"
+  },
+  "ownedStoryBrowser": {
+    "mode": "isolated authenticated real Author/Factory; seeded validated proposal, no provider inference",
+    "passed": true,
+    "checks": 3,
+    "pageErrors": 0,
+    "report": "/tmp/proser-story-parent-browser-20261006/output8/report.json",
+    "originalIntentCommitCount": 1,
+    "duplicateCommitRequests": 0,
+    "inferenceRequests": 0,
+    "protected": [
+      "bold/italic styles",
+      "owned table",
+      "actual scene body"
+    ],
+    "sourceReadiness": "development source browser at Factory build24; final candidate static build/native/production gates remain required"
+  }
+}

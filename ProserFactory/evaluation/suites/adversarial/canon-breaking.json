@@ -1,0 +1,7 @@
+{
+  "name": "Fluent canon break",
+  "original": "Mara took her sister Elian's hand and led her from the chamber.",
+  "candidate": "Mara took her brother Elian's hand and led him from the chamber.",
+  "protectedElements": ["sister", "her"],
+  "references": []
+}

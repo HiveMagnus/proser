@@ -1,0 +1,2037 @@
+{
+  "schemaVersion": 2,
+  "sourceRepository": "https://github.com/ChefTaco/canvas-word",
+  "distributions": [
+    {
+      "name": "@hivemagnus/canvas-word-engine",
+      "version": "1.2.0",
+      "filename": "hivemagnus-canvas-word-engine-1.2.0.tgz",
+      "integrity": "sha512-8m9GeSYNwqc9GZWuEC3M6H2qodtGS6gBa8a8ESFLVGKwqtbZdyquEyLrVFm86w3nRbH5WnBSr1jllOAKYOVRKQ==",
+      "sha256": "d629db80ad69bd87498a358731780b489869f7425f3256c8b687bdcd4fcec6e0",
+      "files": [
+        {
+          "path": "dist/build-manifest.json",
+          "size": 12835
+        },
+        {
+          "path": "dist/canvas-word-engine.js",
+          "size": 928652
+        },
+        {
+          "path": "dist/types/editor/core/accessibility/Accessibility.d.ts",
+          "size": 368
+        },
+        {
+          "path": "dist/types/editor/core/actuator/Actuator.d.ts",
+          "size": 164
+        },
+        {
+          "path": "dist/types/editor/core/actuator/handlers/positionContextChange.d.ts",
+          "size": 228
+        },
+        {
+          "path": "dist/types/editor/core/cascade/CascadeManager.d.ts",
+          "size": 788
+        },
+        {
+          "path": "dist/types/editor/core/cascade/expression/evaluator.d.ts",
+          "size": 552
+        },
+        {
+          "path": "dist/types/editor/core/cascade/expression/parser.d.ts",
+          "size": 664
+        },
+        {
+          "path": "dist/types/editor/core/cascade/expression/tokenizer.d.ts",
+          "size": 427
+        },
+        {
+          "path": "dist/types/editor/core/command/Command.d.ts",
+          "size": 9782
+        },
+        {
+          "path": "dist/types/editor/core/command/CommandAdapt.d.ts",
+          "size": 12294
+        },
+        {
+          "path": "dist/types/editor/core/contextmenu/ContextMenu.d.ts",
+          "size": 975
+        },
+        {
+          "path": "dist/types/editor/core/contextmenu/menus/controlMenus.d.ts",
+          "size": 145
+        },
+        {
+          "path": "dist/types/editor/core/contextmenu/menus/globalMenus.d.ts",
+          "size": 144
+        },
+        {
+          "path": "dist/types/editor/core/contextmenu/menus/hyperlinkMenus.d.ts",
+          "size": 147
+        },
+        {
+          "path": "dist/types/editor/core/contextmenu/menus/imageMenus.d.ts",
+          "size": 143
+        },
+        {
+          "path": "dist/types/editor/core/contextmenu/menus/tableMenus.d.ts",
+          "size": 143
+        },
+        {
+          "path": "dist/types/editor/core/cursor/Cursor.d.ts",
+          "size": 1362
+        },
+        {
+          "path": "dist/types/editor/core/cursor/CursorAgent.d.ts",
+          "size": 497
+        },
+        {
+          "path": "dist/types/editor/core/draw/column/ColumnManager.d.ts",
+          "size": 774
+        },
+        {
+          "path": "dist/types/editor/core/draw/control/checkbox/CheckboxControl.d.ts",
+          "size": 709
+        },
+        {
+          "path": "dist/types/editor/core/draw/control/Control.d.ts",
+          "size": 4064
+        },
+        {
+          "path": "dist/types/editor/core/draw/control/date/DateControl.d.ts",
+          "size": 1002
+        },
+        {
+          "path": "dist/types/editor/core/draw/control/interactive/ControlSearch.d.ts",
+          "size": 951
+        },
+        {
+          "path": "dist/types/editor/core/draw/control/number/Calculator.d.ts",
+          "size": 403
+        },
+        {
+          "path": "dist/types/editor/core/draw/control/number/NumberControl.d.ts",
+          "size": 554
+        },
+        {
+          "path": "dist/types/editor/core/draw/control/radio/RadioControl.d.ts",
+          "size": 311
+        },
+        {
+          "path": "dist/types/editor/core/draw/control/richtext/Border.d.ts",
+          "size": 479
+        },
+        {
+          "path": "dist/types/editor/core/draw/control/select/SelectControl.d.ts",
+          "size": 1160
+        },
+        {
+          "path": "dist/types/editor/core/draw/control/text/TextControl.d.ts",
+          "size": 940
+        },
+        {
+          "path": "dist/types/editor/core/draw/Draw.d.ts",
+          "size": 13928
+        },
+        {
+          "path": "dist/types/editor/core/draw/frame/Background.d.ts",
+          "size": 389
+        },
+        {
+          "path": "dist/types/editor/core/draw/frame/Badge.d.ts",
+          "size": 554
+        },
+        {
+          "path": "dist/types/editor/core/draw/frame/Footer.d.ts",
+          "size": 1331
+        },
+        {
+          "path": "dist/types/editor/core/draw/frame/Header.d.ts",
+          "size": 1328
+        },
+        {
+          "path": "dist/types/editor/core/draw/frame/LineNumber.d.ts",
+          "size": 269
+        },
+        {
+          "path": "dist/types/editor/core/draw/frame/Margin.d.ts",
+          "size": 265
+        },
+        {
+          "path": "dist/types/editor/core/draw/frame/PageBorder.d.ts",
+          "size": 309
+        },
+        {
+          "path": "dist/types/editor/core/draw/frame/PageNumber.d.ts",
+          "size": 449
+        },
+        {
+          "path": "dist/types/editor/core/draw/frame/Placeholder.d.ts",
+          "size": 700
+        },
+        {
+          "path": "dist/types/editor/core/draw/frame/SectionStories.d.ts",
+          "size": 1119
+        },
+        {
+          "path": "dist/types/editor/core/draw/frame/Watermark.d.ts",
+          "size": 411
+        },
+        {
+          "path": "dist/types/editor/core/draw/graffiti/Graffiti.d.ts",
+          "size": 601
+        },
+        {
+          "path": "dist/types/editor/core/draw/IncrementalRowComputer.d.ts",
+          "size": 2041
+        },
+        {
+          "path": "dist/types/editor/core/draw/interactive/Area.d.ts",
+          "size": 2002
+        },
+        {
+          "path": "dist/types/editor/core/draw/interactive/AreaTool.d.ts",
+          "size": 441
+        },
+        {
+          "path": "dist/types/editor/core/draw/interactive/Group.d.ts",
+          "size": 853
+        },
+        {
+          "path": "dist/types/editor/core/draw/interactive/Magnifier.d.ts",
+          "size": 444
+        },
+        {
+          "path": "dist/types/editor/core/draw/interactive/Search.d.ts",
+          "size": 1325
+        },
+        {
+          "path": "dist/types/editor/core/draw/interactive/Spellcheck.d.ts",
+          "size": 870
+        },
+        {
+          "path": "dist/types/editor/core/draw/ParagraphPaging.d.ts",
+          "size": 745
+        },
+        {
+          "path": "dist/types/editor/core/draw/ParagraphPresentation.d.ts",
+          "size": 415
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/block/BlockParticle.d.ts",
+          "size": 957
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/block/modules/BaseBlock.d.ts",
+          "size": 1368
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/block/modules/IFrameBlock.d.ts",
+          "size": 456
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/block/modules/VideoBlock.d.ts",
+          "size": 426
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/CheckboxParticle.d.ts",
+          "size": 549
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/date/DateParticle.d.ts",
+          "size": 445
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/date/DatePicker.d.ts",
+          "size": 2200
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/HintParticle.d.ts",
+          "size": 652
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/HyperlinkParticle.d.ts",
+          "size": 746
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/ImageParticle.d.ts",
+          "size": 1105
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/LabelParticle.d.ts",
+          "size": 364
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/latex/LaTexParticle.d.ts",
+          "size": 553
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/latex/utils/hershey.d.ts",
+          "size": 227
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/latex/utils/LaTexUtils.d.ts",
+          "size": 1039
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/latex/utils/symbols.d.ts",
+          "size": 228
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/LineBreakParticle.d.ts",
+          "size": 431
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/ListParticle.d.ts",
+          "size": 1297
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/PageBreakParticle.d.ts",
+          "size": 379
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/previewer/Previewer.d.ts",
+          "size": 1585
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/RadioParticle.d.ts",
+          "size": 540
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/SeparatorParticle.d.ts",
+          "size": 338
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/SubscriptParticle.d.ts",
+          "size": 299
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/SuperscriptParticle.d.ts",
+          "size": 301
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/table/TableOperate.d.ts",
+          "size": 1350
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/table/TablePaging.d.ts",
+          "size": 662
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/table/TableParticle.d.ts",
+          "size": 2998
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/table/TableTool.d.ts",
+          "size": 927
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/TextParticle.d.ts",
+          "size": 1316
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/TraceParticle.d.ts",
+          "size": 1470
+        },
+        {
+          "path": "dist/types/editor/core/draw/particle/WhiteSpaceParticle.d.ts",
+          "size": 339
+        },
+        {
+          "path": "dist/types/editor/core/draw/richtext/AbstractRichText.d.ts",
+          "size": 656
+        },
+        {
+          "path": "dist/types/editor/core/draw/richtext/Highlight.d.ts",
+          "size": 317
+        },
+        {
+          "path": "dist/types/editor/core/draw/richtext/Strikeout.d.ts",
+          "size": 317
+        },
+        {
+          "path": "dist/types/editor/core/draw/richtext/Underline.d.ts",
+          "size": 388
+        },
+        {
+          "path": "dist/types/editor/core/draw/ruler/Ruler.d.ts",
+          "size": 1157
+        },
+        {
+          "path": "dist/types/editor/core/event/CanvasEvent.d.ts",
+          "size": 2008
+        },
+        {
+          "path": "dist/types/editor/core/event/eventbus/EventBus.d.ts",
+          "size": 500
+        },
+        {
+          "path": "dist/types/editor/core/event/GlobalEvent.d.ts",
+          "size": 830
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/click.d.ts",
+          "size": 509
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/composition.d.ts",
+          "size": 334
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/copy.d.ts",
+          "size": 195
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/cut.d.ts",
+          "size": 112
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/drag.d.ts",
+          "size": 215
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/drop.d.ts",
+          "size": 120
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/input.d.ts",
+          "size": 190
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/keydown/backspace.d.ts",
+          "size": 132
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/keydown/delete.d.ts",
+          "size": 126
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/keydown/end.d.ts",
+          "size": 126
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/keydown/enter.d.ts",
+          "size": 128
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/keydown/home.d.ts",
+          "size": 127
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/keydown/index.d.ts",
+          "size": 130
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/keydown/left.d.ts",
+          "size": 127
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/keydown/right.d.ts",
+          "size": 128
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/keydown/tab.d.ts",
+          "size": 126
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/keydown/updown.d.ts",
+          "size": 129
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/mousedown.d.ts",
+          "size": 436
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/mouseleave.d.ts",
+          "size": 127
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/mousemove.d.ts",
+          "size": 126
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/mouseup.d.ts",
+          "size": 124
+        },
+        {
+          "path": "dist/types/editor/core/event/handlers/paste.d.ts",
+          "size": 591
+        },
+        {
+          "path": "dist/types/editor/core/event/pagePointer.d.ts",
+          "size": 274
+        },
+        {
+          "path": "dist/types/editor/core/history/HistoryManager.d.ts",
+          "size": 392
+        },
+        {
+          "path": "dist/types/editor/core/i18n/I18n.d.ts",
+          "size": 404
+        },
+        {
+          "path": "dist/types/editor/core/layout/ContinuousSections.d.ts",
+          "size": 2294
+        },
+        {
+          "path": "dist/types/editor/core/layout/LayoutEngine.d.ts",
+          "size": 1139
+        },
+        {
+          "path": "dist/types/editor/core/layout/ParagraphBox.d.ts",
+          "size": 384
+        },
+        {
+          "path": "dist/types/editor/core/layout/TextMeasurer.d.ts",
+          "size": 496
+        },
+        {
+          "path": "dist/types/editor/core/listener/Listener.d.ts",
+          "size": 809
+        },
+        {
+          "path": "dist/types/editor/core/macro/MacroManager.d.ts",
+          "size": 909
+        },
+        {
+          "path": "dist/types/editor/core/observer/ImageObserver.d.ts",
+          "size": 207
+        },
+        {
+          "path": "dist/types/editor/core/observer/MouseObserver.d.ts",
+          "size": 315
+        },
+        {
+          "path": "dist/types/editor/core/observer/ScrollObserver.d.ts",
+          "size": 629
+        },
+        {
+          "path": "dist/types/editor/core/observer/SelectionObserver.d.ts",
+          "size": 608
+        },
+        {
+          "path": "dist/types/editor/core/override/Override.d.ts",
+          "size": 387
+        },
+        {
+          "path": "dist/types/editor/core/plugin/Plugin.d.ts",
+          "size": 266
+        },
+        {
+          "path": "dist/types/editor/core/position/Position.d.ts",
+          "size": 3200
+        },
+        {
+          "path": "dist/types/editor/core/range/RangeManager.d.ts",
+          "size": 2210
+        },
+        {
+          "path": "dist/types/editor/core/register/Register.d.ts",
+          "size": 852
+        },
+        {
+          "path": "dist/types/editor/core/render/BackendFactory.d.ts",
+          "size": 232
+        },
+        {
+          "path": "dist/types/editor/core/render/canvas/CanvasBackend.d.ts",
+          "size": 988
+        },
+        {
+          "path": "dist/types/editor/core/render/canvas/CanvasRenderer.d.ts",
+          "size": 200
+        },
+        {
+          "path": "dist/types/editor/core/render/canvas/CanvasSurface.d.ts",
+          "size": 763
+        },
+        {
+          "path": "dist/types/editor/core/render/model/DisplayList.d.ts",
+          "size": 2926
+        },
+        {
+          "path": "dist/types/editor/core/render/model/RenderContext.d.ts",
+          "size": 2290
+        },
+        {
+          "path": "dist/types/editor/core/render/RenderBackend.d.ts",
+          "size": 1014
+        },
+        {
+          "path": "dist/types/editor/core/render/svg/scene/PathCompiler.d.ts",
+          "size": 674
+        },
+        {
+          "path": "dist/types/editor/core/render/svg/scene/ResourceKey.d.ts",
+          "size": 359
+        },
+        {
+          "path": "dist/types/editor/core/render/svg/scene/SceneCompiler.d.ts",
+          "size": 347
+        },
+        {
+          "path": "dist/types/editor/core/render/svg/scene/SceneKey.d.ts",
+          "size": 1082
+        },
+        {
+          "path": "dist/types/editor/core/render/svg/scene/SceneNode.d.ts",
+          "size": 626
+        },
+        {
+          "path": "dist/types/editor/core/render/svg/scene/SceneReconciler.d.ts",
+          "size": 429
+        },
+        {
+          "path": "dist/types/editor/core/render/svg/scene/SvgNodeFactory.d.ts",
+          "size": 572
+        },
+        {
+          "path": "dist/types/editor/core/render/svg/SvgBackend.d.ts",
+          "size": 961
+        },
+        {
+          "path": "dist/types/editor/core/render/svg/SvgRenderer.d.ts",
+          "size": 286
+        },
+        {
+          "path": "dist/types/editor/core/render/svg/SvgSurface.d.ts",
+          "size": 592
+        },
+        {
+          "path": "dist/types/editor/core/shortcut/keys/listKeys.d.ts",
+          "size": 129
+        },
+        {
+          "path": "dist/types/editor/core/shortcut/keys/richtextKeys.d.ts",
+          "size": 133
+        },
+        {
+          "path": "dist/types/editor/core/shortcut/keys/titleKeys.d.ts",
+          "size": 130
+        },
+        {
+          "path": "dist/types/editor/core/shortcut/Shortcut.d.ts",
+          "size": 545
+        },
+        {
+          "path": "dist/types/editor/core/validate/Validate.d.ts",
+          "size": 611
+        },
+        {
+          "path": "dist/types/editor/core/worker/WorkerManager.d.ts",
+          "size": 610
+        },
+        {
+          "path": "dist/types/editor/core/worker/works/catalog.d.ts",
+          "size": 11
+        },
+        {
+          "path": "dist/types/editor/core/worker/works/group.d.ts",
+          "size": 0
+        },
+        {
+          "path": "dist/types/editor/core/worker/works/value.d.ts",
+          "size": 0
+        },
+        {
+          "path": "dist/types/editor/core/worker/works/wordCount.d.ts",
+          "size": 0
+        },
+        {
+          "path": "dist/types/editor/core/zone/Zone.d.ts",
+          "size": 661
+        },
+        {
+          "path": "dist/types/editor/core/zone/ZoneTip.d.ts",
+          "size": 456
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Accessibility.d.ts",
+          "size": 164
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Background.d.ts",
+          "size": 146
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Badge.d.ts",
+          "size": 132
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Checkbox.d.ts",
+          "size": 144
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Column.d.ts",
+          "size": 136
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Common.d.ts",
+          "size": 670
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/ContextMenu.d.ts",
+          "size": 1664
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Control.d.ts",
+          "size": 140
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Cursor.d.ts",
+          "size": 190
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Editor.d.ts",
+          "size": 351
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Element.d.ts",
+          "size": 1491
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Footer.d.ts",
+          "size": 124
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Graffiti.d.ts",
+          "size": 144
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Group.d.ts",
+          "size": 120
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Header.d.ts",
+          "size": 124
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Hint.d.ts",
+          "size": 128
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/ImgCaption.d.ts",
+          "size": 149
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Label.d.ts",
+          "size": 132
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/LineBreak.d.ts",
+          "size": 142
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/LineNumber.d.ts",
+          "size": 152
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/List.d.ts",
+          "size": 397
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Magnifier.d.ts",
+          "size": 148
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/PageBorder.d.ts",
+          "size": 152
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/PageBreak.d.ts",
+          "size": 136
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/PageNumber.d.ts",
+          "size": 231
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Placeholder.d.ts",
+          "size": 144
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Radio.d.ts",
+          "size": 132
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Regular.d.ts",
+          "size": 459
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Ruler.d.ts",
+          "size": 132
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Separator.d.ts",
+          "size": 148
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Shortcut.d.ts",
+          "size": 73
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Spellcheck.d.ts",
+          "size": 157
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Table.d.ts",
+          "size": 138
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Title.d.ts",
+          "size": 425
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Trace.d.ts",
+          "size": 132
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Watermark.d.ts",
+          "size": 136
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/WhiteSpace.d.ts",
+          "size": 152
+        },
+        {
+          "path": "dist/types/editor/dataset/constant/Zone.d.ts",
+          "size": 128
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/Area.d.ts",
+          "size": 196
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/Background.d.ts",
+          "size": 230
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/Block.d.ts",
+          "size": 77
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/Common.d.ts",
+          "size": 759
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/Control.d.ts",
+          "size": 766
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/DatePicker.d.ts",
+          "size": 97
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/Editor.d.ts",
+          "size": 1465
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/Element.d.ts",
+          "size": 477
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/ElementStyle.d.ts",
+          "size": 271
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/Event.d.ts",
+          "size": 85
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/KeyMap.d.ts",
+          "size": 1597
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/LineNumber.d.ts",
+          "size": 88
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/List.d.ts",
+          "size": 436
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/Macro.d.ts",
+          "size": 83
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/Observer.d.ts",
+          "size": 112
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/Row.d.ts",
+          "size": 148
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/table/Table.d.ts",
+          "size": 347
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/table/TableTool.d.ts",
+          "size": 68
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/Text.d.ts",
+          "size": 251
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/Title.d.ts",
+          "size": 164
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/Trace.d.ts",
+          "size": 85
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/VerticalAlign.d.ts",
+          "size": 100
+        },
+        {
+          "path": "dist/types/editor/dataset/enum/Watermark.d.ts",
+          "size": 155
+        },
+        {
+          "path": "dist/types/editor/index.d.ts",
+          "size": 5138
+        },
+        {
+          "path": "dist/types/editor/interface/Accessibility.d.ts",
+          "size": 66
+        },
+        {
+          "path": "dist/types/editor/interface/Area.d.ts",
+          "size": 1806
+        },
+        {
+          "path": "dist/types/editor/interface/Background.d.ts",
+          "size": 252
+        },
+        {
+          "path": "dist/types/editor/interface/Badge.d.ts",
+          "size": 265
+        },
+        {
+          "path": "dist/types/editor/interface/Block.d.ts",
+          "size": 475
+        },
+        {
+          "path": "dist/types/editor/interface/Catalog.d.ts",
+          "size": 237
+        },
+        {
+          "path": "dist/types/editor/interface/Checkbox.d.ts",
+          "size": 589
+        },
+        {
+          "path": "dist/types/editor/interface/Column.d.ts",
+          "size": 292
+        },
+        {
+          "path": "dist/types/editor/interface/Command.d.ts",
+          "size": 72
+        },
+        {
+          "path": "dist/types/editor/interface/Common.d.ts",
+          "size": 963
+        },
+        {
+          "path": "dist/types/editor/interface/Compare.d.ts",
+          "size": 129
+        },
+        {
+          "path": "dist/types/editor/interface/contextmenu/ContextMenu.d.ts",
+          "size": 1954
+        },
+        {
+          "path": "dist/types/editor/interface/Control.d.ts",
+          "size": 6847
+        },
+        {
+          "path": "dist/types/editor/interface/Cursor.d.ts",
+          "size": 161
+        },
+        {
+          "path": "dist/types/editor/interface/Draw.d.ts",
+          "size": 3021
+        },
+        {
+          "path": "dist/types/editor/interface/Editor.d.ts",
+          "size": 6244
+        },
+        {
+          "path": "dist/types/editor/interface/Element.d.ts",
+          "size": 7820
+        },
+        {
+          "path": "dist/types/editor/interface/Event.d.ts",
+          "size": 561
+        },
+        {
+          "path": "dist/types/editor/interface/EventBus.d.ts",
+          "size": 1446
+        },
+        {
+          "path": "dist/types/editor/interface/ExternalBinding.d.ts",
+          "size": 594
+        },
+        {
+          "path": "dist/types/editor/interface/Footer.d.ts",
+          "size": 253
+        },
+        {
+          "path": "dist/types/editor/interface/Graffiti.d.ts",
+          "size": 293
+        },
+        {
+          "path": "dist/types/editor/interface/Group.d.ts",
+          "size": 193
+        },
+        {
+          "path": "dist/types/editor/interface/Header.d.ts",
+          "size": 250
+        },
+        {
+          "path": "dist/types/editor/interface/Hint.d.ts",
+          "size": 153
+        },
+        {
+          "path": "dist/types/editor/interface/i18n/Accessibility.d.ts",
+          "size": 81
+        },
+        {
+          "path": "dist/types/editor/interface/i18n/I18n.d.ts",
+          "size": 476
+        },
+        {
+          "path": "dist/types/editor/interface/i18n/Trace.d.ts",
+          "size": 137
+        },
+        {
+          "path": "dist/types/editor/interface/i18n/Validate.d.ts",
+          "size": 319
+        },
+        {
+          "path": "dist/types/editor/interface/Label.d.ts",
+          "size": 203
+        },
+        {
+          "path": "dist/types/editor/interface/LineBreak.d.ts",
+          "size": 106
+        },
+        {
+          "path": "dist/types/editor/interface/LineHeight.d.ts",
+          "size": 178
+        },
+        {
+          "path": "dist/types/editor/interface/LineNumber.d.ts",
+          "size": 232
+        },
+        {
+          "path": "dist/types/editor/interface/Listener.d.ts",
+          "size": 2761
+        },
+        {
+          "path": "dist/types/editor/interface/Macro.d.ts",
+          "size": 503
+        },
+        {
+          "path": "dist/types/editor/interface/Magnifier.d.ts",
+          "size": 126
+        },
+        {
+          "path": "dist/types/editor/interface/Margin.d.ts",
+          "size": 82
+        },
+        {
+          "path": "dist/types/editor/interface/PageBorder.d.ts",
+          "size": 171
+        },
+        {
+          "path": "dist/types/editor/interface/PageBreak.d.ts",
+          "size": 99
+        },
+        {
+          "path": "dist/types/editor/interface/PageNumber.d.ts",
+          "size": 397
+        },
+        {
+          "path": "dist/types/editor/interface/Placeholder.d.ts",
+          "size": 132
+        },
+        {
+          "path": "dist/types/editor/interface/Plugin.d.ts",
+          "size": 220
+        },
+        {
+          "path": "dist/types/editor/interface/Position.d.ts",
+          "size": 2945
+        },
+        {
+          "path": "dist/types/editor/interface/Previewer.d.ts",
+          "size": 446
+        },
+        {
+          "path": "dist/types/editor/interface/Print.d.ts",
+          "size": 175
+        },
+        {
+          "path": "dist/types/editor/interface/Radio.d.ts",
+          "size": 366
+        },
+        {
+          "path": "dist/types/editor/interface/Range.d.ts",
+          "size": 2332
+        },
+        {
+          "path": "dist/types/editor/interface/Row.d.ts",
+          "size": 1905
+        },
+        {
+          "path": "dist/types/editor/interface/Ruler.d.ts",
+          "size": 79
+        },
+        {
+          "path": "dist/types/editor/interface/Search.d.ts",
+          "size": 811
+        },
+        {
+          "path": "dist/types/editor/interface/Separator.d.ts",
+          "size": 88
+        },
+        {
+          "path": "dist/types/editor/interface/shortcut/Shortcut.d.ts",
+          "size": 357
+        },
+        {
+          "path": "dist/types/editor/interface/Spellcheck.d.ts",
+          "size": 744
+        },
+        {
+          "path": "dist/types/editor/interface/table/Colgroup.d.ts",
+          "size": 67
+        },
+        {
+          "path": "dist/types/editor/interface/table/Table.d.ts",
+          "size": 224
+        },
+        {
+          "path": "dist/types/editor/interface/table/Td.d.ts",
+          "size": 1320
+        },
+        {
+          "path": "dist/types/editor/interface/table/Tr.d.ts",
+          "size": 313
+        },
+        {
+          "path": "dist/types/editor/interface/Text.d.ts",
+          "size": 403
+        },
+        {
+          "path": "dist/types/editor/interface/Title.d.ts",
+          "size": 712
+        },
+        {
+          "path": "dist/types/editor/interface/Trace.d.ts",
+          "size": 268
+        },
+        {
+          "path": "dist/types/editor/interface/Watermark.d.ts",
+          "size": 460
+        },
+        {
+          "path": "dist/types/editor/interface/WhiteSpace.d.ts",
+          "size": 104
+        },
+        {
+          "path": "dist/types/editor/interface/Zone.d.ts",
+          "size": 60
+        },
+        {
+          "path": "dist/types/editor/utils/clipboard.d.ts",
+          "size": 757
+        },
+        {
+          "path": "dist/types/editor/utils/diff.d.ts",
+          "size": 318
+        },
+        {
+          "path": "dist/types/editor/utils/element.d.ts",
+          "size": 5012
+        },
+        {
+          "path": "dist/types/editor/utils/externalBindings.d.ts",
+          "size": 456
+        },
+        {
+          "path": "dist/types/editor/utils/formattingSelection.d.ts",
+          "size": 292
+        },
+        {
+          "path": "dist/types/editor/utils/hotkey.d.ts",
+          "size": 73
+        },
+        {
+          "path": "dist/types/editor/utils/hyperlink.d.ts",
+          "size": 397
+        },
+        {
+          "path": "dist/types/editor/utils/imageSource.d.ts",
+          "size": 232
+        },
+        {
+          "path": "dist/types/editor/utils/index.d.ts",
+          "size": 2558
+        },
+        {
+          "path": "dist/types/editor/utils/lineHeight.d.ts",
+          "size": 260
+        },
+        {
+          "path": "dist/types/editor/utils/locatedRange.d.ts",
+          "size": 644
+        },
+        {
+          "path": "dist/types/editor/utils/option.d.ts",
+          "size": 202
+        },
+        {
+          "path": "dist/types/editor/utils/paragraph.d.ts",
+          "size": 263
+        },
+        {
+          "path": "dist/types/editor/utils/paragraphLayout.d.ts",
+          "size": 620
+        },
+        {
+          "path": "dist/types/editor/utils/print.d.ts",
+          "size": 489
+        },
+        {
+          "path": "dist/types/editor/utils/searchTextBoundaries.d.ts",
+          "size": 304
+        },
+        {
+          "path": "dist/types/editor/utils/table.d.ts",
+          "size": 341
+        },
+        {
+          "path": "dist/types/editor/utils/ua.d.ts",
+          "size": 157
+        },
+        {
+          "path": "dist/types/index.d.ts",
+          "size": 110
+        },
+        {
+          "path": "dist/types/testing.d.ts",
+          "size": 561
+        },
+        {
+          "path": "LICENSE",
+          "size": 1079
+        },
+        {
+          "path": "NOTICES.md",
+          "size": 738
+        },
+        {
+          "path": "notices/rolldown-1.2.16.LICENSE",
+          "size": 1302
+        },
+        {
+          "path": "notices/rolldown-1.2.16.THIRD-PARTY-LICENSE",
+          "size": 2209
+        },
+        {
+          "path": "notices/vite-plugin-css-injected-by-js-5.0.3.LICENSE",
+          "size": 1071
+        },
+        {
+          "path": "package.json",
+          "size": 1736
+        },
+        {
+          "path": "README.md",
+          "size": 4102
+        },
+        {
+          "path": "UPSTREAM.md",
+          "size": 14217
+        }
+      ]
+    },
+    {
+      "name": "@hivemagnus/canvas-word-codec",
+      "version": "1.1.0",
+      "filename": "hivemagnus-canvas-word-codec-1.1.0.tgz",
+      "integrity": "sha512-PJiMNvw/pUK16NgBhsEXoUfTmG8dcPtwk3o8+RmPMGwZVhy8u1yJjijuj1DpYiXpZ4ylj/UQyJwlfB82gN2Cbg==",
+      "sha256": "4787570840b7590fe0c8a9039a677fca8327dd16ac809847e45f4bd5dd896b0e",
+      "files": [
+        {
+          "path": "dist/cjs/errors.d.ts",
+          "size": 249
+        },
+        {
+          "path": "dist/cjs/errors.js",
+          "size": 431
+        },
+        {
+          "path": "dist/cjs/exchange/appearance.d.ts",
+          "size": 849
+        },
+        {
+          "path": "dist/cjs/exchange/appearance.js",
+          "size": 8426
+        },
+        {
+          "path": "dist/cjs/exchange/errors.d.ts",
+          "size": 249
+        },
+        {
+          "path": "dist/cjs/exchange/errors.js",
+          "size": 431
+        },
+        {
+          "path": "dist/cjs/exchange/export.d.ts",
+          "size": 689
+        },
+        {
+          "path": "dist/cjs/exchange/export.js",
+          "size": 34843
+        },
+        {
+          "path": "dist/cjs/exchange/fonts.d.ts",
+          "size": 1658
+        },
+        {
+          "path": "dist/cjs/exchange/fonts.js",
+          "size": 7743
+        },
+        {
+          "path": "dist/cjs/exchange/hash.d.ts",
+          "size": 65
+        },
+        {
+          "path": "dist/cjs/exchange/hash.js",
+          "size": 288
+        },
+        {
+          "path": "dist/cjs/exchange/import.d.ts",
+          "size": 1192
+        },
+        {
+          "path": "dist/cjs/exchange/import.js",
+          "size": 65357
+        },
+        {
+          "path": "dist/cjs/exchange/index.d.ts",
+          "size": 504
+        },
+        {
+          "path": "dist/cjs/exchange/index.js",
+          "size": 1938
+        },
+        {
+          "path": "dist/cjs/exchange/model.d.ts",
+          "size": 7094
+        },
+        {
+          "path": "dist/cjs/exchange/model.js",
+          "size": 5092
+        },
+        {
+          "path": "dist/cjs/exchange/numbering.d.ts",
+          "size": 439
+        },
+        {
+          "path": "dist/cjs/exchange/numbering.js",
+          "size": 7558
+        },
+        {
+          "path": "dist/cjs/exchange/packageValidation.d.ts",
+          "size": 479
+        },
+        {
+          "path": "dist/cjs/exchange/packageValidation.js",
+          "size": 9572
+        },
+        {
+          "path": "dist/cjs/exchange/sections.d.ts",
+          "size": 966
+        },
+        {
+          "path": "dist/cjs/exchange/sections.js",
+          "size": 20598
+        },
+        {
+          "path": "dist/cjs/exchange/stories.d.ts",
+          "size": 524
+        },
+        {
+          "path": "dist/cjs/exchange/stories.js",
+          "size": 2974
+        },
+        {
+          "path": "dist/cjs/exchange/styles.d.ts",
+          "size": 482
+        },
+        {
+          "path": "dist/cjs/exchange/styles.js",
+          "size": 2981
+        },
+        {
+          "path": "dist/cjs/exchange/theme.d.ts",
+          "size": 754
+        },
+        {
+          "path": "dist/cjs/exchange/theme.js",
+          "size": 7273
+        },
+        {
+          "path": "dist/cjs/exchange/typography.d.ts",
+          "size": 645
+        },
+        {
+          "path": "dist/cjs/exchange/typography.js",
+          "size": 6662
+        },
+        {
+          "path": "dist/cjs/exchange/validation.d.ts",
+          "size": 37163
+        },
+        {
+          "path": "dist/cjs/exchange/validation.js",
+          "size": 19242
+        },
+        {
+          "path": "dist/cjs/exchange/zipArchive.d.ts",
+          "size": 178
+        },
+        {
+          "path": "dist/cjs/exchange/zipArchive.js",
+          "size": 1356
+        },
+        {
+          "path": "dist/cjs/export.d.ts",
+          "size": 601
+        },
+        {
+          "path": "dist/cjs/export.js",
+          "size": 27722
+        },
+        {
+          "path": "dist/cjs/hash.d.ts",
+          "size": 65
+        },
+        {
+          "path": "dist/cjs/hash.js",
+          "size": 288
+        },
+        {
+          "path": "dist/cjs/import.d.ts",
+          "size": 1065
+        },
+        {
+          "path": "dist/cjs/import.js",
+          "size": 57913
+        },
+        {
+          "path": "dist/cjs/index.d.ts",
+          "size": 442
+        },
+        {
+          "path": "dist/cjs/index.js",
+          "size": 1842
+        },
+        {
+          "path": "dist/cjs/model.d.ts",
+          "size": 4453
+        },
+        {
+          "path": "dist/cjs/model.js",
+          "size": 4480
+        },
+        {
+          "path": "dist/cjs/package.json",
+          "size": 19
+        },
+        {
+          "path": "dist/cjs/packageValidation.d.ts",
+          "size": 479
+        },
+        {
+          "path": "dist/cjs/packageValidation.js",
+          "size": 9514
+        },
+        {
+          "path": "dist/cjs/sections.d.ts",
+          "size": 828
+        },
+        {
+          "path": "dist/cjs/sections.js",
+          "size": 16416
+        },
+        {
+          "path": "dist/cjs/stories.d.ts",
+          "size": 524
+        },
+        {
+          "path": "dist/cjs/stories.js",
+          "size": 2947
+        },
+        {
+          "path": "dist/cjs/styles.d.ts",
+          "size": 460
+        },
+        {
+          "path": "dist/cjs/styles.js",
+          "size": 2188
+        },
+        {
+          "path": "dist/cjs/theme.d.ts",
+          "size": 754
+        },
+        {
+          "path": "dist/cjs/theme.js",
+          "size": 7273
+        },
+        {
+          "path": "dist/cjs/validation.d.ts",
+          "size": 15877
+        },
+        {
+          "path": "dist/cjs/validation.js",
+          "size": 12747
+        },
+        {
+          "path": "dist/cjs/zipArchive.d.ts",
+          "size": 178
+        },
+        {
+          "path": "dist/cjs/zipArchive.js",
+          "size": 1354
+        },
+        {
+          "path": "dist/errors.d.ts",
+          "size": 249
+        },
+        {
+          "path": "dist/errors.js",
+          "size": 287
+        },
+        {
+          "path": "dist/exchange/appearance.d.ts",
+          "size": 849
+        },
+        {
+          "path": "dist/exchange/appearance.js",
+          "size": 8092
+        },
+        {
+          "path": "dist/exchange/errors.d.ts",
+          "size": 249
+        },
+        {
+          "path": "dist/exchange/errors.js",
+          "size": 287
+        },
+        {
+          "path": "dist/exchange/export.d.ts",
+          "size": 689
+        },
+        {
+          "path": "dist/exchange/export.js",
+          "size": 34074
+        },
+        {
+          "path": "dist/exchange/fonts.d.ts",
+          "size": 1658
+        },
+        {
+          "path": "dist/exchange/fonts.js",
+          "size": 7088
+        },
+        {
+          "path": "dist/exchange/hash.d.ts",
+          "size": 65
+        },
+        {
+          "path": "dist/exchange/hash.js",
+          "size": 130
+        },
+        {
+          "path": "dist/exchange/import.d.ts",
+          "size": 1192
+        },
+        {
+          "path": "dist/exchange/import.js",
+          "size": 63886
+        },
+        {
+          "path": "dist/exchange/index.d.ts",
+          "size": 504
+        },
+        {
+          "path": "dist/exchange/index.js",
+          "size": 496
+        },
+        {
+          "path": "dist/exchange/model.d.ts",
+          "size": 7094
+        },
+        {
+          "path": "dist/exchange/model.js",
+          "size": 4559
+        },
+        {
+          "path": "dist/exchange/numbering.d.ts",
+          "size": 439
+        },
+        {
+          "path": "dist/exchange/numbering.js",
+          "size": 7384
+        },
+        {
+          "path": "dist/exchange/packageValidation.d.ts",
+          "size": 479
+        },
+        {
+          "path": "dist/exchange/packageValidation.js",
+          "size": 9138
+        },
+        {
+          "path": "dist/exchange/sections.d.ts",
+          "size": 966
+        },
+        {
+          "path": "dist/exchange/sections.js",
+          "size": 20077
+        },
+        {
+          "path": "dist/exchange/stories.d.ts",
+          "size": 524
+        },
+        {
+          "path": "dist/exchange/stories.js",
+          "size": 2698
+        },
+        {
+          "path": "dist/exchange/styles.d.ts",
+          "size": 482
+        },
+        {
+          "path": "dist/exchange/styles.js",
+          "size": 2648
+        },
+        {
+          "path": "dist/exchange/theme.d.ts",
+          "size": 754
+        },
+        {
+          "path": "dist/exchange/theme.js",
+          "size": 6831
+        },
+        {
+          "path": "dist/exchange/typography.d.ts",
+          "size": 645
+        },
+        {
+          "path": "dist/exchange/typography.js",
+          "size": 6469
+        },
+        {
+          "path": "dist/exchange/validation.d.ts",
+          "size": 37163
+        },
+        {
+          "path": "dist/exchange/validation.js",
+          "size": 17950
+        },
+        {
+          "path": "dist/exchange/zipArchive.d.ts",
+          "size": 178
+        },
+        {
+          "path": "dist/exchange/zipArchive.js",
+          "size": 1221
+        },
+        {
+          "path": "dist/export.d.ts",
+          "size": 601
+        },
+        {
+          "path": "dist/export.js",
+          "size": 27226
+        },
+        {
+          "path": "dist/hash.d.ts",
+          "size": 65
+        },
+        {
+          "path": "dist/hash.js",
+          "size": 130
+        },
+        {
+          "path": "dist/import.d.ts",
+          "size": 1065
+        },
+        {
+          "path": "dist/import.js",
+          "size": 56668
+        },
+        {
+          "path": "dist/index.d.ts",
+          "size": 442
+        },
+        {
+          "path": "dist/index.js",
+          "size": 434
+        },
+        {
+          "path": "dist/model.d.ts",
+          "size": 4453
+        },
+        {
+          "path": "dist/model.js",
+          "size": 3997
+        },
+        {
+          "path": "dist/packageValidation.d.ts",
+          "size": 479
+        },
+        {
+          "path": "dist/packageValidation.js",
+          "size": 9080
+        },
+        {
+          "path": "dist/sections.d.ts",
+          "size": 828
+        },
+        {
+          "path": "dist/sections.js",
+          "size": 15957
+        },
+        {
+          "path": "dist/stories.d.ts",
+          "size": 524
+        },
+        {
+          "path": "dist/stories.js",
+          "size": 2676
+        },
+        {
+          "path": "dist/styles.d.ts",
+          "size": 460
+        },
+        {
+          "path": "dist/styles.js",
+          "size": 1891
+        },
+        {
+          "path": "dist/theme.d.ts",
+          "size": 754
+        },
+        {
+          "path": "dist/theme.js",
+          "size": 6831
+        },
+        {
+          "path": "dist/validation.d.ts",
+          "size": 15877
+        },
+        {
+          "path": "dist/validation.js",
+          "size": 11830
+        },
+        {
+          "path": "dist/zipArchive.d.ts",
+          "size": 178
+        },
+        {
+          "path": "dist/zipArchive.js",
+          "size": 1219
+        },
+        {
+          "path": "LICENSE",
+          "size": 1079
+        },
+        {
+          "path": "NOTICES.md",
+          "size": 1593
+        },
+        {
+          "path": "package.json",
+          "size": 2013
+        },
+        {
+          "path": "README.md",
+          "size": 6214
+        },
+        {
+          "path": "UPSTREAM.md",
+          "size": 8480
+        }
+      ]
+    }
+  ],
+  "coreBundledModules": [
+    {
+      "filename": "canvas-word-engine.js",
+      "sha256": "55c1776cde0fe87e9da388708d54fd5a21a2d772ac24e89db7a39350216f3573",
+      "modules": [
+        "\u0000rolldown/runtime.js",
+        "package.json",
+        "src/editor/assets/css/index.css",
+        "src/editor/core/accessibility/Accessibility.ts",
+        "src/editor/core/actuator/Actuator.ts",
+        "src/editor/core/actuator/handlers/positionContextChange.ts",
+        "src/editor/core/cascade/CascadeManager.ts",
+        "src/editor/core/cascade/expression/evaluator.ts",
+        "src/editor/core/cascade/expression/parser.ts",
+        "src/editor/core/cascade/expression/tokenizer.ts",
+        "src/editor/core/command/Command.ts",
+        "src/editor/core/command/CommandAdapt.ts",
+        "src/editor/core/contextmenu/ContextMenu.ts",
+        "src/editor/core/contextmenu/menus/controlMenus.ts",
+        "src/editor/core/contextmenu/menus/globalMenus.ts",
+        "src/editor/core/contextmenu/menus/hyperlinkMenus.ts",
+        "src/editor/core/contextmenu/menus/imageMenus.ts",
+        "src/editor/core/contextmenu/menus/tableMenus.ts",
+        "src/editor/core/cursor/Cursor.ts",
+        "src/editor/core/cursor/CursorAgent.ts",
+        "src/editor/core/draw/Draw.ts",
+        "src/editor/core/draw/IncrementalRowComputer.ts",
+        "src/editor/core/draw/ParagraphPaging.ts",
+        "src/editor/core/draw/ParagraphPresentation.ts",
+        "src/editor/core/draw/column/ColumnManager.ts",
+        "src/editor/core/draw/control/Control.ts",
+        "src/editor/core/draw/control/checkbox/CheckboxControl.ts",
+        "src/editor/core/draw/control/date/DateControl.ts",
+        "src/editor/core/draw/control/interactive/ControlSearch.ts",
+        "src/editor/core/draw/control/number/Calculator.ts",
+        "src/editor/core/draw/control/number/NumberControl.ts",
+        "src/editor/core/draw/control/radio/RadioControl.ts",
+        "src/editor/core/draw/control/richtext/Border.ts",
+        "src/editor/core/draw/control/select/SelectControl.ts",
+        "src/editor/core/draw/control/text/TextControl.ts",
+        "src/editor/core/draw/frame/Background.ts",
+        "src/editor/core/draw/frame/Badge.ts",
+        "src/editor/core/draw/frame/Footer.ts",
+        "src/editor/core/draw/frame/Header.ts",
+        "src/editor/core/draw/frame/LineNumber.ts",
+        "src/editor/core/draw/frame/Margin.ts",
+        "src/editor/core/draw/frame/PageBorder.ts",
+        "src/editor/core/draw/frame/PageNumber.ts",
+        "src/editor/core/draw/frame/Placeholder.ts",
+        "src/editor/core/draw/frame/SectionStories.ts",
+        "src/editor/core/draw/frame/Watermark.ts",
+        "src/editor/core/draw/graffiti/Graffiti.ts",
+        "src/editor/core/draw/interactive/Area.ts",
+        "src/editor/core/draw/interactive/AreaTool.ts",
+        "src/editor/core/draw/interactive/Group.ts",
+        "src/editor/core/draw/interactive/Magnifier.ts",
+        "src/editor/core/draw/interactive/Search.ts",
+        "src/editor/core/draw/interactive/Spellcheck.ts",
+        "src/editor/core/draw/particle/CheckboxParticle.ts",
+        "src/editor/core/draw/particle/HintParticle.ts",
+        "src/editor/core/draw/particle/HyperlinkParticle.ts",
+        "src/editor/core/draw/particle/ImageParticle.ts",
+        "src/editor/core/draw/particle/LabelParticle.ts",
+        "src/editor/core/draw/particle/LineBreakParticle.ts",
+        "src/editor/core/draw/particle/ListParticle.ts",
+        "src/editor/core/draw/particle/PageBreakParticle.ts",
+        "src/editor/core/draw/particle/RadioParticle.ts",
+        "src/editor/core/draw/particle/SeparatorParticle.ts",
+        "src/editor/core/draw/particle/SubscriptParticle.ts",
+        "src/editor/core/draw/particle/SuperscriptParticle.ts",
+        "src/editor/core/draw/particle/TextParticle.ts",
+        "src/editor/core/draw/particle/TraceParticle.ts",
+        "src/editor/core/draw/particle/WhiteSpaceParticle.ts",
+        "src/editor/core/draw/particle/block/BlockParticle.ts",
+        "src/editor/core/draw/particle/block/modules/BaseBlock.ts",
+        "src/editor/core/draw/particle/block/modules/IFrameBlock.ts",
+        "src/editor/core/draw/particle/block/modules/VideoBlock.ts",
+        "src/editor/core/draw/particle/date/DateParticle.ts",
+        "src/editor/core/draw/particle/date/DatePicker.ts",
+        "src/editor/core/draw/particle/latex/LaTexParticle.ts",
+        "src/editor/core/draw/particle/latex/utils/LaTexUtils.ts",
+        "src/editor/core/draw/particle/latex/utils/hershey.ts",
+        "src/editor/core/draw/particle/latex/utils/symbols.ts",
+        "src/editor/core/draw/particle/previewer/Previewer.ts",
+        "src/editor/core/draw/particle/table/TableOperate.ts",
+        "src/editor/core/draw/particle/table/TablePaging.ts",
+        "src/editor/core/draw/particle/table/TableParticle.ts",
+        "src/editor/core/draw/particle/table/TableTool.ts",
+        "src/editor/core/draw/richtext/AbstractRichText.ts",
+        "src/editor/core/draw/richtext/Highlight.ts",
+        "src/editor/core/draw/richtext/Strikeout.ts",
+        "src/editor/core/draw/richtext/Underline.ts",
+        "src/editor/core/draw/ruler/Ruler.ts",
+        "src/editor/core/event/CanvasEvent.ts",
+        "src/editor/core/event/GlobalEvent.ts",
+        "src/editor/core/event/eventbus/EventBus.ts",
+        "src/editor/core/event/handlers/click.ts",
+        "src/editor/core/event/handlers/composition.ts",
+        "src/editor/core/event/handlers/copy.ts",
+        "src/editor/core/event/handlers/cut.ts",
+        "src/editor/core/event/handlers/drag.ts",
+        "src/editor/core/event/handlers/drop.ts",
+        "src/editor/core/event/handlers/input.ts",
+        "src/editor/core/event/handlers/keydown/backspace.ts",
+        "src/editor/core/event/handlers/keydown/delete.ts",
+        "src/editor/core/event/handlers/keydown/end.ts",
+        "src/editor/core/event/handlers/keydown/enter.ts",
+        "src/editor/core/event/handlers/keydown/home.ts",
+        "src/editor/core/event/handlers/keydown/index.ts",
+        "src/editor/core/event/handlers/keydown/left.ts",
+        "src/editor/core/event/handlers/keydown/right.ts",
+        "src/editor/core/event/handlers/keydown/tab.ts",
+        "src/editor/core/event/handlers/keydown/updown.ts",
+        "src/editor/core/event/handlers/mousedown.ts",
+        "src/editor/core/event/handlers/mouseleave.ts",
+        "src/editor/core/event/handlers/mousemove.ts",
+        "src/editor/core/event/handlers/mouseup.ts",
+        "src/editor/core/event/handlers/paste.ts",
+        "src/editor/core/event/pagePointer.ts",
+        "src/editor/core/history/HistoryManager.ts",
+        "src/editor/core/i18n/I18n.ts",
+        "src/editor/core/i18n/lang/en.json",
+        "src/editor/core/i18n/lang/zh-CN.json",
+        "src/editor/core/layout/ContinuousSections.ts",
+        "src/editor/core/layout/LayoutEngine.ts",
+        "src/editor/core/layout/ParagraphBox.ts",
+        "src/editor/core/layout/TextMeasurer.ts",
+        "src/editor/core/listener/Listener.ts",
+        "src/editor/core/macro/MacroManager.ts",
+        "src/editor/core/observer/ImageObserver.ts",
+        "src/editor/core/observer/MouseObserver.ts",
+        "src/editor/core/observer/ScrollObserver.ts",
+        "src/editor/core/observer/SelectionObserver.ts",
+        "src/editor/core/override/Override.ts",
+        "src/editor/core/plugin/Plugin.ts",
+        "src/editor/core/position/Position.ts",
+        "src/editor/core/range/RangeManager.ts",
+        "src/editor/core/register/Register.ts",
+        "src/editor/core/render/BackendFactory.ts",
+        "src/editor/core/render/canvas/CanvasBackend.ts",
+        "src/editor/core/render/canvas/CanvasRenderer.ts",
+        "src/editor/core/render/canvas/CanvasSurface.ts",
+        "src/editor/core/render/model/DisplayList.ts",
+        "src/editor/core/render/svg/SvgBackend.ts",
+        "src/editor/core/render/svg/SvgRenderer.ts",
+        "src/editor/core/render/svg/SvgSurface.ts",
+        "src/editor/core/render/svg/scene/PathCompiler.ts",
+        "src/editor/core/render/svg/scene/ResourceKey.ts",
+        "src/editor/core/render/svg/scene/SceneCompiler.ts",
+        "src/editor/core/render/svg/scene/SceneKey.ts",
+        "src/editor/core/render/svg/scene/SceneReconciler.ts",
+        "src/editor/core/render/svg/scene/SvgNodeFactory.ts",
+        "src/editor/core/shortcut/Shortcut.ts",
+        "src/editor/core/shortcut/keys/listKeys.ts",
+        "src/editor/core/shortcut/keys/richtextKeys.ts",
+        "src/editor/core/shortcut/keys/titleKeys.ts",
+        "src/editor/core/validate/Validate.ts",
+        "src/editor/core/worker/WorkerManager.ts",
+        "src/editor/core/worker/works/catalog.ts?worker&inline",
+        "src/editor/core/worker/works/group.ts?worker&inline",
+        "src/editor/core/worker/works/value.ts?worker&inline",
+        "src/editor/core/worker/works/wordCount.ts?worker&inline",
+        "src/editor/core/zone/Zone.ts",
+        "src/editor/core/zone/ZoneTip.ts",
+        "src/editor/dataset/constant/Accessibility.ts",
+        "src/editor/dataset/constant/Background.ts",
+        "src/editor/dataset/constant/Badge.ts",
+        "src/editor/dataset/constant/Checkbox.ts",
+        "src/editor/dataset/constant/Column.ts",
+        "src/editor/dataset/constant/Common.ts",
+        "src/editor/dataset/constant/ContextMenu.ts",
+        "src/editor/dataset/constant/Control.ts",
+        "src/editor/dataset/constant/Cursor.ts",
+        "src/editor/dataset/constant/Editor.ts",
+        "src/editor/dataset/constant/Element.ts",
+        "src/editor/dataset/constant/Footer.ts",
+        "src/editor/dataset/constant/Graffiti.ts",
+        "src/editor/dataset/constant/Group.ts",
+        "src/editor/dataset/constant/Header.ts",
+        "src/editor/dataset/constant/Hint.ts",
+        "src/editor/dataset/constant/ImgCaption.ts",
+        "src/editor/dataset/constant/Label.ts",
+        "src/editor/dataset/constant/LineBreak.ts",
+        "src/editor/dataset/constant/LineNumber.ts",
+        "src/editor/dataset/constant/List.ts",
+        "src/editor/dataset/constant/Magnifier.ts",
+        "src/editor/dataset/constant/PageBorder.ts",
+        "src/editor/dataset/constant/PageBreak.ts",
+        "src/editor/dataset/constant/PageNumber.ts",
+        "src/editor/dataset/constant/Placeholder.ts",
+        "src/editor/dataset/constant/Radio.ts",
+        "src/editor/dataset/constant/Regular.ts",
+        "src/editor/dataset/constant/Ruler.ts",
+        "src/editor/dataset/constant/Separator.ts",
+        "src/editor/dataset/constant/Shortcut.ts",
+        "src/editor/dataset/constant/Spellcheck.ts",
+        "src/editor/dataset/constant/Table.ts",
+        "src/editor/dataset/constant/Title.ts",
+        "src/editor/dataset/constant/Trace.ts",
+        "src/editor/dataset/constant/Watermark.ts",
+        "src/editor/dataset/constant/WhiteSpace.ts",
+        "src/editor/dataset/constant/Zone.ts",
+        "src/editor/dataset/enum/Area.ts",
+        "src/editor/dataset/enum/Background.ts",
+        "src/editor/dataset/enum/Block.ts",
+        "src/editor/dataset/enum/Common.ts",
+        "src/editor/dataset/enum/Control.ts",
+        "src/editor/dataset/enum/DatePicker.ts",
+        "src/editor/dataset/enum/Editor.ts",
+        "src/editor/dataset/enum/Element.ts",
+        "src/editor/dataset/enum/Event.ts",
+        "src/editor/dataset/enum/KeyMap.ts",
+        "src/editor/dataset/enum/LineNumber.ts",
+        "src/editor/dataset/enum/List.ts",
+        "src/editor/dataset/enum/Macro.ts",
+        "src/editor/dataset/enum/Observer.ts",
+        "src/editor/dataset/enum/Row.ts",
+        "src/editor/dataset/enum/Text.ts",
+        "src/editor/dataset/enum/Title.ts",
+        "src/editor/dataset/enum/Trace.ts",
+        "src/editor/dataset/enum/VerticalAlign.ts",
+        "src/editor/dataset/enum/Watermark.ts",
+        "src/editor/dataset/enum/table/Table.ts",
+        "src/editor/dataset/enum/table/TableTool.ts",
+        "src/editor/index.ts",
+        "src/editor/utils/clipboard.ts",
+        "src/editor/utils/diff.ts",
+        "src/editor/utils/element.ts",
+        "src/editor/utils/externalBindings.ts",
+        "src/editor/utils/formattingSelection.ts",
+        "src/editor/utils/hotkey.ts",
+        "src/editor/utils/hyperlink.ts",
+        "src/editor/utils/imageSource.ts",
+        "src/editor/utils/index.ts",
+        "src/editor/utils/lineHeight.ts",
+        "src/editor/utils/locatedRange.ts",
+        "src/editor/utils/option.ts",
+        "src/editor/utils/paragraph.ts",
+        "src/editor/utils/paragraphLayout.ts",
+        "src/editor/utils/print.ts",
+        "src/editor/utils/searchTextBoundaries.ts",
+        "src/editor/utils/table.ts",
+        "src/editor/utils/ua.ts",
+        "src/index.ts",
+        "src/testing.ts"
+      ],
+      "imports": []
+    }
+  ],
+  "preservedEditorPullRequests": [
+    1495,
+    1496,
+    1505,
+    1506,
+    1508,
+    1509
+  ],
+  "historicalOwnedForkLedger": "docs/history/canvas-owned-forks-20261108",
+  "wordAcceptance": "unverified",
+  "physicalDeviceAcceptance": "incomplete",
+  "performanceCertification": "deferred-R6"
+}

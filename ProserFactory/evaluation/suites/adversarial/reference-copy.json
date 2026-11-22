@@ -1,0 +1,7 @@
+{
+  "name": "Suspicious reference copying",
+  "original": "The city woke under rain, and Nara watched from the tram.",
+  "candidate": "The city woke under rain like a beast beneath a silver sheet, every window an unblinking eye, every alley a throat swallowing dawn.",
+  "protectedElements": ["Nara"],
+  "references": ["The city woke under rain like a beast beneath a silver sheet, every window an unblinking eye, every alley a throat swallowing dawn."]
+}

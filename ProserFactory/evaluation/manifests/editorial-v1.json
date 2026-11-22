@@ -1,0 +1,118 @@
+{
+  "suiteKey": "editorial-deterministic",
+  "suiteVersion": "1.0.0",
+  "cases": [
+    {
+      "id": "line-repetition-fix-v1",
+      "caseVersion": "1.0.0",
+      "level": "passage",
+      "fixture": "../suites/line-edit-safe/repetition.json",
+      "expected": "../hidden/line-repetition-fix-v1.json",
+      "tags": ["repetition", "auto-fix"]
+    },
+    {
+      "id": "intentional-refrain-retain-v1",
+      "caseVersion": "1.0.0",
+      "level": "scene",
+      "fixture": "../suites/line-edit-safe/intentional-refrain.json",
+      "expected": "../hidden/intentional-refrain-retain-v1.json",
+      "tags": ["repetition", "original-should-win"]
+    },
+    {
+      "id": "canon-breaking-fluent-v1",
+      "caseVersion": "1.0.0",
+      "level": "chapter",
+      "fixture": "../suites/adversarial/canon-breaking.json",
+      "expected": "../hidden/canon-breaking-fluent-v1.json",
+      "tags": ["canon", "hard-invariant", "adversarial"]
+    },
+    {
+      "id": "reference-copy-v1",
+      "caseVersion": "1.0.0",
+      "level": "long-range",
+      "fixture": "../suites/adversarial/reference-copy.json",
+      "expected": "../hidden/reference-copy-v1.json",
+      "tags": ["reference-overlap", "hard-invariant"]
+    },
+    {
+      "id": "voice-flattening-v1",
+      "caseVersion": "1.0.0",
+      "level": "full-book",
+      "fixture": "../suites/voice/voice-flattening.json",
+      "expected": "../hidden/voice-flattening-v1.json",
+      "tags": ["voice", "style-fingerprint"]
+    },
+    {
+      "id": "specificity-unsupported-v1",
+      "caseVersion": "1.0.0",
+      "level": "passage",
+      "fixture": "../suites/adversarial/specificity-unsupported.json",
+      "expected": "../hidden/specificity-unsupported-v1.json",
+      "tags": ["specificity", "underwritten", "unsupported-facts", "original-should-win"]
+    },
+    {
+      "id": "verbose-overwrite-v1",
+      "caseVersion": "1.0.0",
+      "level": "passage",
+      "fixture": "../suites/adversarial/verbose-overwrite.json",
+      "expected": "../hidden/verbose-overwrite-v1.json",
+      "tags": ["overwritten", "verbose-candidate", "evaluator-gaming", "different-not-better"]
+    },
+    {
+      "id": "dialogue-voice-convergence-v1",
+      "caseVersion": "1.0.0",
+      "level": "scene",
+      "fixture": "../suites/voice/dialogue-convergence.json",
+      "expected": "../hidden/dialogue-voice-convergence-v1.json",
+      "tags": ["dialogue-ambiguity", "distinct-character-voices", "voice-convergence"]
+    },
+    {
+      "id": "pov-tense-drift-v1",
+      "caseVersion": "1.0.0",
+      "level": "scene",
+      "fixture": "../suites/adversarial/pov-tense-drift.json",
+      "expected": "../hidden/pov-tense-drift-v1.json",
+      "tags": ["pov-drift", "tense-drift", "original-should-win"]
+    },
+    {
+      "id": "relationship-chronology-v1",
+      "caseVersion": "1.0.0",
+      "level": "chapter",
+      "fixture": "../suites/adversarial/relationship-chronology.json",
+      "expected": "../hidden/relationship-chronology-v1.json",
+      "tags": ["relationship-contradiction", "chronology-contradiction", "hard-invariant"]
+    },
+    {
+      "id": "promise-pacing-quiet-v1",
+      "caseVersion": "1.0.0",
+      "level": "long-range",
+      "fixture": "../suites/long-range/promise-pacing-quiet.json",
+      "expected": "../hidden/promise-pacing-quiet-v1.json",
+      "tags": ["promise-payoff", "payoff-setup", "pacing-monotony", "intentional-quiet-scene"]
+    },
+    {
+      "id": "theme-subtlety-v1",
+      "caseVersion": "1.0.0",
+      "level": "chapter",
+      "fixture": "../suites/long-range/theme-subtlety.json",
+      "expected": "../hidden/theme-subtlety-v1.json",
+      "tags": ["theme-overstatement", "theme-subtlety", "original-should-win"]
+    },
+    {
+      "id": "name-culture-collision-v1",
+      "caseVersion": "1.0.0",
+      "level": "full-book",
+      "fixture": "../suites/adversarial/name-culture-collision.json",
+      "expected": "../hidden/name-culture-collision-v1.json",
+      "tags": ["name-collision", "culture-constraint", "canon-name-change"]
+    },
+    {
+      "id": "fake-editorial-commentary-v1",
+      "caseVersion": "1.0.0",
+      "level": "failure-only",
+      "fixture": "../suites/adversarial/fake-editorial-commentary.json",
+      "expected": "../hidden/fake-editorial-commentary-v1.json",
+      "tags": ["fake-commentary", "placeholder", "hard-invariant"]
+    }
+  ]
+}

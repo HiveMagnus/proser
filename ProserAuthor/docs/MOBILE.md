@@ -1,0 +1,139 @@
+# Mobile structured writing and reading
+
+Phone entry remains `/m`, `/m/studio` and `/m/read`. Active mobile writing uses the
+same Factory structured authority, revision preconditions, proposals and operation
+receipts as desktop. Author owns the browser session and display; all browser
+requests stay on relative `/api/*` through the authenticated same-origin proxy.
+
+R2 mobile/accessibility certification is active after the user revoked its earlier
+deferral. Current fixes/evidence and physical-device requirements are in
+[the R2 acceptance record](../../CANVAS_R2_ACCEPTANCE.md); R6 performance
+certification remains deferred. Device emulation is not physical-phone acceptance.
+
+## Entry and authenticated state
+
+`apps/web/src/middleware.ts` and `lib/mobile-routing.ts` redirect phone-class user
+agents: `/` to `/m`, `/manuscript` to `/m/studio`, `/publish` to `/m/read`.
+Tablets are not automatically treated as phones. The `proser-view=desktop` cookie
+preserves the desktop override; the shell's Desktop control remains available.
+Bottom navigation links Home, Studio and Read.
+
+An empty Studio offers an inline scene-title/brief form. It captures the displayed
+book/structure revisions and uses the durable Quick Draft service; Enter in the
+title submits without a modal or inference. Recovery retains the original target
+and nonce. Inactive or unsupported document authority blocks Quick Draft instead
+of falling back to legacy scene writes. Desktop override project creation/editing
+and deletion use their own authenticated operation journals and revision snapshots.
+
+`MobileStateProvider` remounts when the authenticated identity changes. Its
+localStorage record uses `JSON.stringify(['proser-mobile-state-v1', userId])`,
+requires schema version 1 and the matching user ID, and retains the selected
+book/scene plus shell/brief/trace preferences. Anonymous and different-user
+sessions do not reveal that user's state. These preferences are not the durable
+manuscript save journal.
+
+## Home
+
+`app/m/page.tsx` resumes an owned book/scene and offers Quick Draft. With active
+structured authority, `useDocumentQuickDraft` retains the exact user-scoped
+creation/quick-draft intent before dispatch, recovers its original receipt through
+GETs after a lost acknowledgement and requires explicit continuation when needed.
+It uses current book-manifest revisions and preserves hierarchy identities. The
+retained inactive-authority compatibility flow is not a structured writing fallback.
+
+## Studio
+
+`app/m/studio/page.tsx` authenticates, checks Factory schema/ordered-passage/typed-
+operation capabilities and mounts `DocumentStudio` scoped to user/book. Unsupported
+or inactive document authority displays an explicit unavailable/retry state.
+
+The active studio loads manifest/structure/layout identities and bounded scene,
+chapter or book passages. It supports Canvas continuity mode, responsive writing
+controls, an accessible semantic mode, saved-document navigation/search, layout,
+tracked AI/editorial review and discussion. Accepted proposals use stable targets
+and Factory revalidation, not tapped-text/index or quotation matching. Native
+Canvas commands do not save directly.
+
+Autosave/history/recovery use document sessions and user/book/document-scoped
+IndexedDB journals. Save acknowledgements identify exact immutable revisions;
+interrupted operations recover their original receipts. Newer remote revisions
+and overlapping drafts require explicit reconciliation. Unsupported edits retain
+an owned quarantine record rather than being declared Saved. Route/reload guards
+protect unacknowledged changes; account changes invalidate visible session state.
+Retiring and replacement sessions serialize local retention for the same immutable
+owner, while cross-tab IndexedDB writes retain strict expected-version checks.
+Cached-page restoration reloads saved content only when no composition or
+unacknowledged work is present.
+
+Candidate core `1.0.4-proser.3` adds software-keyboard edit intentions, composition
+and touch-cancellation fences, soft-break preservation and visual-viewport caret
+visibility. Deferred cursor focus respects a newer control target and teardown. Semantic mode retains exact canonical selections across mode changes,
+provides heading/list/table/inline-image descriptions and supports Alt+Up/Down
+paragraph movement. These candidate changes are not yet a deployed or certified
+physical-device release; use the root record for installed revisions.
+
+Studio navigation follows the selected scope: Scene and Whole book focus a
+saved scene, while Chapter selects stable chapter identities in act/chapter
+order. Chapter arrows include empty chapters, which show an explicit empty
+state and load no scene body. The desktop and mobile routes retain `scope` and
+`chapterId` for reload/history; a chapter target keeps its current scene when it
+belongs to that chapter, otherwise selects that chapter's first saved scene.
+Unsaved body or layout work must be acknowledged before changing chapters or
+editing windows. Each chapter/book window remains bounded to three scenes.
+
+## Read
+
+With active authority, `app/m/read/page.tsx` mounts `DocumentReader` only for an
+authenticated user. It reads the saved manifest, exact layout styles and scene
+revisions. Scene/chapter/full-book scopes keep at most three scene bodies in
+memory. Stale scene/layout references produce a reload/error state instead of
+silently mixing revisions.
+
+`SemanticDocument` renders headings, lists (including table-cell lists), table
+cells, supported hyperlinks, images and review projections. Image requests use
+owned `/api/images/:id/content` URLs. Tables have keyboard-focusable scroll
+regions. Reader controls choose font/size, scope and previous/next windows; user-
+scoped `proser-reader-preferences-v1` storage controls display only. Reading never
+sends document mutation requests or changes canonical layout.
+
+The legacy reader remains a read-only compatibility path when authority is
+inactive. Its prose/outline projections do not become document editing authority.
+
+## Keyboard, touch and assistive technology
+
+The shared toolbar preserves canonical selection while controls receive focus.
+Canvas local history is disabled in favor of the application operation journal;
+semantic/native document Undo/Redo follows the same authority. Native Tab and
+Shift+Tab leave/return to the page input without inserting indentation; a labelled
+readonly passage view supports screen reading. Toolbar/search fields keep their
+own input undo. Original/markup projections are read-only.
+
+Touch selection is explicit and composition-fenced. Software keyboard,
+orientation, focus recovery, OS IME and real microphone dictation still require
+physical-device acceptance. A synthesized multiline browser intention establishes
+newline compatibility, not working speech recognition. Actual Linux Orca generated-
+speech evidence is scoped separately from iPhone/Mac VoiceOver and audible output.
+
+## Verification
+
+- Unit suites: `mobile-routing`, `mobile-state-context`, mobile Home/Studio/Read,
+  `document-reader`, semantic accessibility, passage sessions/journals and protected
+  object preservation.
+- Native compatibility: root `npm run test:canvas`.
+- Chromium/WebKit mobile profiles: root `npm run test:canvas-mobile`.
+- Actual Linux screen reader: `scripts/test-r2-orca-session.py`, isolated X11/
+  AT-SPI/Orca with retained generated speech and exact source hashes.
+- Authenticated application/recovery: root
+  `scripts/run-document-release-workspace-smoke.mjs`, explicitly isolated
+  PostgreSQL/Redis and disposable acceptance books.
+- Physical iPhone Safari/VoiceOver/IME/dictation: the current R2 matrix; WebDriver
+  preflight reports device Web Inspector disabled. The approved Computer Use
+  Mirroring session reached Proser sign-in in normal Safari and stopped before
+  login. A later observation after the user authenticated directly showed Mobile
+  Home ready for the candidate fixture; SSH-process permission failures do not
+  block that backend. Candidate editing and actual VoiceOver/IME/dictation remain open. No simulated profile
+  substitutes for this row.
+
+Retain unique receipts, failed/unknown outcomes and fixture history. Never prune
+active diagnostics, manuscript originals or production checkpoints as temporary
+files. [Retention policy](CANVAS_MAINTENANCE.md).

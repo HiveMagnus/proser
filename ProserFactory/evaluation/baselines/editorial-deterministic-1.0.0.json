@@ -1,0 +1,9 @@
+{
+  "suiteKey": "editorial-deterministic",
+  "suiteVersion": "1.0.0",
+  "minimums": {
+    "hardInvariantPassRate": 1,
+    "originalRetentionAccuracy": 1,
+    "expectedMatchRate": 0.8
+  }
+}

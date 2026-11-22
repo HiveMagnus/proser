@@ -1,0 +1,58 @@
+{
+  "codex": {
+    "entries": [
+      {
+        "id": 10,
+        "type": "character",
+        "name": "Vespera Vale",
+        "description": "A guarded botanist who inherited the Glass Orchard."
+      },
+      {
+        "id": 11,
+        "type": "location",
+        "name": "The Glass Orchard",
+        "description": "A walled orchard whose fruit replay buried memories."
+      }
+    ]
+  },
+  "bookMap": {
+    "acts": [
+      {
+        "chapters": [
+          {
+            "title": "Return",
+            "scenes": [
+              {
+                "id": 201,
+                "title": "Arrival",
+                "summary": "Vespera Vale reaches The Glass Orchard."
+              },
+              {
+                "id": 202,
+                "title": "Storm",
+                "summary": "Rain moves over unnamed fields."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "sceneHits": {
+    "hits": [
+      {
+        "id": 201,
+        "matchExcerpt": "Old Name appears in the orchard ledger."
+      }
+    ]
+  },
+  "notes": {
+    "notes": [
+      {
+        "id": 301,
+        "title": "Rename note",
+        "content": "Old Name should become New Name."
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "entries": [
+    {
+      "id": 10,
+      "entryType": "character",
+      "entryName": "Vespera Vale",
+      "entryDescription": "A guarded botanist who inherited the Glass Orchard and studies memory-bearing fruit.",
+      "attributes": "{\"role\":\"protagonist\",\"appearance\":\"ink-stained hands, green coat\"}"
+    },
+    {
+      "id": 11,
+      "entryType": "location",
+      "entryName": "The Glass Orchard",
+      "entryDescription": "A walled orchard whose fruit replay buried memories for anyone who bites them.",
+      "attributes": "{\"region\":\"Harrow Vale\",\"sensory_signature\":\"glass leaves, wet soil, distant bells\"}"
+    },
+    {
+      "id": 12,
+      "entryType": "relationship",
+      "entryName": "Vespera and The Amber Pruners",
+      "entryDescription": "Vespera Vale mistrusts The Amber Pruners after they hid her family's debt.",
+      "attributes": "{\"source\":\"Vespera Vale\",\"target\":\"The Amber Pruners\",\"relationship\":\"mistrust\"}"
+    }
+  ]
+}

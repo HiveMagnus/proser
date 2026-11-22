@@ -1,0 +1,29 @@
+name: proser-factory
+
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    container_name: proser-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: proser
+      POSTGRES_USER: proser
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - proser-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U proser -d proser"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 60s
+
+volumes:
+  proser-postgres-data:
+    name: proser-postgres-data

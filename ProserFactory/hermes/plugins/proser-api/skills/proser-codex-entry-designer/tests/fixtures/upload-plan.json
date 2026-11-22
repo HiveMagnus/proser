@@ -1,0 +1,22 @@
+{
+  "steps": [
+    {
+      "step": 1,
+      "operation": "create_new",
+      "entryName": "The Amber Pruners",
+      "entryType": "faction",
+      "toolCall": {
+        "tool": "proser_codex",
+        "args": {
+          "action": "create_entry",
+          "bookId": 42,
+          "body": {
+            "entryType": "faction",
+            "entryName": "The Amber Pruners",
+            "entryDescription": "Caretakers who prune memory-bearing trees."
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "name": "@cheftaco/proser-contracts",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build --force",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --fsModuleCachePath node_modules/.vitest-cache",
+    "test:watch": "vitest --fsModuleCachePath node_modules/.vitest-cache"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vitest": "5.0.5"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HiveMagnus/proser.git",
+    "directory": "ProserAuthor/packages/contracts"
+  },
+  "files": [
+    "dist/"
+  ],
+  "license": "Apache-2.0"
+}

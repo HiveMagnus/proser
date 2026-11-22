@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.next/
+*.tsbuildinfo
+
+# Turbo
+.turbo/
+
+# IDE
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage/
+test-results/
+playwright-report/
+
+# Docker
+infra/docker/data/
+
+# TLS certificates (generated, never commit)
+certs/
+
+# Local-only references
+APP_ARCHITECTURE_IAM.md
+node_modules
+apps/web/e2e/.auth/

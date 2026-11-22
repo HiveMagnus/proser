@@ -1,0 +1,1 @@
+proser-author ALL=(root) NOPASSWD: /usr/bin/systemctl restart proser-v2-web.service proser-factory.service

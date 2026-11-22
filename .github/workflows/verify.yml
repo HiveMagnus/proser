@@ -1,0 +1,429 @@
+name: Verify Proser
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      performance:
+        description: Run deferred full reference-profile performance certification
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  changes:
+    name: Changes and documentation
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      full: ${{ steps.changes.outputs.full }}
+      documentationOnly: ${{ steps.changes.outputs.documentationOnly }}
+      reused: ${{ steps.changes.outputs.reused }}
+      factory: ${{ steps.changes.outputs.factory }}
+      author: ${{ steps.changes.outputs.author }}
+      contracts-and-canvas: ${{ steps.changes.outputs.contracts-and-canvas }}
+      document-tools: ${{ steps.changes.outputs.document-tools }}
+      authenticated-document-browser: ${{ steps.changes.outputs.authenticated-document-browser }}
+      authenticated-quick-draft-webkit: ${{ steps.changes.outputs.authenticated-quick-draft-webkit }}
+    env:
+      DATABASE_URL: postgresql://unused:fixture-only@127.0.0.1:5432/unused_fixture
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - run: npm run test:ci
+      - id: changes
+        name: Classify the complete change range
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/classify-ci-changes.mjs "$RUNNER_TEMP/proser-ci-changes.json"
+      - name: Cache npm downloads
+        if: steps.changes.outputs.documentationOnly == 'true'
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-npm-v2-${{ hashFiles('ProserFactory/package-lock.json', 'ProserFactory/vendor/**/package-lock.json') }}
+      - name: Check changed documentation formatting and tables
+        if: steps.changes.outputs.documentationOnly == 'true'
+        run: npm exec --yes --package=prettier@3.9.10 -- node scripts/check-ci-documentation.mjs "$RUNNER_TEMP/proser-ci-changes.json"
+      - name: Check generated API documentation against Factory contracts
+        if: steps.changes.outputs.documentationOnly == 'true'
+        run: npm --prefix ProserFactory ci && npm --prefix ProserFactory run db:generate && npm run docs:validate
+  factory:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs['factory'] != 'false' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17.6-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: proser-ci-fixture-only
+          POSTGRES_DB: proser_canvas_ci_test
+        ports: [55441:5432]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d proser_canvas_ci_test"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: [56441:6379]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:proser-ci-fixture-only@127.0.0.1:55441/proser_canvas_ci_test
+      REDIS_URL: redis://127.0.0.1:56441
+      USE_BULLMQ: "false"
+      TLS_ENABLED: "false"
+      DOCUMENT_AUTHORITY_ENABLED: "false"
+      AUTH_SECRET: proser-ci-session-fixture-only
+      FACTORY_AUTH_SECRET: proser-ci-factory-fixture-only
+      PUBLICATION_FONT_MANIFEST: ${{ github.workspace }}/.ci/proser-publication-fonts/manifest.json
+    defaults:
+      run:
+        working-directory: ProserFactory
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Cache npm downloads
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-npm-v2-${{ hashFiles('ProserFactory/package-lock.json', 'ProserFactory/vendor/**/package-lock.json') }}
+      - run: npm ci && npm run db:generate && npm run db:deploy
+      - run: npm exec -- playwright install --with-deps chromium
+      - run: node scripts/install-publication-fonts.mjs "$(dirname "$PUBLICATION_FONT_MANIFEST")"
+      - run: npm run lint && npm run typecheck && npm run test:build
+      - run: node --test scripts/require-isolated-test-services.test.cjs
+      - run: npm run codec:test && npm test && npm run test:smoke && npm run test:cli
+      - run: npm run build && npm audit
+      - run: node ../scripts/test-worker-heartbeat.mjs
+      - run: bash -n scripts/deploy-to-proser.sh
+  author:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs['author'] != 'false' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      NEXTAUTH_SECRET: proser-ci-author-session-fixture-only
+      FACTORY_AUTH_SECRET: proser-ci-factory-fixture-only
+      FACTORY_URL: http://factory.example.test:3001
+    defaults:
+      run:
+        working-directory: ProserAuthor
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - run: npm install --global corepack@0.36.0 && corepack enable && corepack prepare pnpm@12.16.1 --activate
+      - name: Locate pnpm store
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(corepack pnpm --dir "$GITHUB_WORKSPACE/ProserAuthor" store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Cache pnpm downloads
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-corepack-0.36.0-pnpm-12.16.1-${{ hashFiles('ProserAuthor/pnpm-lock.yaml', 'ProserAuthor/pnpm-workspace.yaml', 'ProserAuthor/.npmrc', 'ProserAuthor/patches/**') }}
+      - run: corepack pnpm install --frozen-lockfile
+      - run: corepack pnpm format:check && corepack pnpm lint && corepack pnpm typecheck
+      - run: corepack pnpm test && corepack pnpm build && corepack pnpm audit
+      - run: node --test scripts/check-document-rollback.test.mjs
+      - run: bash -n scripts/deploy-to-proser.sh deploy/update.sh deploy/proser-tailscale-cert-renew
+      - run: docker compose config --quiet
+      - name: Validate combined Compose deployment and optional Factory port
+        working-directory: .
+        env:
+          PROSER_DB_PASSWORD: proser-ci-database-fixture-only
+          INTERNAL_API_SECRET: proser-ci-internal-fixture-only
+          METRICS_TOKEN: proser-ci-metrics-fixture-only
+        run: |
+          docker compose -f compose.yml config --quiet
+          docker compose -f compose.yml -f compose.factory-api.yml config --quiet
+  contracts-and-canvas:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs['contracts-and-canvas'] != 'false' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://unused:fixture-only@127.0.0.1:5432/unused_fixture
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Cache npm downloads
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-npm-v2-${{ hashFiles('ProserFactory/package-lock.json', 'ProserFactory/vendor/**/package-lock.json') }}
+      - run: npm install --global corepack@0.36.0 && corepack enable && corepack prepare pnpm@12.16.1 --activate
+      - name: Locate pnpm store
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(corepack pnpm --dir "$GITHUB_WORKSPACE/ProserAuthor" store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Cache pnpm downloads
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-corepack-0.36.0-pnpm-12.16.1-${{ hashFiles('ProserAuthor/pnpm-lock.yaml', 'ProserAuthor/pnpm-workspace.yaml', 'ProserAuthor/.npmrc', 'ProserAuthor/patches/**') }}
+      - run: npm --prefix ProserFactory ci && npm --prefix ProserFactory run db:generate
+      - run: corepack pnpm --dir ProserAuthor install --frozen-lockfile
+      - run: npm run documents:check && npm run format:check
+      - run: python3 scripts/test-node-runtime.py
+      - run: node --test document-tools/render-docx.test.mjs
+      - run: node scripts/check-canvas-shared-packages.mjs
+      - run: npm --prefix ProserFactory run codec:build && node ProserFactory/scripts/generate-canvas-release-ledger.mjs --check
+      - run: npm --prefix ProserFactory exec -- playwright install --with-deps chromium
+      - run: npm run test:canvas-fixtures
+      - run: npm run test:canvas
+      - run: npm --prefix ProserFactory exec -- playwright install --with-deps webkit
+      - run: npm run test:canvas-mobile -- --repeat 3
+        env:
+          DEBUG: pw:browser
+  document-tools:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs['document-tools'] != 'false' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: postgresql://unused:fixture-only@127.0.0.1:5432/unused_fixture
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Cache npm downloads
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-npm-v2-${{ hashFiles('ProserFactory/package-lock.json', 'ProserFactory/vendor/**/package-lock.json') }}
+      - run: npm --prefix ProserFactory ci && npm --prefix ProserFactory run db:generate && npm --prefix ProserFactory run build
+      - run: node scripts/create-document-fixtures.mjs /tmp/proser-document-fixtures
+      - run: node ProserFactory/scripts/native-paragraph-fixtures.mjs /tmp/proser-document-fixtures/native-paragraphs
+      - run: node ProserFactory/scripts/native-comment-fixtures.mjs /tmp/proser-document-fixtures/native-comments
+      - run: npm --prefix ProserFactory exec -- playwright install --with-deps chromium
+      - run: node ProserFactory/scripts/install-publication-fonts.mjs /tmp/proser-fixture-fonts
+      - run: PUBLICATION_FONT_MANIFEST=/tmp/proser-fixture-fonts/manifest.json npm --prefix ProserFactory exec -- tsx --tsconfig ProserFactory/tsconfig.json ProserFactory/scripts/owned-story-fixtures.ts /tmp/proser-document-fixtures/owned-stories
+      - run: PUBLICATION_FONT_MANIFEST=/tmp/proser-fixture-fonts/manifest.json npm --prefix ProserFactory exec -- tsx --tsconfig ProserFactory/tsconfig.json ProserFactory/scripts/named-style-fixtures.ts /tmp/proser-document-fixtures/named-styles
+      - run: PUBLICATION_FONT_MANIFEST=/tmp/proser-fixture-fonts/manifest.json npm --prefix ProserFactory exec -- tsx --tsconfig ProserFactory/tsconfig.json ProserFactory/scripts/word-theme-fixtures.ts /tmp/proser-document-fixtures/word-themes
+      - run: PUBLICATION_FONT_MANIFEST=/tmp/proser-fixture-fonts/manifest.json npm --prefix ProserFactory exec -- tsx --tsconfig ProserFactory/tsconfig.json ProserFactory/scripts/webp-publication-fixtures.ts /tmp/proser-document-fixtures/webp
+      - run: PUBLICATION_FONT_MANIFEST=/tmp/proser-fixture-fonts/manifest.json npm --prefix ProserFactory exec -- tsx --tsconfig ProserFactory/tsconfig.json ProserFactory/scripts/large-paragraph-publication-fixtures.ts /tmp/proser-document-fixtures/large-paragraph
+      - run: PUBLICATION_FONT_MANIFEST=/tmp/proser-fixture-fonts/manifest.json npm --prefix ProserFactory exec -- tsx --tsconfig ProserFactory/tsconfig.json ProserFactory/scripts/large-paragraph-publication-fixtures.ts /tmp/proser-document-fixtures/large-manuscript 600
+      - run: PUBLICATION_FONT_MANIFEST=/tmp/proser-fixture-fonts/manifest.json npm --prefix ProserFactory exec -- tsx --tsconfig ProserFactory/tsconfig.json ProserFactory/scripts/empty-line-font-fixtures.ts /tmp/proser-document-fixtures/empty-line-fonts
+      - run: PUBLICATION_FONT_MANIFEST=/tmp/proser-fixture-fonts/manifest.json npm --prefix ProserFactory exec -- tsx --tsconfig ProserFactory/tsconfig.json ProserFactory/scripts/historical-boundary-publication-fixtures.ts /tmp/proser-document-fixtures/historical-boundaries
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - name: Build document-tools with reusable layers
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: document-tools
+          load: true
+          push: false
+          tags: proser-document-tools:canvas-foundation
+          cache-from: type=gha,scope=document-tools-ubuntu24-amd64-v1,version=2
+          cache-to: type=gha,scope=document-tools-ubuntu24-amd64-v1,version=2,mode=max,ignore-error=true
+      - run: |
+          mkdir -p /tmp/proser-document-proof
+          docker run --rm --network none --cpus 2 --memory 2g --pids-limit 128 \
+            --mount type=bind,source=/tmp/proser-document-fixtures,target=/fixtures,readonly \
+            --mount type=bind,source=/tmp/proser-document-proof,target=/output \
+            proser-document-tools:canvas-foundation /bin/bash -c '/bin/bash /opt/verify-fixtures.sh && /bin/bash /opt/verify-native-paragraphs.sh && /bin/bash /opt/verify-owned-stories.sh && /bin/bash /opt/verify-native-comments.sh && /bin/bash /opt/verify-named-styles.sh && /bin/bash /opt/verify-themes-webp.sh && /bin/bash /opt/verify-large-paragraph.sh large-paragraph factory-only && /bin/bash /opt/verify-large-paragraph.sh large-manuscript && /bin/bash /opt/verify-empty-line-fonts.sh && /bin/bash /opt/verify-historical-boundaries.sh'
+  authenticated-document-browser:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs['authenticated-document-browser'] != 'false' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:17.6-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: proser-ci-fixture-only
+          POSTGRES_DB: proser_canvas_release_ci
+        ports: [55441:5432]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d proser_canvas_release_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: [56441:6379]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:proser-ci-fixture-only@127.0.0.1:55441/proser_canvas_release_ci
+      REDIS_URL: redis://127.0.0.1:56441/8
+      PROSER_RELEASE_SMOKE_OUTPUT: ${{ github.workspace }}/.ci/proser-release-workspace
+      PROSER_PERFORMANCE_OUTPUT: ${{ github.workspace }}/.ci/proser-document-browser
+      PUBLICATION_FONT_MANIFEST: ${{ github.workspace }}/.ci/proser-publication-fonts/manifest.json
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Cache npm downloads
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-npm-v2-${{ hashFiles('ProserFactory/package-lock.json', 'ProserFactory/vendor/**/package-lock.json') }}
+      - run: npm install --global corepack@0.36.0 && corepack enable && corepack prepare pnpm@12.16.1 --activate
+      - name: Locate pnpm store
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(corepack pnpm --dir "$GITHUB_WORKSPACE/ProserAuthor" store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Cache pnpm downloads
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-corepack-0.36.0-pnpm-12.16.1-${{ hashFiles('ProserAuthor/pnpm-lock.yaml', 'ProserAuthor/pnpm-workspace.yaml', 'ProserAuthor/.npmrc', 'ProserAuthor/patches/**') }}
+      - run: npm --prefix ProserFactory ci && npm --prefix ProserFactory run db:generate && npm --prefix ProserFactory run db:deploy
+      - run: corepack pnpm --dir ProserAuthor install --frozen-lockfile
+      - run: npm --prefix ProserFactory exec -- playwright install --with-deps chromium
+      - run: node ProserFactory/scripts/install-publication-fonts.mjs "$(dirname "$PUBLICATION_FONT_MANIFEST")"
+      - run: npm run build
+      - run: node scripts/run-document-release-workspace-smoke.mjs
+      - run: npm run test:document-performance
+        if: github.event_name == 'workflow_dispatch' && inputs.performance
+      - name: Retain acceptance measurements in job output
+        if: always()
+        run: |
+          if test -f "$PROSER_PERFORMANCE_OUTPUT/performance.json"; then
+            cat "$PROSER_PERFORMANCE_OUTPUT/performance.json"
+          fi
+  authenticated-quick-draft-webkit:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs['authenticated-quick-draft-webkit'] != 'false' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17.6-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: proser-ci-fixture-only
+          POSTGRES_DB: proser_canvas_release_ci_webkit
+        ports: [55441:5432]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d proser_canvas_release_ci_webkit"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: [56441:6379]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:proser-ci-fixture-only@127.0.0.1:55441/proser_canvas_release_ci_webkit
+      REDIS_URL: redis://127.0.0.1:56441/8
+      PROSER_RELEASE_BROWSER: webkit
+      PROSER_RELEASE_R2_QUICK_DRAFT_ONLY: "true"
+      PROSER_RELEASE_SMOKE_OUTPUT: ${{ github.workspace }}/.ci/proser-quick-draft-webkit
+      PUBLICATION_FONT_MANIFEST: ${{ github.workspace }}/.ci/proser-publication-fonts/manifest.json
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Cache npm downloads
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-npm-v2-${{ hashFiles('ProserFactory/package-lock.json', 'ProserFactory/vendor/**/package-lock.json') }}
+      - run: npm install --global corepack@0.36.0 && corepack enable && corepack prepare pnpm@12.16.1 --activate
+      - name: Locate pnpm store
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(corepack pnpm --dir "$GITHUB_WORKSPACE/ProserAuthor" store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Cache pnpm downloads
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-corepack-0.36.0-pnpm-12.16.1-${{ hashFiles('ProserAuthor/pnpm-lock.yaml', 'ProserAuthor/pnpm-workspace.yaml', 'ProserAuthor/.npmrc', 'ProserAuthor/patches/**') }}
+      - run: npm --prefix ProserFactory ci && npm --prefix ProserFactory run db:generate && npm --prefix ProserFactory run db:deploy
+      - run: corepack pnpm --dir ProserAuthor install --frozen-lockfile
+      - run: npm --prefix ProserFactory exec -- playwright install --with-deps chromium webkit
+      - run: node ProserFactory/scripts/install-publication-fonts.mjs "$(dirname "$PUBLICATION_FONT_MANIFEST")"
+      - run: node --test scripts/document-release-browser.test.mjs && npm run documents:check
+      - run: npm run build
+      - run: node scripts/run-document-release-workspace-smoke.mjs
+      - name: Prepare a separate fresh WebKit workspace database
+        working-directory: ProserFactory
+        run: |
+          node <<'NODE'
+          const { Client } = require('pg');
+          (async () => {
+            const client = new Client({ connectionString: process.env.DATABASE_URL });
+            await client.connect();
+            try {
+              await client.query('CREATE DATABASE proser_canvas_release_ci_webkit_workspace');
+            } finally {
+              await client.end();
+            }
+          })().catch(error => { console.error(error.message); process.exitCode = 1; });
+          NODE
+      - name: Run seven authenticated WebKit workspace checks
+        env:
+          DATABASE_URL: postgresql://postgres:proser-ci-fixture-only@127.0.0.1:55441/proser_canvas_release_ci_webkit_workspace
+          REDIS_URL: redis://127.0.0.1:56441/9
+          PROSER_RELEASE_R2_QUICK_DRAFT_ONLY: "false"
+          PROSER_RELEASE_R2_WORKSPACE_ONLY: "true"
+          PROSER_RELEASE_SMOKE_OUTPUT: ${{ github.workspace }}/.ci/proser-workspace-webkit
+        run: |
+          npm --prefix ProserFactory run db:deploy
+          node scripts/run-document-release-workspace-smoke.mjs
+      - name: Retain focused browser acceptance and exact profile
+        if: always()
+        run: |
+          for directory in "$PROSER_RELEASE_SMOKE_OUTPUT" "$GITHUB_WORKSPACE/.ci/proser-workspace-webkit"; do
+            for receipt in evidence.json browser-profile.json; do
+              if test -f "$directory/$receipt"; then
+                cat "$directory/$receipt"
+              fi
+            done
+          done
+
+  acceptance:
+    name: CI acceptance
+    needs:
+      [
+        changes,
+        factory,
+        author,
+        contracts-and-canvas,
+        document-tools,
+        authenticated-document-browser,
+        authenticated-quick-draft-webkit,
+      ]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Require every selected suite to succeed
+        env:
+          CI_NEEDS: ${{ toJSON(needs) }}
+        run: node scripts/ci-validation.mjs

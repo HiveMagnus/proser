@@ -1,0 +1,14 @@
+import {z} from 'zod';
+import {commentAnchorSchema} from '@/documents/validation';
+const identity=z.string().min(1).max(128).regex(/^[a-zA-Z0-9_.:-]+$/);
+export const sceneCommentParams=z.object({bookId:z.coerce.number().int().positive(),sceneId:z.coerce.number().int().positive()});
+export const sceneCommentReviewParams=sceneCommentParams.extend({commentId:identity});
+export const layoutCommentParams=z.object({bookId:z.coerce.number().int().positive(),storyId:identity});
+export const layoutCommentReviewParams=layoutCommentParams.extend({commentId:identity});
+const anchors=z.array(commentAnchorSchema).min(1).max(1000).optional();
+const sceneSource=z.object({expectedRevisionId:z.string().uuid(),expectedSceneRevisionId:z.string().uuid()});
+const layoutSource=z.object({expectedRevisionId:z.string().uuid(),expectedLayoutRevisionId:z.string().uuid()});
+export const sceneCommentRevalidation=sceneSource.extend({anchors}).strict();
+export const sceneCommentResolution=sceneSource.extend({operationId:z.string().uuid(),action:z.enum(['resolved','reopened','reanchored']),anchors}).strict();
+export const layoutCommentRevalidation=layoutSource.extend({anchors}).strict();
+export const layoutCommentResolution=layoutSource.extend({operationId:z.string().uuid(),action:z.enum(['resolved','reopened','reanchored']),anchors}).strict();

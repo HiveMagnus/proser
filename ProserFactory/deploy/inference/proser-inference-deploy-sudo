@@ -1,0 +1,183 @@
+#!/usr/bin/env bash
+# Root-owned semantic privilege boundary for the inference deployment.
+set -euo pipefail
+
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+readonly PATH
+
+readonly UNIT=/etc/systemd/system/llama-qwen3.6.service
+readonly KEY_FILE=/etc/proser-inference-api-keys
+readonly TEMPLATE_DIR=/opt/llama.cpp/templates/qwen3.6-proser-v1
+readonly TEMPLATE="$TEMPLATE_DIR/chat_template.jinja"
+readonly STATE_ROOT=/var/lib/proser-inference-deploy
+readonly EXPECTED_UNIT_SHA256=eac572908903a18123e58ff177e627e2d0ecba08ad3f77cb5fd5dc2635cd403d
+shopt -s nullglob
+
+die() {
+  printf 'proser-inference-deploy-sudo: %s\n' "$*" >&2
+  exit 64
+}
+
+[[ ${SUDO_USER:-} == proser-inference ]] || die 'only the proser-inference deployment account is allowed'
+[[ $# -ge 1 ]] || die 'a subcommand is required'
+
+validate_stamp() {
+  [[ "$1" =~ ^[0-9]{8}T[0-9]{6}Z$ ]] || die 'invalid deployment stamp'
+}
+
+assert_fixed_path() {
+  local path="$1" current="" part
+  local -a parts
+  IFS='/' read -r -a parts <<<"${path#/}"
+  for part in "${parts[@]}"; do
+    [[ -n "$part" ]] || continue
+    current="$current/$part"
+    [[ ! -L "$current" ]] || die "symlink refused: $current"
+  done
+  [[ "$(realpath -m -- "$path")" == "$path" ]] || die "non-canonical path refused: $path"
+}
+
+assert_stage_file() {
+  local path="$1" maximum_bytes="$2" expected_mode="$3" mode
+  assert_fixed_path "$path"
+  [[ -f "$path" ]] || die "staged file is absent: $path"
+  [[ "$(stat -c %U -- "$path")" == proser-inference ]] || die "staged file owner is invalid: $path"
+  [[ "$(stat -c %h -- "$path")" == 1 ]] || die "staged file has multiple links: $path"
+  [[ "$(stat -c %s -- "$path")" -le "$maximum_bytes" ]] || die "staged file is too large: $path"
+  mode="$(stat -c %a -- "$path")"
+  [[ "$mode" == "$expected_mode" ]] || die "staged file mode must be $expected_mode: $path"
+}
+
+state_dir() {
+  printf '%s/%s\n' "$STATE_ROOT" "$1"
+}
+
+read_prior_flag() {
+  local receipt="$1" key="$2" value
+  value="$(awk -F= -v key="$key" '$1 == key { print $2; exit }' "$receipt")"
+  [[ "$value" == 0 || "$value" == 1 ]] || die "invalid rollback receipt: $key"
+  printf '%s\n' "$value"
+}
+
+rollback() {
+  local stamp="$1" state receipt prior_unit prior_key prior_template
+  validate_stamp "$stamp"
+  state="$(state_dir "$stamp")"
+  receipt="$state/receipt"
+  assert_fixed_path "$state"
+  if [[ ! -f "$receipt" || -L "$receipt" ]]; then
+    # Activation captures into the private state directory before it changes
+    # any live path. An absent receipt therefore means cleanup is sufficient.
+    /usr/bin/rm -rf -- "$state"
+    return 0
+  fi
+  prior_unit="$(read_prior_flag "$receipt" PRIOR_UNIT)"
+  prior_key="$(read_prior_flag "$receipt" PRIOR_KEY)"
+  prior_template="$(read_prior_flag "$receipt" PRIOR_TEMPLATE)"
+
+  if [[ "$prior_unit" == 1 ]]; then
+    /usr/bin/install -o root -g root -m 0644 -- "$state/unit.bak" "$UNIT"
+  else
+    if ! /usr/bin/systemctl disable --now llama-qwen3.6.service >/dev/null 2>&1; then
+      if /usr/bin/systemctl is-active --quiet llama-qwen3.6.service ||
+        /usr/bin/systemctl is-enabled --quiet llama-qwen3.6.service; then
+        die 'failed to stop or disable the new inference service during rollback'
+      fi
+    fi
+    /usr/bin/rm -f -- "$UNIT"
+  fi
+  if [[ "$prior_key" == 1 ]]; then
+    /usr/bin/install -o root -g proser-inference -m 0640 -- "$state/key.bak" "$KEY_FILE"
+  else
+    /usr/bin/rm -f -- "$KEY_FILE"
+  fi
+  if [[ "$prior_template" == 1 ]]; then
+    /usr/bin/install -o root -g root -m 0644 -- "$state/template.bak" "$TEMPLATE"
+  else
+    /usr/bin/rm -f -- "$TEMPLATE"
+  fi
+
+  /usr/bin/systemctl daemon-reload
+  if [[ "$prior_unit" == 1 ]]; then
+    /usr/bin/systemctl restart llama-qwen3.6.service
+  fi
+  /usr/bin/rm -rf -- "$state"
+}
+
+command_name="$1"
+shift
+case "$command_name" in
+  ping)
+    [[ $# -eq 0 ]] || die 'ping takes no arguments'
+    /usr/bin/true
+    ;;
+  activate)
+    [[ $# -eq 1 ]] || die 'activate requires one deployment stamp'
+    stamp="$1"
+    validate_stamp "$stamp"
+    state="$(state_dir "$stamp")"
+    unit_stage="/tmp/llama-qwen3.6.$stamp.service"
+    key_stage="/tmp/proser-inference-api-keys.$stamp"
+    template_stage="/tmp/proser-chat-template.$stamp.jinja"
+    assert_fixed_path "$UNIT"
+    assert_fixed_path "$KEY_FILE"
+    assert_fixed_path "$TEMPLATE_DIR"
+    assert_fixed_path "$TEMPLATE"
+    assert_fixed_path "$STATE_ROOT"
+    assert_fixed_path "$state"
+    active_state=("$STATE_ROOT"/*)
+    [[ ${#active_state[@]} -eq 0 ]] || die 'another inference deployment is already active'
+    [[ ! -e "$state" ]] || die 'deployment stamp already exists'
+    /usr/bin/install -d -o root -g root -m 0700 -- "$STATE_ROOT" "$state"
+
+    # Capture each user-owned directory entry into a root-only directory first.
+    # Validation, hashing, and installation then operate on an inode/path the
+    # deployment user can no longer replace between checks.
+    /usr/bin/mv -T -- "$unit_stage" "$state/unit.stage"
+    /usr/bin/mv -T -- "$key_stage" "$state/key.stage"
+    /usr/bin/mv -T -- "$template_stage" "$state/template.stage"
+    unit_stage="$state/unit.stage"
+    key_stage="$state/key.stage"
+    template_stage="$state/template.stage"
+    assert_stage_file "$unit_stage" 131072 644
+    assert_stage_file "$key_stage" 4096 600
+    assert_stage_file "$template_stage" 1048576 644
+    [[ "$(sha256sum -- "$unit_stage" | awk '{print $1}')" == "$EXPECTED_UNIT_SHA256" ]] ||
+      die 'staged unit does not match the reviewed service definition'
+    api_key="$(cat -- "$key_stage")"
+    [[ "$api_key" =~ ^[A-Za-z0-9._~-]{32,256}$ ]] || die 'staged API key is malformed'
+    [[ "$(wc -l <"$key_stage")" == 1 ]] || die 'staged API key must contain exactly one line'
+    unset api_key
+    prior_unit=0
+    prior_key=0
+    prior_template=0
+    if [[ -f "$UNIT" ]]; then /usr/bin/cp -a -- "$UNIT" "$state/unit.bak"; prior_unit=1; fi
+    if [[ -f "$KEY_FILE" ]]; then /usr/bin/cp -a -- "$KEY_FILE" "$state/key.bak"; prior_key=1; fi
+    if [[ -f "$TEMPLATE" ]]; then /usr/bin/cp -a -- "$TEMPLATE" "$state/template.bak"; prior_template=1; fi
+    printf 'PRIOR_UNIT=%s\nPRIOR_KEY=%s\nPRIOR_TEMPLATE=%s\n' \
+      "$prior_unit" "$prior_key" "$prior_template" >"$state/receipt"
+    /usr/bin/chmod 0600 "$state/receipt"
+
+    /usr/bin/install -d -o root -g root -m 0755 -- "$TEMPLATE_DIR"
+    /usr/bin/install -o root -g root -m 0644 -- "$template_stage" "$TEMPLATE"
+    /usr/bin/install -o root -g root -m 0644 -- "$unit_stage" "$UNIT"
+    /usr/bin/install -o root -g proser-inference -m 0640 -- "$key_stage" "$KEY_FILE"
+    /usr/bin/systemctl daemon-reload
+    /usr/bin/systemctl restart llama-qwen3.6.service
+    ;;
+  rollback)
+    [[ $# -eq 1 ]] || die 'rollback requires one deployment stamp'
+    rollback "$1"
+    ;;
+  finalize)
+    [[ $# -eq 1 ]] || die 'finalize requires one deployment stamp'
+    validate_stamp "$1"
+    state="$(state_dir "$1")"
+    assert_fixed_path "$state"
+    [[ -f "$state/receipt" && ! -L "$state/receipt" ]] || die 'deployment receipt is absent'
+    /usr/bin/rm -rf -- "$state"
+    ;;
+  *)
+    die 'unsupported subcommand'
+    ;;
+esac

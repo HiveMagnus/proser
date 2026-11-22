@@ -1,0 +1,7 @@
+{
+  "name": "Intentional refrain",
+  "original": "Remember the river, her mother had said. At the border she whispered it again: remember the river. When the gates opened, the words became a promise—remember the river.",
+  "candidate": "Her mother had told her to remember the river. At the border she repeated the advice. When the gates opened, the advice became a promise.",
+  "protectedElements": ["remember the river"],
+  "references": []
+}

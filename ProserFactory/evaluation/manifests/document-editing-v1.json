@@ -1,0 +1,227 @@
+{
+  "suiteKey": "structured-document-editing",
+  "suiteVersion": "1.1.0",
+  "cases": [
+    {
+      "id": "format-object-preservation",
+      "caseVersion": "1.0.0",
+      "fixture": "../suites/document-editing/format-object-preservation.json",
+      "expected": "../hidden/document-editing/format-object-preservation.json",
+      "inputSha256": "08fec047ceb1d400c68df45286ba931b58df897dcea05992b04081ce28bae6db",
+      "expectedSha256": "195b8f85881fa8b5fa135149b104f364daaefebdb83320f3efde48e91ba9ff57",
+      "tags": [
+        "structured-document",
+        "format",
+        "object",
+        "preservation"
+      ]
+    },
+    {
+      "id": "incompatible-format-replacement",
+      "caseVersion": "1.0.0",
+      "fixture": "../suites/document-editing/incompatible-format-replacement.json",
+      "expected": "../hidden/document-editing/incompatible-format-replacement.json",
+      "inputSha256": "57a1ae1fe006a023f5b3e65214fa2da14d21adfda6925d5b3aa189f095bf0a88",
+      "expectedSha256": "f92a87c40e60ce357c1d2ab780cd06fc7710463e84ba9bfd5e08503dd7ecde0b",
+      "tags": [
+        "structured-document",
+        "incompatible",
+        "format",
+        "replacement"
+      ]
+    },
+    {
+      "id": "inline-image-adjacent-edit",
+      "caseVersion": "1.1.0",
+      "fixture": "../suites/document-editing/inline-image-adjacent-edit.json",
+      "expected": "../hidden/document-editing/inline-image-adjacent-edit.json",
+      "inputSha256": "656bb221f221e0a8abb49ccba669a3e53846b1c1958f7972b108cbc0e3562180",
+      "expectedSha256": "2e1b36931eed44eea2d92ce7e955243bb9da70801750d5f8cb9a6c6508a7808c",
+      "tags": [
+        "structured-document",
+        "inline-image",
+        "protected-object"
+      ]
+    },
+    {
+      "id": "inline-image-range-refused",
+      "caseVersion": "1.1.0",
+      "fixture": "../suites/document-editing/inline-image-range-refused.json",
+      "expected": "../hidden/document-editing/inline-image-range-refused.json",
+      "inputSha256": "2b417fa1d475cab6978754a9bc68b3b504e9f694a022ab42e40831e50c913d0e",
+      "expectedSha256": "963b611d59267a740814051a7797ff0eca84976ef83848471e5358b144b2be7c",
+      "tags": [
+        "structured-document",
+        "inline-image",
+        "protected-object"
+      ]
+    },
+    {
+      "id": "pending-review-conflict",
+      "caseVersion": "1.0.0",
+      "fixture": "../suites/document-editing/pending-review-conflict.json",
+      "expected": "../hidden/document-editing/pending-review-conflict.json",
+      "inputSha256": "44278938d796905f56b8096fcb48cc6d983181989380471652b504ab88a021b5",
+      "expectedSha256": "7baafc59a8631dde3ffead774eff872dab34f2beceb88e924fa80038c8076bb4",
+      "tags": [
+        "structured-document",
+        "pending",
+        "review",
+        "conflict"
+      ]
+    },
+    {
+      "id": "repeated-quote-no-relocation",
+      "caseVersion": "1.0.0",
+      "fixture": "../suites/document-editing/repeated-quote-no-relocation.json",
+      "expected": "../hidden/document-editing/repeated-quote-no-relocation.json",
+      "inputSha256": "a39cc0e0440b97607bd41725bbf0ec745a9b9c62fc134045271caa9dcc4a7fc1",
+      "expectedSha256": "bc1a1b6fba2bb11e8f7ed4efe2df603642821e25cbb2e055fec095d2a53e4260",
+      "tags": [
+        "structured-document",
+        "repeated",
+        "quote",
+        "no",
+        "relocation"
+      ]
+    },
+    {
+      "id": "stale-inline-image",
+      "caseVersion": "1.1.0",
+      "fixture": "../suites/document-editing/stale-inline-image.json",
+      "expected": "../hidden/document-editing/stale-inline-image.json",
+      "inputSha256": "62c1bd84f80e0bcf9736b6deb472eae61989c5733e63c5402b8eb208d4cb0846",
+      "expectedSha256": "c8284a1e57b85c88659164328e5838818ba5f8dfba50092ed4a5021ce255a039",
+      "tags": [
+        "structured-document",
+        "inline-image",
+        "protected-object"
+      ]
+    },
+    {
+      "id": "stale-layout",
+      "caseVersion": "1.0.0",
+      "fixture": "../suites/document-editing/stale-layout.json",
+      "expected": "../hidden/document-editing/stale-layout.json",
+      "inputSha256": "636d6de4993837d3e1940ac6a4cf3b50d3ddd63df1835428fcee3f01d66f6ec2",
+      "expectedSha256": "c8284a1e57b85c88659164328e5838818ba5f8dfba50092ed4a5021ce255a039",
+      "tags": [
+        "structured-document",
+        "stale",
+        "layout"
+      ]
+    },
+    {
+      "id": "stale-paragraph-format",
+      "caseVersion": "1.0.0",
+      "fixture": "../suites/document-editing/stale-paragraph-format.json",
+      "expected": "../hidden/document-editing/stale-paragraph-format.json",
+      "inputSha256": "aecbf92bd97b6aaccc7a183a13eeaf212fa2226e73f43aea37eb17dea48d3f9f",
+      "expectedSha256": "c8284a1e57b85c88659164328e5838818ba5f8dfba50092ed4a5021ce255a039",
+      "tags": [
+        "structured-document",
+        "stale",
+        "paragraph",
+        "format"
+      ]
+    },
+    {
+      "id": "stale-protected-image",
+      "caseVersion": "1.0.0",
+      "fixture": "../suites/document-editing/stale-protected-image.json",
+      "expected": "../hidden/document-editing/stale-protected-image.json",
+      "inputSha256": "79d554f9895e013f59d4253b5e8f906fd21c63d4634d45538c19291437dda824",
+      "expectedSha256": "c8284a1e57b85c88659164328e5838818ba5f8dfba50092ed4a5021ce255a039",
+      "tags": [
+        "structured-document",
+        "stale",
+        "protected",
+        "image"
+      ]
+    },
+    {
+      "id": "stale-run-format",
+      "caseVersion": "1.0.0",
+      "fixture": "../suites/document-editing/stale-run-format.json",
+      "expected": "../hidden/document-editing/stale-run-format.json",
+      "inputSha256": "394a643521436c2d7ca2bcf8e360145b5249d50a702620b0a2f98f2e84fb0f2b",
+      "expectedSha256": "c8284a1e57b85c88659164328e5838818ba5f8dfba50092ed4a5021ce255a039",
+      "tags": [
+        "structured-document",
+        "stale",
+        "run",
+        "format"
+      ]
+    },
+    {
+      "id": "stale-run-identity",
+      "caseVersion": "1.0.0",
+      "fixture": "../suites/document-editing/stale-run-identity.json",
+      "expected": "../hidden/document-editing/stale-run-identity.json",
+      "inputSha256": "8a1c61fc52e3eb05e63f96ff8886ff7662801d24942e521bfdbc99d16a6f96f7",
+      "expectedSha256": "c8284a1e57b85c88659164328e5838818ba5f8dfba50092ed4a5021ce255a039",
+      "tags": [
+        "structured-document",
+        "stale",
+        "run",
+        "identity"
+      ]
+    },
+    {
+      "id": "stale-table-container",
+      "caseVersion": "1.0.0",
+      "fixture": "../suites/document-editing/stale-table-container.json",
+      "expected": "../hidden/document-editing/stale-table-container.json",
+      "inputSha256": "c0c2ae0017b80a0c9736cc2a1902dbc03c034e3dedad274d60638ab6e7484b85",
+      "expectedSha256": "c8284a1e57b85c88659164328e5838818ba5f8dfba50092ed4a5021ce255a039",
+      "tags": [
+        "structured-document",
+        "stale",
+        "table",
+        "container"
+      ]
+    },
+    {
+      "id": "table-cell-edit",
+      "caseVersion": "1.0.0",
+      "fixture": "../suites/document-editing/table-cell-edit.json",
+      "expected": "../hidden/document-editing/table-cell-edit.json",
+      "inputSha256": "219118def343b2abd6840931117d2db2ff3afd4329d2e2881b6e16a962c24383",
+      "expectedSha256": "2e1b36931eed44eea2d92ce7e955243bb9da70801750d5f8cb9a6c6508a7808c",
+      "tags": [
+        "structured-document",
+        "table",
+        "cell",
+        "edit"
+      ]
+    },
+    {
+      "id": "unicode-grapheme-edit",
+      "caseVersion": "1.0.0",
+      "fixture": "../suites/document-editing/unicode-grapheme-edit.json",
+      "expected": "../hidden/document-editing/unicode-grapheme-edit.json",
+      "inputSha256": "e19abf1a02a6103a91c6dc5fc2356fb830dcf424f761f7db3a1262ced022e548",
+      "expectedSha256": "2e1b36931eed44eea2d92ce7e955243bb9da70801750d5f8cb9a6c6508a7808c",
+      "tags": [
+        "structured-document",
+        "unicode",
+        "grapheme",
+        "edit"
+      ]
+    },
+    {
+      "id": "unicode-split-refused",
+      "caseVersion": "1.0.0",
+      "fixture": "../suites/document-editing/unicode-split-refused.json",
+      "expected": "../hidden/document-editing/unicode-split-refused.json",
+      "inputSha256": "12dbdd18089b19fb336441bdb35862d0e641efe1db8fccce164b9aa9a7e33828",
+      "expectedSha256": "c4d2e825e996cebcb698bb185eb16f8bdf34e0ebad1afd17b07b2f199d743d98",
+      "tags": [
+        "structured-document",
+        "unicode",
+        "split",
+        "refused"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "purpose": "candidate-specific-reviewed-document-transition",
+  "migrations": {
+    "prisma/migrations/20261005120000_structured_documents/migration.sql": "4cd12803d11987add3cc4f13802701694dad420d0274900d8392b012fbc86fe5",
+    "prisma/migrations/20261005130000_document_scopes/migration.sql": "7c72a1316bb038393bbece420c8de691cd3f07d42698e45f4f379c64c470b770",
+    "prisma/migrations/20261005140000_document_inference/migration.sql": "bd3f655f577683179e0a2ccbc924ea47d9e11886197bd115412ef63f988b367a",
+    "prisma/migrations/20261005150000_document_proposals/migration.sql": "28aaf599b842a422e6953aa7cc953c88a75274d9fdbe9905557beebf0db44014",
+    "prisma/migrations/20261005160000_document_trace_analysis/migration.sql": "f2e63b15bf39cb4e243fd14606e2b32f9fc4a27ebba04c8649e444236c44da1e",
+    "prisma/migrations/20261005170000_document_import_originals/migration.sql": "1a77515ee3432f954992b893ecac830768380ad18d13f5950eed17a53710368b",
+    "prisma/migrations/20261005180000_document_workflow_effects/migration.sql": "cb919f3f351a7b03cde6c47eb88c5f5b4cd64efdf1df3c1f402937a255596a07",
+    "prisma/migrations/20261005190000_document_publication_artifacts/migration.sql": "0aa0b705fde972b115709b2ebf2b90f55d318f4ce8de8955310f424868a223fe",
+    "prisma/migrations/20261005200000_document_operator_effects/migration.sql": "3ed62e089a248db0eb02d6b264bb48a058e515d8cdaff2d50ae87cf68852a819",
+    "prisma/migrations/20261005210000_document_search_index/migration.sql": "a98ded5da68168765258920bc90533aa54b16dd3616386db041c6f354a0aa086",
+    "prisma/migrations/20261005220000_release_admission_fence/migration.sql": "713d68d1d243000a36fec9a6c7d1b4b3aa3c161766740e639d0c2fbe56da5b0d",
+    "prisma/migrations/20261005230000_legacy_schema_alignment/migration.sql": "a3d389a5a3059e90fe657e5714ca0229ad9c6afae4300499db5a92f215a90c79",
+    "prisma/migrations/20261006023000_owned_story_discussions/migration.sql": "97bb3a7ccb399539eae4616dbdc58a1fbd0b4e42b48f52c81cfe932b62c21053"
+  },
+  "migrationLockSha256": "99836963713b4f5b269ad49af0ed3d7b0b2e336115c2f92dc9ac683d139d0900",
+  "enforcementSqlSha256": "3995b374b447894edf17fb276aded5cf307c7dac2b52b81d100197806b923f19",
+  "migrationCount": 22
+}

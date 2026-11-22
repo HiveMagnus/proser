@@ -1,0 +1,178 @@
+{
+  "name": "pending-review-conflict",
+  "document": {
+    "schemaVersion": 1,
+    "blocks": [
+      {
+        "type": "paragraph",
+        "id": "first",
+        "style": {
+          "alignment": "left",
+          "after": 12
+        },
+        "runs": [
+          {
+            "id": "first-run",
+            "text": "Repeated phrase.",
+            "style": {
+              "font": "Georgia",
+              "bold": true,
+              "size": 18
+            }
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "second",
+        "style": {
+          "alignment": "left",
+          "after": 12
+        },
+        "runs": [
+          {
+            "id": "second-run",
+            "text": "Repeated phrase.",
+            "style": {
+              "font": "Georgia",
+              "bold": true,
+              "size": 18
+            },
+            "changeId": "pending-insert"
+          }
+        ]
+      },
+      {
+        "type": "image",
+        "id": "image",
+        "assetId": 1,
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "alt": "Protected image",
+        "width": 100,
+        "height": 100
+      },
+      {
+        "type": "table",
+        "id": "table",
+        "widths": [
+          200,
+          200
+        ],
+        "rows": [
+          {
+            "id": "row",
+            "cells": [
+              {
+                "id": "cell-one",
+                "paragraphs": [
+                  {
+                    "type": "paragraph",
+                    "id": "cell-paragraph",
+                    "style": {
+                      "alignment": "left",
+                      "after": 12
+                    },
+                    "runs": [
+                      {
+                        "id": "cell-paragraph-run",
+                        "text": "Table phrase.",
+                        "style": {
+                          "font": "Georgia",
+                          "bold": true,
+                          "size": 18
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "cell-two",
+                "paragraphs": [
+                  {
+                    "type": "paragraph",
+                    "id": "other-cell",
+                    "style": {
+                      "alignment": "left",
+                      "after": 12
+                    },
+                    "runs": [
+                      {
+                        "id": "other-cell-run",
+                        "text": "Unaffected cell.",
+                        "style": {
+                          "font": "Georgia",
+                          "bold": true,
+                          "size": 18
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "changes": [
+      {
+        "id": "pending-insert",
+        "kind": "insertion",
+        "status": "pending",
+        "targetRunIds": [
+          "second-run"
+        ],
+        "authorId": 1,
+        "authorName": "fixture",
+        "createdAt": "2026-10-05T00:00:00.000Z",
+        "origin": "ai"
+      }
+    ],
+    "comments": [],
+    "layout": {
+      "preset": "manuscript",
+      "width": 794,
+      "height": 1123,
+      "margins": [
+        76,
+        76,
+        76,
+        76
+      ],
+      "font": "Georgia",
+      "fontSize": 16,
+      "pageNumbers": true,
+      "header": [
+        {
+          "type": "paragraph",
+          "id": "header",
+          "style": {
+            "alignment": "left",
+            "after": 12
+          },
+          "runs": [
+            {
+              "id": "header-run",
+              "text": "Preserved header",
+              "style": {
+                "font": "Georgia",
+                "bold": true,
+                "size": 18
+              }
+            }
+          ]
+        }
+      ],
+      "footer": []
+    }
+  },
+  "target": {
+    "blockId": "second",
+    "from": 0,
+    "to": 16,
+    "sourceText": "Repeated phrase."
+  },
+  "replacement": "Repeated wording.",
+  "instruction": "Improve the exact selected phrase without changing facts, formatting or protected objects."
+}

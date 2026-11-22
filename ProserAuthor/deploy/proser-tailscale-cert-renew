@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+domain="${PROSER_TLS_DOMAIN:?Set the TLS domain in the private host configuration}"
+cert_dir="${PROSER_TLS_DIR:-/var/lib/proser-tls}"
+cert_file="$cert_dir/proser.crt"
+key_file="$cert_dir/proser.key"
+min_validity="${PROSER_TLS_MIN_VALIDITY:-720h}"
+
+mkdir -p "$cert_dir"
+tmp_dir="$(mktemp -d "$cert_dir/.renew.XXXXXX")"
+trap 'rm -rf "$tmp_dir"' EXIT
+
+tailscale cert \
+  --min-validity="$min_validity" \
+  --cert-file="$tmp_dir/proser.crt" \
+  --key-file="$tmp_dir/proser.key" \
+  "$domain"
+
+openssl x509 -in "$tmp_dir/proser.crt" -noout -checkhost "$domain" >/dev/null
+cert_pub="$(openssl x509 -in "$tmp_dir/proser.crt" -pubkey -noout | openssl pkey -pubin -outform DER | sha256sum)"
+key_pub="$(openssl pkey -in "$tmp_dir/proser.key" -pubout -outform DER | sha256sum)"
+[[ "$cert_pub" == "$key_pub" ]] || {
+  echo "Certificate and private key do not match" >&2
+  exit 1
+}
+
+if [[ -f "$cert_file" ]] && cmp -s "$tmp_dir/proser.crt" "$cert_file"; then
+  echo "Tailscale certificate is already current"
+  exit 0
+fi
+
+install -m 0644 "$tmp_dir/proser.crt" "$cert_file"
+install -m 0640 "$tmp_dir/proser.key" "$key_file"
+
+# The exact restart command is allowed through a narrow sudoers rule installed
+# by the host provisioner. Both Node services read their certificate at start.
+sudo -n /usr/bin/systemctl restart proser-v2-web.service proser-factory.service
+echo "Installed renewed Tailscale certificate and restarted Proser TLS services"

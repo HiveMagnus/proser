@@ -1,0 +1,22 @@
+[Unit]
+Description=Proser Factory — Express API Server
+After=network.target redis.service docker.service
+Wants=redis.service docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=proser-factory
+WorkingDirectory=/opt/proser-factory
+EnvironmentFile=/opt/proser-factory/.env
+Environment=PUBLICATION_FONT_MANIFEST=/opt/proser-factory/publication-fonts/manifest.json
+ExecStart=/opt/proser-runtime/node-v24.22.1/bin/node dist/index.js
+Environment=PATH=/opt/proser-runtime/node-v24.22.1/bin:/usr/local/bin:/usr/bin:/bin
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=proser-factory
+
+[Install]
+WantedBy=multi-user.target

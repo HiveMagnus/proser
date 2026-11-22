@@ -1,0 +1,13 @@
+{
+  "name": "@cheftaco/proser-canvas-fixtures",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@hivemagnus/canvas-word-engine": "1.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vite": "^8.3.5"
+  }
+}

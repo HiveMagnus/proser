@@ -1,0 +1,94 @@
+import { randomUUID, createHash } from 'node:crypto';
+import { createZipBuffer } from '@/lib/zipArchive';
+import { documentFromText, replaceDocumentText } from '@/documents/model';
+import { exportStructuredDocx } from '@/documents/docxExport';
+import { parseDocumentXml, readDocumentPackage, validateDocxPackage } from '@/documents/packageValidation';
+
+test('DOCX contains native tracked changes, original properties, comments and real package relationships', async () => {
+  const initial = documentFromText('Hello world\n\nAnother paragraph', randomUUID);
+  const edited = replaceDocumentText(initial, 6, 11, 'world', 'friend', randomUUID, { authorId: 4, authorName: 'Authenticated author', createdAt: '2026-10-05T12:00:00.000Z', status: 'pending', origin: 'ai' });
+  const first = edited.blocks[0]; if (first.type !== 'paragraph') throw new Error('fixture');
+  first.runs[0].style = { bold: true, font: 'Georgia', color: '#123456' };
+  edited.comments.push({ id: randomUUID(), authorId: 4, authorName: 'Authenticated author', createdAt: '2026-10-05T12:00:00.000Z', text: 'Review this greeting.', resolved: false, anchors: [{ blockId: first.id, runId: first.runs[0].id, start: 0, end: 5, sourceText: 'Hello' }] });
+  const bytes = await exportStructuredDocx(edited, 'retain-review');
+  const parts = await validateDocxPackage(bytes);
+  const main = parts.get('word/document.xml')!.toString();
+  expect(main).toContain('<w:ins '); expect(main).toContain('<w:del '); expect(main).toContain('<w:delText');
+  expect(main).toContain('<w:commentRangeStart'); expect(main).toContain('<w:b/>'); expect(main).toContain('123456');
+  expect(parts.get('word/comments.xml')!.toString()).toContain('Review this greeting.');
+  const final = (await validateDocxPackage(await exportStructuredDocx(edited, 'final'))).get('word/document.xml')!.toString();
+  expect(final).not.toContain('<w:ins '); expect(final).not.toContain('world'); expect(final).toContain('friend');
+  const original = (await validateDocxPackage(await exportStructuredDocx(edited, 'original'))).get('word/document.xml')!.toString();
+  expect(original).toContain('world'); expect(original).not.toContain('friend');
+});
+test('package validation rejects duplicate entries, unsafe XML, missing parts and decompression bombs', async () => {
+  const duplicate = await createZipBuffer([{ name: 'word/document.xml', content: '<document/>' }, { name: 'word/document.xml', content: '<document/>' }]);
+  await expect(readDocumentPackage(duplicate)).rejects.toThrow('duplicate');
+  expect(() => parseDocumentXml(Buffer.from('<!DOCTYPE x [<!ENTITY y SYSTEM "file:///etc/passwd">]><x>&y;</x>'))).toThrow('DTD');
+  expect(() => parseDocumentXml(Buffer.from('<a><b></a>'))).toThrow('Malformed');
+  await expect(validateDocxPackage(await createZipBuffer([{ name: 'content.xml', content: '<x/>' }]))).rejects.toThrow('Missing');
+  const { ZipFile } = await import('yazl');
+  const archive = new ZipFile(); const chunks: Buffer[] = []; const compressed = new Promise<Buffer>((resolve, reject) => { archive.outputStream.on('data', (chunk: Buffer) => chunks.push(chunk)); archive.outputStream.on('end', () => resolve(Buffer.concat(chunks))); archive.outputStream.on('error', reject); });
+  archive.addBuffer(Buffer.from('0'.repeat(1024 * 1024)), 'bomb.txt', { compress: true, compressionLevel: 9 }); archive.end();
+  await expect(readDocumentPackage(await compressed)).rejects.toThrow('decompression');
+});
+test('authenticated image identity is required; invalid image bytes are not silently omitted', async () => {
+  const document = documentFromText('Caption', randomUUID);
+  document.blocks.push({ type: 'image', id: randomUUID(), assetId: 1, sha256: 'a'.repeat(64), alt: 'Image', width: 100, height: 100 });
+  await expect(exportStructuredDocx(document, 'final')).rejects.toThrow('Verified image');
+});
+test('lists, story-local hyperlinks and repeated image references produce valid distinct objects', async () => {
+  const document = documentFromText('First item\n\nSecond item', randomUUID);
+  for (const block of document.blocks) if (block.type === 'paragraph') block.style.list = 'number';
+  document.layout.header = [{ type: 'paragraph', id: randomUUID(), style: {}, runs: [{ id: randomUUID(), text: 'Header link', style: { hyperlink: 'https://example.com/header' } }] }];
+  const image = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGPgcY4EAAEHAKmKqmQVAAAAAElFTkSuQmCC', 'base64');
+  for (let index = 0; index < 2; index++) document.blocks.push({ type: 'image', id: randomUUID(), assetId: 1, sha256: createHash('sha256').update(image).digest('hex'), alt: 'Repeated image', width: 20, height: 20 });
+  const parts = await validateDocxPackage(await exportStructuredDocx(document, 'final', new Map([[1, { bytes: image, mediaType: 'image/png' }]])));
+  expect(parts.get('word/document.xml')!.toString()).toContain('<w:numPr>');
+  expect(parts.get('word/numbering.xml')!.toString()).toContain('w:numFmt w:val="decimal"');
+  expect(parts.get('word/_rels/header1.xml.rels')!.toString()).toContain('https://example.com/header');
+  expect(parts.get('word/_rels/document.xml.rels')!.toString()).not.toContain('https://example.com/header');
+  expect([...parts.keys()].filter((name) => name.startsWith('word/media/'))).toHaveLength(1);
+  const xml = parseDocumentXml(parts.get('word/document.xml')!);
+  const drawings = xml.getElementsByTagNameNS('http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing', 'docPr');
+  expect(drawings.item(0)!.getAttribute('id')).not.toBe(drawings.item(1)!.getAttribute('id'));
+});
+test('multi-run comments have one contiguous range; point comments close and reference their range', async () => {
+  const document = documentFromText('Hello world', randomUUID);
+  const block = document.blocks[0]; if (block.type !== 'paragraph') throw new Error('fixture');
+  block.runs = [{ id: randomUUID(), text: 'Hello ', style: {} }, { id: randomUUID(), text: 'world', style: { bold: true } }];
+  const makeComment = (anchors: typeof document.comments[number]['anchors']) => ({ id: randomUUID(), authorId: 1, authorName: 'Author', createdAt: '2026-10-05T12:00:00.000Z', text: 'Comment', resolved: false, anchors });
+  document.comments.push(makeComment(block.runs.map((run) => ({ blockId: block.id, runId: run.id, start: 0, end: run.text.length, sourceText: run.text }))));
+  document.comments.push(makeComment([{ blockId: block.id, runId: block.runs[0].id, start: 1, end: 1, sourceText: '' }]));
+  const main = (await validateDocxPackage(await exportStructuredDocx(document, 'retain-review'))).get('word/document.xml')!;
+  const xml = parseDocumentXml(main);
+  const namespace = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+  for (const tag of ['commentRangeStart', 'commentRangeEnd', 'commentReference']) expect(xml.getElementsByTagNameNS(namespace, tag).length).toBe(2);
+  document.comments[0].anchors.reverse();
+  await expect(exportStructuredDocx(document, 'retain-review')).rejects.toThrow('contiguous');
+});
+test('native revision fragments have unique IDs; unsupported named styles and XML text fail visibly', async () => {
+  const document = documentFromText('Bold plain', randomUUID);
+  const block = document.blocks[0]; if (block.type !== 'paragraph') throw new Error('fixture');
+  block.runs = [{ id: randomUUID(), text: 'Bold ', style: { bold: true } }, { id: randomUUID(), text: 'plain', style: { bold: false } }];
+  const changeId = randomUUID();
+  document.changes.push({ id: changeId, kind: 'insertion', status: 'pending', origin: 'ai', authorId: 1, authorName: 'Author', createdAt: '2026-10-05T12:00:00.000Z', targetRunIds: block.runs.map((run) => run.id) });
+  for (const run of block.runs) run.changeId = changeId;
+  const main = (await validateDocxPackage(await exportStructuredDocx(document, 'retain-review'))).get('word/document.xml')!;
+  const insertions = parseDocumentXml(main).getElementsByTagNameNS('http://schemas.openxmlformats.org/wordprocessingml/2006/main', 'ins');
+  expect(insertions.length).toBe(2);
+  expect(insertions.item(0)!.getAttribute('w:id')).not.toBe(insertions.item(1)!.getAttribute('w:id'));
+  expect(main.toString()).toContain('<w:b w:val="0"/>');
+  block.style.name = 'Undefined style';
+  await expect(exportStructuredDocx(document, 'final')).rejects.toMatchObject({code:'EXPORT_STYLE_UNAVAILABLE',status:409});
+  delete block.style.name;
+  block.runs[0].text = '\u0000';
+  await expect(exportStructuredDocx(document, 'final')).rejects.toThrow('valid Unicode');
+  block.runs[0].text = '\u0001';
+  await expect(exportStructuredDocx(document, 'final')).rejects.toThrow('unsupported by OOXML');
+});
+test('XML preflight rejects excessive depth and invalid UTF-8 before constructing a DOM', () => {
+  expect(() => parseDocumentXml(Buffer.from('<x>'.repeat(65) + '</x>'.repeat(65)))).toThrow('depth');
+  expect(() => parseDocumentXml(Buffer.from([0xff, 0xff]))).toThrow('UTF-8');
+  expect(() => parseDocumentXml(Buffer.from('<x>&#xD800;</x>'))).toThrow('Malformed');
+});

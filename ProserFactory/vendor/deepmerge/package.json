@@ -1,0 +1,12 @@
+{
+  "name": "@cheftaco/proser-deepmerge",
+  "version": "4.3.1-proser.1",
+  "private": true,
+  "description": "MIT deepmerge 4.3.1 with own-data-property writes for GHSA-gcqx-w48m-w2h4",
+  "main": "index.cjs",
+  "types": "index.d.ts",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test test.cjs"
+  }
+}

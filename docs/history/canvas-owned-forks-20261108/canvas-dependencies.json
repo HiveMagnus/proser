@@ -1,0 +1,255 @@
+{
+  "schemaVersion": 1,
+  "baselinePackages": {
+    "@hufe921/canvas-editor": {
+      "version": "1.0.5",
+      "license": "MIT",
+      "baseCommit": "f8435acb98badcc831174055e9001d42fe51bb0f",
+      "tarball": "https://registry.npmjs.org/@hufe921/canvas-editor/-/canvas-editor-1.0.5.tgz",
+      "integrity": "sha512-7iQA4Eya+V0t5u8FaoKqOi5ze6qEARSF8dToAQMnN+s90YuVQPOSkb8yiOY2uKpL/uc60JdbAl+cv5cugaLYLg=="
+    },
+    "@hufe921/canvas-editor-plugin-docx": {
+      "version": "1.0.0",
+      "license": "MIT",
+      "baseCommit": "4741a9f8885d57fde1704d39a7aa930aeadc51e6",
+      "tarball": "https://registry.npmjs.org/@hufe921/canvas-editor-plugin-docx/-/canvas-editor-plugin-docx-1.0.0.tgz",
+      "integrity": "sha512-f3MIzNU6RyJ6ZYT7SW8ZKBS260hJnq4eidPOD2e4YmauGJzvqtePf2Hrser0+mJkDkv4hyZ4bes6AsEYyVLbng=="
+    }
+  },
+  "canvasFork": {
+    "name": "@cheftaco/proser-canvas-engine",
+    "version": "1.0.5-proser.2",
+    "license": "MIT",
+    "runtimeDependencies": [],
+    "notices": "ProserAuthor/packages/canvas-engine/NOTICES.md",
+    "patches": [
+      {
+        "id": "opt-in-serialized-object-identity",
+        "baseCommit": "9af964c2f920da1fcc7d541fae4ab781fcd3bf02",
+        "upstreamMergeCommit": "71aa0996c2d4c827ec5d86d9acee80eb0a3f98a4",
+        "rationale": "Retain element, table row and cell identities only on explicit extraPickAttrs id requests; default clipboard serialization strips IDs, and extra value cannot overwrite recursive cell content. Author saves opt in.",
+        "files": [
+          "src/editor/utils/element.ts",
+          "src/editor/dataset/constant/Element.ts"
+        ],
+        "fixtures": [
+          "ProserAuthor/packages/canvas-engine/src/__tests__/stable-object-identities.test.ts",
+          "ProserAuthor/packages/editor/browser/identity-acceptance.ts",
+          "scripts/test-canvas-browser.mjs"
+        ],
+        "upstreamStatus": "merged-2026-10-12-targeted-source-port",
+        "upstreamPullRequest": "https://github.com/Hufe921/canvas-editor/pull/1492"
+      },
+      {
+        "id": "zero-native-history-allocation",
+        "baseCommit": "9af964c2f920da1fcc7d541fae4ab781fcd3bf02",
+        "rationale": "Allow application-owned operation journals to disable runtime glyph snapshot allocation explicitly with historyMaxRecordCount zero; positive counts retain existing native history.",
+        "files": [
+          "src/editor/core/draw/Draw.ts",
+          "src/editor/interface/Editor.ts"
+        ],
+        "fixtures": [
+          "ProserAuthor/packages/editor/browser/fixture.ts"
+        ],
+        "upstreamStatus": "merged-2026-10-07",
+        "upstreamPullRequest": "https://github.com/Hufe921/canvas-editor/pull/1488"
+      },
+      {
+        "id": "search-unicode-element-boundaries",
+        "baseCommit": "9af964c2f920da1fcc7d541fae4ab781fcd3bf02",
+        "rationale": "Search produces UTF-16 offsets while the editor renders grapheme elements. Map folded-text boundaries to runtime elements, reject partial graphemes, preserve trailing text after tables and use the cursor-before-selection range convention.",
+        "files": [
+          "src/editor/core/draw/interactive/Search.ts",
+          "src/editor/core/range/RangeManager.ts"
+        ],
+        "fixtures": "ProserAuthor/packages/editor/browser/fixture.ts; npm run test:canvas",
+        "coverage": [
+          "Repeated quotations after emoji and combining characters",
+          "Complete Unicode selections and partial-grapheme search rejection",
+          "Same quotation in different table cells",
+          "Case-fold expansion and text after the final table"
+        ],
+        "upstreamStatus": "Local patch; not submitted upstream"
+      },
+      {
+        "id": "literal-zero-width-space-preservation",
+        "baseCommit": "9af964c2f920da1fcc7d541fae4ab781fcd3bf02",
+        "rationale": "Reserve forbidden-in-canonical-text NUL for transient paragraph syntax, preserving literal U+200B Unicode content, search and UTF-16 selection; suppress sentinel glyph rendering.",
+        "files": [
+          "src/editor/dataset/constant/Common.ts",
+          "src/editor/core/worker/works/wordCount.ts",
+          "src/editor/core/worker/works/catalog.ts",
+          "src/editor/core/draw/particle/TextParticle.ts"
+        ],
+        "fixtures": [
+          "ProserAuthor/packages/canvas-engine/src/__tests__/external-run-serialization.test.ts",
+          "ProserAuthor/packages/editor/browser/fixture.ts"
+        ],
+        "upstreamStatus": "not-submitted"
+      },
+      {
+        "id": "effective-caret-formatting-toggle",
+        "baseCommit": "9af964c2f920da1fcc7d541fae4ab781fcd3bf02",
+        "rationale": "Toggle explicit pending insertion formatting before preceding glyph formatting so OFF then ON restores styled caret input without modifying surrounding text.",
+        "files": [
+          "src/editor/core/command/CommandAdapt.ts"
+        ],
+        "fixtures": [
+          "ProserAuthor/packages/editor/browser/fixture.ts",
+          "scripts/test-canvas-browser.mjs"
+        ],
+        "coverage": [
+          "Bold, italic, underline and strikeout",
+          "Initially styled and plain caret targets",
+          "Zero through three toggles followed by actual keyboard input",
+          "Unchanged surrounding text and formatting"
+        ],
+        "upstreamStatus": "merged-2026-10-07",
+        "upstreamPullRequest": "https://github.com/Hufe921/canvas-editor/pull/1487"
+      },
+      {
+        "id": "keyboardless-beforeinput-and-soft-enter",
+        "baseCommit": "9af964c2f920da1fcc7d541fae4ab781fcd3bf02",
+        "rationale": "Route cancelable virtual-keyboard deletion and paragraph/line-break intentions through existing guarded keyboard handlers; mark soft Enter explicitly and preserve heading/list identity.",
+        "files": [
+          "src/editor/core/cursor/CursorAgent.ts",
+          "src/editor/core/event/handlers/keydown/enter.ts",
+          "src/editor/core/event/handlers/input.ts"
+        ],
+        "fixtures": [
+          "ProserAuthor/packages/canvas-engine/browser/mobile-input.ts",
+          "scripts/test-canvas-mobile-browser.mjs"
+        ],
+        "coverage": [
+          "Chromium and WebKit emulated mobile profiles",
+          "Body/table-cell Unicode edits and exact native undo/redo",
+          "Unchanged neighboring cells and header/footer stories",
+          "Heading/list soft-break identity",
+          "Read-only and composition guards",
+          "Physical keyboard deletion executes once without repeated beforeinput mutation",
+          "Multiline text/dictation preserves exact literal soft newline",
+          "Application beforeinput cancellation remains authoritative"
+        ],
+        "upstreamStatus": "not-submitted"
+      },
+      {
+        "id": "touch-selection-cancellation",
+        "baseCommit": "9af964c2f920da1fcc7d541fae4ab781fcd3bf02",
+        "rationale": "Restrict opt-in touch selection to range extension; cancellation, lost capture and mode disable abort without a drop or formatting effect, restore the original range/style and release capture.",
+        "files": [
+          "src/editor/core/event/CanvasEvent.ts",
+          "src/editor/core/draw/Draw.ts"
+        ],
+        "fixtures": [
+          "ProserAuthor/packages/canvas-engine/browser/mobile-input.ts",
+          "scripts/test-canvas-mobile-browser.mjs"
+        ],
+        "coverage": [
+          "Actual Chromium CDP touch end/cancel/disable/lost-capture",
+          "Exact content preservation and initial selection restoration on cancellation",
+          "Pointer capture release",
+          "Ordinary mouse text drag remains supported",
+          "Touch during trusted composition cannot retarget a neighboring table cell"
+        ],
+        "upstreamStatus": "not-submitted"
+      },
+      {
+        "id": "visual-viewport-cursor-bounds",
+        "baseCommit": "9af964c2f920da1fcc7d541fae4ab781fcd3bf02",
+        "rationale": "Intersect cursor scrolling geometry with the visible viewport so software keyboard occlusion does not leave the caret hidden behind the layout viewport.",
+        "files": [
+          "src/editor/core/cursor/Cursor.ts"
+        ],
+        "fixtures": [
+          "ProserAuthor/packages/canvas-engine/browser/mobile-input.ts",
+          "scripts/test-canvas-mobile-browser.mjs"
+        ],
+        "coverage": [
+          "Chromium and WebKit emulated visual viewport keyboard geometry",
+          "Caret remains within visible bounds with its range unchanged",
+          "Physical device acceptance explicitly unverified"
+        ],
+        "upstreamStatus": "not-submitted"
+      },
+      {
+        "id": "incremental-proser-paragraph-geometry-fallback",
+        "baseCommit": "71aa0996c2d4c827ec5d86d9acee80eb0a3f98a4",
+        "rationale": "Use full row layout for Proser paragraph indentation/spacing/pagination metadata absent from upstream incremental convergence state; preserve the default-disabled experimental option.",
+        "files": [
+          "src/editor/core/draw/IncrementalRowComputer.ts",
+          "src/editor/core/draw/Draw.ts"
+        ],
+        "fixtures": [
+          "ProserAuthor/packages/canvas-engine/browser/upstream-input.ts",
+          "scripts/test-canvas-upstream-browser.mjs"
+        ],
+        "upstreamStatus": "local-compatibility-guard"
+      }
+    ],
+    "embeddedHelpers": [
+      "rolldown runtime helpers",
+      "vite-plugin-css-injected-by-js style injection"
+    ],
+    "patchRegistry": "ProserAuthor/packages/canvas-engine/UPSTREAM.md",
+    "baseCommit": "71aa0996c2d4c827ec5d86d9acee80eb0a3f98a4",
+    "sourceSynchronization": {
+      "repository": "https://github.com/Hufe921/canvas-editor",
+      "commit": "71aa0996c2d4c827ec5d86d9acee80eb0a3f98a4",
+      "publishedBaselineVersion": "1.0.5",
+      "publishedBaselineCommit": "f8435acb98badcc831174055e9001d42fe51bb0f",
+      "retainedLocalPatches": true,
+      "incrementalComputeDefault": false
+    }
+  },
+  "docxImplementation": {
+    "status": "Maintained MIT headless fork used by Factory import and publication adapters; complete independent exchange corpus and Microsoft Word acceptance remain required",
+    "runtimeDependencies": {
+      "@xmldom/xmldom": "MIT",
+      "yauzl": "MIT",
+      "yazl": "MIT",
+      "saxes": "ISC",
+      "zod": "MIT"
+    },
+    "commercialEngines": [],
+    "dependencyVersions": {
+      "@xmldom/xmldom": "0.9.12",
+      "saxes": "6.0.0",
+      "yauzl": "3.4.0",
+      "yazl": "3.3.1",
+      "zod": "4.6.7"
+    },
+    "parserMaintenance": "Saxes upstream is archived. Bounded parsing fixtures and continuous advisory review remain release requirements.",
+    "name": "@cheftaco/proser-canvas-docx-codec",
+    "version": "1.0.0-proser.5",
+    "source": "ProserFactory/vendor/canvas-docx-codec",
+    "patchRegistry": "ProserFactory/vendor/canvas-docx-codec/UPSTREAM.md",
+    "notices": "ProserFactory/vendor/canvas-docx-codec/NOTICES.md",
+    "originalUpstreamClosure": {
+      "count": 26,
+      "typePackages": 2,
+      "linkedIntoRebuiltRuntime": false,
+      "inventory": "ProserFactory/vendor/canvas-docx-codec/provenance/upstream-dependency-inventory.json",
+      "jszipLicenseElection": "MIT"
+    },
+    "currentUpstreamSource": {
+      "commit": "0e8a1b36c8e94061edc19ce05b93c12fbad03b34",
+      "snapshot": "ProserFactory/vendor/canvas-docx-codec/upstream-current",
+      "optionalDownloadPR45": "merged",
+      "headlessProposalPR46": "open-not-adopted-as-upstream"
+    }
+  },
+  "releaseRequirements": [
+    "Rebuild both forks and regenerate exact tarball/source/build/dependency evidence for each candidate",
+    "Check distribution SBOM and all retained original/runtime/embedded notices",
+    "Pass full document fidelity corpus before upstream upgrade",
+    "Contribute generic patches only after complete regression coverage"
+  ],
+  "releaseEvidence": {
+    "generator": "ProserFactory/scripts/generate-canvas-release-ledger.mjs",
+    "exactDistributions": "ProserFactory/docs/canvas-release-evidence.json",
+    "sbom": "ProserFactory/docs/canvas-release-sbom.json",
+    "schema": "CycloneDX 1.6",
+    "check": "node scripts/generate-canvas-release-ledger.mjs --check",
+    "wordAcceptance": "unverified"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "@cheftaco/proser-editor",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build --force",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --fsModuleCachePath node_modules/.vitest-cache",
+    "test:watch": "vitest --fsModuleCachePath node_modules/.vitest-cache"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^6.0.3",
+    "vitest": "5.0.5"
+  },
+  "dependencies": {
+    "@cheftaco/proser-contracts": "workspace:^",
+    "@hivemagnus/canvas-word-engine": "1.2.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HiveMagnus/proser.git",
+    "directory": "ProserAuthor/packages/editor"
+  },
+  "files": [
+    "dist/"
+  ],
+  "license": "Apache-2.0"
+}

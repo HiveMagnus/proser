@@ -1,0 +1,7 @@
+{
+  "name": "Unintentional local repetition",
+  "original": "Mara crossed the empty hall. The empty hall amplified each careful step. She stopped beneath the cracked skylight.",
+  "candidate": "Mara crossed the empty hall, each careful step amplified beneath the cracked skylight.",
+  "protectedElements": ["Mara", "cracked skylight"],
+  "references": []
+}

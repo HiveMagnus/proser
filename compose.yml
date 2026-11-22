@@ -1,0 +1,142 @@
+x-application: &application
+  image: ${PROSER_IMAGE:-proser:local}
+  init: true
+  restart: unless-stopped
+
+x-factory-env: &factory-env
+  DATABASE_URL: postgresql://proser:${PROSER_DB_PASSWORD:?Run scripts/init-compose-env.mjs}@postgres:5432/proser
+  REDIS_URL: redis://redis:6379
+  USE_BULLMQ: "true"
+  DOCUMENT_AUTHORITY_ENABLED: "true"
+  PORT: "3001"
+  TLS_ENABLED: "false"
+  INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?Set INTERNAL_API_SECRET}
+  FACTORY_AUTH_SECRET: ${FACTORY_AUTH_SECRET:?Set FACTORY_AUTH_SECRET}
+  HERMES_AGENT_AUTH_SECRET: ${HERMES_AGENT_AUTH_SECRET:-}
+  HERMES_AGENT_ALLOWED_GITHUB_IDS: ${HERMES_AGENT_ALLOWED_GITHUB_IDS:-}
+  METRICS_TOKEN: ${METRICS_TOKEN:?Set METRICS_TOKEN}
+  INFERENCE_BACKEND: ${INFERENCE_BACKEND:-llamacpp}
+  INFERENCE_HOST: ${INFERENCE_HOST:-http://127.0.0.1:8000}
+  INFERENCE_API_KEY: ${INFERENCE_API_KEY:-}
+  OLLAMA_MODEL: ${INFERENCE_MODEL:-qwen3.6-35b}
+  VLLM_MODEL: ${INFERENCE_MODEL:-qwen3.6-35b}
+  WEBUI_FORGE_URL: ${WEBUI_FORGE_URL:-http://127.0.0.1:7861}
+  AI_DIAGNOSTIC_CONTENT_LOGGING: "false"
+
+x-factory-volumes: &factory-volumes
+  - factory-data:/opt/proser/factory/data
+  - factory-images:/opt/proser/factory/public/images
+
+services:
+  author:
+    <<: *application
+    build:
+      context: .
+      args:
+        PROSER_REVISION: ${PROSER_REVISION:-}
+    working_dir: /opt/proser/author/apps/web
+    command: [node, server.js]
+    ports:
+      - "${PROSER_WEB_BIND:-127.0.0.1}:${PROSER_WEB_PORT:-3000}:3000"
+    environment:
+      PORT: "3000"
+      AUTH_URL: ${PROSER_ORIGIN:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?Set NEXTAUTH_SECRET}
+      FACTORY_AUTH_SECRET: ${FACTORY_AUTH_SECRET:?Set FACTORY_AUTH_SECRET}
+      FACTORY_URL: http://factory:3001
+      LOCAL_AUTH_ENABLED: ${LOCAL_AUTH_ENABLED:-true}
+      LOCAL_AUTH_USERNAME: ${LOCAL_AUTH_USERNAME:-}
+      LOCAL_AUTH_PASSWORD: ${LOCAL_AUTH_PASSWORD:-}
+      IAM_CORE_URL: ${IAM_CORE_URL:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+    depends_on:
+      factory:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, curl, -fsS, "http://127.0.0.1:3000/api/readiness"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  factory:
+    <<: *application
+    pull_policy: never
+    environment: *factory-env
+    networks: [default, data]
+    volumes: *factory-volumes
+    depends_on:
+      initialize:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, curl, -fsS, "http://127.0.0.1:3001/api/readiness"]
+      interval: 5s
+      start_period: 30s
+      timeout: 10s
+      retries: 12
+
+  worker:
+    <<: *application
+    pull_policy: never
+    command: [node, dist/workers/index.js]
+    environment: *factory-env
+    networks: [default, data]
+    volumes: *factory-volumes
+    depends_on:
+      initialize:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  initialize:
+    <<: *application
+    pull_policy: never
+    restart: "no"
+    command: [node, scripts/initialize-compose-database.mjs]
+    networks: [data]
+    environment:
+      DATABASE_URL: postgresql://proser:${PROSER_DB_PASSWORD:?Run scripts/init-compose-env.mjs}@postgres:5432/proser
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17-alpine
+    networks: [data]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: proser
+      POSTGRES_DB: proser
+      POSTGRES_PASSWORD: ${PROSER_DB_PASSWORD:?Run scripts/init-compose-env.mjs}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD, pg_isready, -h, 127.0.0.1, -U, proser, -d, proser]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7.4-alpine
+    networks: [data]
+    restart: unless-stopped
+    command: [redis-server, --appendonly, "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+networks:
+  data:
+    internal: true
+
+volumes:
+  factory-data:
+  factory-images:
+  postgres-data:
+  redis-data:

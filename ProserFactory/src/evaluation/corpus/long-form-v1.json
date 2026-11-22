@@ -1,0 +1,32 @@
+{
+  "version": "long-form-v1",
+  "cases": [
+    {
+      "id": "causal-choice",
+      "level": "scene",
+      "genre": "thriller",
+      "candidateA": "Mara entered the room. Then the guard entered. Then the door closed. They talked about the key. After that she left.",
+      "candidateB": "Mara needed the key before midnight, but the guard closed his fist around it. Because retreat would doom her brother, she confessed the theft. The guard opened the door—and demanded she enter first.",
+      "expectedWinner": "B",
+      "invariants": ["causal_movement", "character_choice", "ending_pressure"]
+    },
+    {
+      "id": "specific-over-cliche",
+      "level": "scene",
+      "genre": "romance",
+      "candidateA": "Her heart skipped a beat when his piercing blue eyes met hers. Time stood still, and she let out a breath she did not know she was holding.",
+      "candidateB": "He remembered she took coffee without sugar. The untouched packet beside her cup felt more intimate than the apology he had rehearsed all morning.",
+      "expectedWinner": "B",
+      "invariants": ["specificity", "originality", "relationship_delta"]
+    },
+    {
+      "id": "strong-exit",
+      "level": "chapter",
+      "genre": "mystery",
+      "candidateA": "The detective reviewed the facts and went home. It had been a long day, and tomorrow would bring more investigation.",
+      "candidateB": "The final photograph showed the locked window from inside the room. On the glass, reflected behind the victim, stood the detective herself. The timestamp was tomorrow's date.",
+      "expectedWinner": "B",
+      "invariants": ["ending_strength", "revelation", "forward_question"]
+    }
+  ]
+}

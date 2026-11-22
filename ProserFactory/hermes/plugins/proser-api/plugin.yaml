@@ -1,0 +1,31 @@
+name: proser-api
+version: 4.4.0
+description: Hermes Agent tools and skills for scoped ProserFactory API authoring workflows.
+author: Proser
+provides_tools:
+  - proser_books
+  - proser_exports
+  - proser_context
+  - proser_codex
+  - proser_generate
+  - proser_settings
+  - proser_models
+  - proser_images
+  - proser_full_book
+  - proser_quality_review
+  - proser_improve_quality
+  - proser_guided_improve
+  - proser_editorial_optimize
+  - proser_editorial
+  - proser_workflow_status
+  - proser_workflow_checkpoint
+  - proser_workflow_pause
+  - proser_workflow_resume
+  - proser_workflow_cancel
+  - proser_publication
+  - proser_workflow_evidence
+  - proser_workflow_finalize
+  - proser_download
+  - proser_import_image
+  - proser_review_findings
+  - proser_finding_decide

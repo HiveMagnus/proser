@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "scope": "Production publication fonts and their retained upstream licenses",
+  "fonts": [
+    {
+      "name": "Liberation",
+      "version": "2.1.5",
+      "license": "OFL-1.1",
+      "upstream": "https://github.com/liberationfonts/liberation-fonts/releases/tag/2.1.5",
+      "distribution": "https://github.com/liberationfonts/liberation-fonts/files/7261482/liberation-fonts-ttf-2.1.5.tar.gz?download=1",
+      "sha256": "7191c669bf38899f73a2094ed00f7b800553364f90e2637010a69c0e268f25d0"
+    },
+    {
+      "name": "DejaVu",
+      "version": "2.37",
+      "license": "Bitstream Vera and Arev font licenses; DejaVu changes public domain",
+      "upstream": "https://github.com/dejavu-fonts/dejavu-fonts/releases/tag/version_2_37",
+      "distribution": "https://github.com/dejavu-fonts/dejavu-fonts/releases/download/version_2_37/dejavu-fonts-ttf-2.37.tar.bz2",
+      "sha256": "fa9ca4d13871dd122f61258a80d01751d603b4d3ee14095d65453b4e846e17d7"
+    }
+  ]
+}

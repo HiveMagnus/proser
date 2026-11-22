@@ -1,0 +1,7 @@
+{
+  "name": "Character voice flattening",
+  "original": "Ain't a lock born yet that likes me, Jory said. Nara replied, Your confidence remains statistically unsupported.",
+  "candidate": "I can open any lock, Jory said. Nara replied, I do not think that is true.",
+  "protectedElements": ["Jory", "Nara"],
+  "references": []
+}

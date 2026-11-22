@@ -1,0 +1,11 @@
+import { interpolatePromptByKey } from '@/prompts/service';
+import type { DocumentDiscussionSnapshot } from './proposal-model';
+import type { DocumentStoryDiscussionSnapshot } from './story-proposal-model';
+/** Preserve full target blocks while avoiding repeated proof fields and omitted
+ * ID inventories in the provider prompt. The complete disclosure stays durable. */
+export function documentProposalPrompt(snapshot: DocumentDiscussionSnapshot | DocumentStoryDiscussionSnapshot, instruction: string) {
+  return interpolatePromptByKey('document-proposal', {
+    instruction,
+    context: JSON.stringify({ sourceBookRevisionId: snapshot.sourceBookRevisionId, ...('sourceKind' in snapshot ? { sourceKind: snapshot.sourceKind, storyId: snapshot.storyId, sourceLayoutRevisionId: snapshot.sourceLayoutRevisionId } : { sourceKind: 'scene', sourceSceneRevisionId: snapshot.sourceSceneRevisionId }), ...('transition' in snapshot && snapshot.transition ? { transition: snapshot.transition } : {}), ...('plotThread' in snapshot && snapshot.plotThread ? { plotThread: { reviewId: snapshot.plotThread.reviewId, evidenceId: snapshot.plotThread.evidenceId, question: snapshot.plotThread.snapshot.question, description: snapshot.plotThread.snapshot.description, notes: snapshot.plotThread.snapshot.notes, checks: snapshot.plotThread.snapshot.checks, critique: snapshot.plotThread.critique, evidence: snapshot.plotThread.snapshot.evidence.map(item => ({ evidenceId: item.id, stage: item.stage, label: item.source.label, text: item.source.text })) } } : {}), ...('revisionCampaign' in snapshot && snapshot.revisionCampaign ? { revisionCampaign: snapshot.revisionCampaign } : {}), localDraftDigest: snapshot.localDraftDigest, unsaved: snapshot.unsaved, projection: snapshot.projection, blocks: snapshot.blocks, codex: snapshot.codex, conversation: snapshot.conversation, targets: snapshot.targets.map((target) => ({ targetId: target.targetId, blockId: target.blockId, from: target.from, to: target.to, sourceText: target.sourceText, editable: target.editable })), omitted: { blocks: snapshot.omitted.blockIds.length, codex: snapshot.omitted.codexIds.length, proposals: snapshot.omittedProposalIds.length + snapshot.omittedEarlierTurnCount } }),
+  });
+}

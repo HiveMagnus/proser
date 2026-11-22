@@ -1,0 +1,57 @@
+[Unit]
+Description=llama.cpp OpenAI-compatible server (Qwen3.6-35B-A3B, Proser profile)
+After=network-online.target nvidia-persistenced.service
+Wants=network-online.target nvidia-persistenced.service
+
+[Service]
+Type=simple
+User=proser-inference
+Group=proser-inference
+WorkingDirectory=/opt/llama.cpp
+Environment=CUDA_VISIBLE_DEVICES=0,1,2
+Environment=HF_HUB_DISABLE_TELEMETRY=1
+ExecStart=/opt/llama.cpp/build/bin/llama-server \
+    --model /opt/vllm/models/qwen3.6-35b/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q6_K_P.gguf \
+    --mmproj /opt/vllm/models/mmproj-Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-f16.gguf \
+    --alias qwen3.6-35b \
+    --host 0.0.0.0 \
+    --port 8000 \
+    --api-key-file /etc/proser-inference-api-keys \
+    --n-gpu-layers 99 \
+    --split-mode layer \
+    --tensor-split 1,1,1 \
+    --ctx-size 1200000 \
+    --parallel 8 \
+    --cont-batching \
+    --flash-attn auto \
+    --cache-type-k q8_0 \
+    --cache-type-v q8_0 \
+    --jinja \
+    --chat-template-file /opt/llama.cpp/templates/qwen3.6-proser-v1/chat_template.jinja \
+    --chat-template-kwargs '{"preserve_thinking":false,"enable_thinking":false}' \
+    --reasoning auto \
+    --reasoning-budget 1024 \
+    --reasoning-format deepseek \
+    --temp 0.7 \
+    --top-p 0.8 \
+    --top-k 20 \
+    --min-p 0.0 \
+    --presence-penalty 1.5 \
+    --repeat-penalty 1.0 \
+    --metrics \
+    --no-webui \
+    --log-colors off
+Restart=always
+RestartSec=10
+TimeoutStartSec=600
+TimeoutStopSec=60
+KillSignal=SIGINT
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=read-only
+PrivateTmp=true
+ReadWritePaths=/opt/vllm/models /opt/llama.cpp /home/proser-inference/.cache
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

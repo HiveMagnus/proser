@@ -1,0 +1,89 @@
+{
+  // VS Code Tasks for the current ProserAuthor web-shell boundary.
+  "version": "2.0.0",
+  "inputs": [
+    { "id": "proserOrigin", "type": "promptString", "description": "Author HTTPS origin" }
+  ],
+  "tasks": [
+    {
+      "label": "Web: Dev Server",
+      "type": "shell",
+      "command": "pnpm --filter @cheftaco/proser-web dev",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": [
+        {
+          "pattern": {
+            "regexp": "^(?!)$"
+          },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": ".*",
+            "endsPattern": "ready"
+          }
+        }
+      ],
+      "group": "build",
+      "detail": "Start the Next.js web shell using the repository environment"
+    },
+    {
+      "label": "Turbo: Build All",
+      "type": "shell",
+      "command": "pnpm turbo build",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "problemMatcher": ["$tsc"],
+      "detail": "Build all packages + apps via Turborepo"
+    },
+    {
+      "label": "Turbo: Typecheck All",
+      "type": "shell",
+      "command": "pnpm typecheck",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "test",
+      "problemMatcher": ["$tsc"],
+      "detail": "Type-check all active packages and the web shell"
+    },
+    {
+      "label": "Turbo: Lint All",
+      "type": "shell",
+      "command": "pnpm turbo lint",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "test",
+      "problemMatcher": ["$eslint-stylish"],
+      "detail": "ESLint all packages + apps"
+    },
+    {
+      "label": "Turbo: Test All",
+      "type": "shell",
+      "command": "pnpm turbo test",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "test",
+      "problemMatcher": [],
+      "detail": "Run all vitest suites"
+    },
+    {
+      "label": "Web: Playwright E2E",
+      "type": "shell",
+      "command": "pnpm exec playwright test --project=smoke --project=factory-proxy --reporter=line",
+      "options": {
+        "cwd": "${workspaceFolder}/apps/web",
+        "env": {
+          "PLAYWRIGHT_BASE_URL": "${input:proserOrigin}"
+        }
+      },
+      "group": "test",
+      "detail": "Run smoke and Factory-proxy E2E tests against the canonical deployment"
+    }
+  ]
+}

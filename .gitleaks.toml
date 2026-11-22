@@ -1,0 +1,24 @@
+title = "Proser secret scanning"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Synthetic inference bearer used only by the model route tests."
+condition = "AND"
+targetRules = ["generic-api-key"]
+regexTarget = "secret"
+paths = ['''^ProserFactory/src/__tests__/models\.routes\.test\.ts$''']
+regexes = ['''^test-inference-api-key-at-least-32-characters$''']
+
+[[allowlists]]
+description = "Editorial judging profile identifiers are public configuration keys."
+condition = "AND"
+targetRules = ["generic-api-key"]
+regexTarget = "secret"
+paths = ['''^ProserFactory/src/services/editorial/judging/judgeProfiles\.ts$''']
+regexes = [
+  '''^blind_pairwise_v1$''',
+  '''^blind_pairwise_adversarial_v1$''',
+  '''^blind_pairwise_tiebreak_v1$''',
+]

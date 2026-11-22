@@ -1,0 +1,4 @@
+services:
+  factory:
+    ports:
+      - "${PROSER_FACTORY_BIND:-127.0.0.1}:${PROSER_FACTORY_PORT:-3001}:3001"

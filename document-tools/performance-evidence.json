@@ -1,0 +1,291 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-05T23:10:23.073Z",
+  "node": "v24.21.0",
+  "cpu": "AMD Ryzen 9 7945HX with Radeon Graphics",
+  "logicalCpus": 32,
+  "hostMemoryBytes": 64992559104,
+  "browser": "145.0.7632.6",
+  "profiles": [
+    {
+      "name": "desktop",
+      "cpuThrottle": 1,
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "runs": [
+        {
+          "words": 50000,
+          "bookId": 1,
+          "sceneId": 1,
+          "usableMs": 267.8231420000002,
+          "wholeBookUsableMs": 373.45132600000034,
+          "windowFetchedScenes": 3,
+          "coldFetchedScenes": 3,
+          "samples": {
+            "canvas": {
+              "count": 51,
+              "p95Ms": 19.5,
+              "maximumMs": 23.100000023841858,
+              "saveLatencyMs": 174.18319699999984
+            },
+            "semantic": {
+              "count": 51,
+              "p95Ms": 16,
+              "maximumMs": 16.899999976158142,
+              "saveLatencyMs": 157.44126700000015
+            }
+          },
+          "warmNavigationMs": 86.75436399999944,
+          "savedSourceHash": "a5fc083e83f5699313d6989e585c3a47d32b1fcf1a168785821ca85f9cbebf83",
+          "memory": {
+            "LayoutCount": 304,
+            "LayoutDuration": 0.063185,
+            "TaskDuration": 2.233749,
+            "JSHeapUsedSize": 40445644,
+            "JSHeapTotalSize": 118841344
+          },
+          "publications": [
+            {
+              "format": "docx",
+              "jobId": "69468e47-34f3-4bbb-b061-008c7170d655",
+              "artifactId": "181d6afc-08be-4194-91e8-c8e9c2bf7548",
+              "sourceRevisionId": "298f5ff1-2e49-4bca-916d-a7fb7e5b97d1",
+              "sourceHash": "40634c4ea421e704f470464b8b6125dd81b6b8f478a6f547522e500c41bf6f0e",
+              "durationMs": 577.2562349999998,
+              "byteLength": 137098,
+              "sha256": "8e6b3666f453953a1d665274861a54779ffaf193b6d078245be3f4ce7f76130b"
+            },
+            {
+              "format": "pdf",
+              "jobId": "c685230a-f31b-4a49-b221-0df065e6cb7e",
+              "artifactId": "89486639-469a-437e-9726-61c3fddee32b",
+              "sourceRevisionId": "298f5ff1-2e49-4bca-916d-a7fb7e5b97d1",
+              "sourceHash": "40634c4ea421e704f470464b8b6125dd81b6b8f478a6f547522e500c41bf6f0e",
+              "durationMs": 1581.6483429999998,
+              "byteLength": 389558,
+              "sha256": "20d89cd29641833543fb00192d4073e8061a4b06b3e1ab4979ecebc2929075d3"
+            }
+          ]
+        },
+        {
+          "words": 150000,
+          "bookId": 2,
+          "sceneId": 26,
+          "usableMs": 180.37033200000042,
+          "wholeBookUsableMs": 246.87692799999968,
+          "windowFetchedScenes": 3,
+          "coldFetchedScenes": 3,
+          "samples": {
+            "canvas": {
+              "count": 51,
+              "p95Ms": 16.299999952316284,
+              "maximumMs": 16.399999976158142,
+              "saveLatencyMs": 156.1329079999996
+            },
+            "semantic": {
+              "count": 51,
+              "p95Ms": 16,
+              "maximumMs": 16.5,
+              "saveLatencyMs": 154.09822600000007
+            }
+          },
+          "warmNavigationMs": 65.82142599999861,
+          "savedSourceHash": "1740e73dd3b52ca76d37b30fbb88275baacadc72167a410e1d299b45d306f051",
+          "memory": {
+            "LayoutCount": 592,
+            "LayoutDuration": 0.110664,
+            "TaskDuration": 4.086583,
+            "JSHeapUsedSize": 39693496,
+            "JSHeapTotalSize": 128278528
+          },
+          "publications": [
+            {
+              "format": "docx",
+              "jobId": "c8e5b939-1b1f-4f3a-a93a-28f445ed5df8",
+              "artifactId": "703f6be3-c470-48e0-886d-8b5273bf4f89",
+              "sourceRevisionId": "7f21f622-5acb-4557-85e9-7de6bf314af1",
+              "sourceHash": "7aa222a7e797d56503b9abf5f25e0ca4544e31070eff2fba7d46afdb26b9e69b",
+              "durationMs": 796.8163019999993,
+              "byteLength": 407093,
+              "sha256": "fce49fb74853b500f6ee1e06925a09d48b901cc3104e221d6451860c9cca0f69"
+            },
+            {
+              "format": "pdf",
+              "jobId": "ba4b1edb-ccfb-4399-b46d-bec542bcf1b1",
+              "artifactId": "d64fccb5-850f-4a5f-8d46-042315967bb3",
+              "sourceRevisionId": "7f21f622-5acb-4557-85e9-7de6bf314af1",
+              "sourceHash": "7aa222a7e797d56503b9abf5f25e0ca4544e31070eff2fba7d46afdb26b9e69b",
+              "durationMs": 2101.32885,
+              "byteLength": 1130427,
+              "sha256": "8bf259af4daf884514cf96e2b36c3d3f3cd6e37d9aade302254bf995f50b61a8"
+            }
+          ]
+        },
+        {
+          "words": 300000,
+          "bookId": 3,
+          "sceneId": 101,
+          "usableMs": 169.55978099999993,
+          "wholeBookUsableMs": 248.80442299999777,
+          "windowFetchedScenes": 3,
+          "coldFetchedScenes": 3,
+          "samples": {
+            "canvas": {
+              "count": 51,
+              "p95Ms": 15.899999976158142,
+              "maximumMs": 20.300000071525574,
+              "saveLatencyMs": 263.760836999998
+            },
+            "semantic": {
+              "count": 51,
+              "p95Ms": 17.40000009536743,
+              "maximumMs": 19.600000023841858,
+              "saveLatencyMs": 153.05300799999895
+            }
+          },
+          "warmNavigationMs": 88.33600699999806,
+          "savedSourceHash": "12566592128dbc664b555cc7c323d86d667397c7cb3914ee2feca284d3583e0d",
+          "memory": {
+            "LayoutCount": 880,
+            "LayoutDuration": 0.159266,
+            "TaskDuration": 5.952177,
+            "JSHeapUsedSize": 22180264,
+            "JSHeapTotalSize": 126705664
+          },
+          "publications": [
+            {
+              "format": "docx",
+              "jobId": "3b735d34-7f54-4bf9-ac87-34282a0d17f9",
+              "artifactId": "bf26ef62-ddac-4825-afe1-254b126e4f2a",
+              "sourceRevisionId": "1a089fd1-b623-4292-a68b-dd5a0b258903",
+              "sourceHash": "ed470fb54c195569e97b2435bdfb6fcc174bf806f8ef42b79832e77af9ac7e3f",
+              "durationMs": 1452.9658419999978,
+              "byteLength": 817078,
+              "sha256": "3a65dc21af7b14f3b1f2eebae4e4ca8aca869ece7b41bc938dba581659856f4d"
+            },
+            {
+              "format": "pdf",
+              "jobId": "7c97e389-249f-46d0-9f7a-2f7897c14bcb",
+              "artifactId": "f7d8c3ac-d630-43b3-b0bd-1dae5b4a5b4a",
+              "sourceRevisionId": "1a089fd1-b623-4292-a68b-dd5a0b258903",
+              "sourceHash": "ed470fb54c195569e97b2435bdfb6fcc174bf806f8ef42b79832e77af9ac7e3f",
+              "durationMs": 3410.5066469999983,
+              "byteLength": 2312992,
+              "sha256": "f64e951c1bea8eec0945e79b5eadd08da11bb2f310f4f7679206a76b293e8f8d"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "mobile-chromium-emulation",
+      "cpuThrottle": 4,
+      "viewport": {
+        "width": 390,
+        "height": 664
+      },
+      "runs": [
+        {
+          "words": 50000,
+          "bookId": 4,
+          "sceneId": 251,
+          "usableMs": 907.8182440000019,
+          "wholeBookUsableMs": 1515.7470630000025,
+          "windowFetchedScenes": 3,
+          "coldFetchedScenes": 3,
+          "samples": {
+            "canvas": {
+              "count": 51,
+              "p95Ms": 63.89999997615814,
+              "maximumMs": 99.79999995231628,
+              "saveLatencyMs": 851.7104180000024
+            },
+            "semantic": {
+              "count": 51,
+              "p95Ms": 29.800000071525574,
+              "maximumMs": 31.399999976158142,
+              "saveLatencyMs": 369.5522770000025
+            }
+          },
+          "warmNavigationMs": 664.7812680000061,
+          "savedSourceHash": "5e6dc92aa8fae72945bc96183902d5344c17d6820741d39c89b3fdd288f9b98b",
+          "memory": {
+            "LayoutCount": 315,
+            "LayoutDuration": 0.279692,
+            "TaskDuration": 15.693964,
+            "JSHeapUsedSize": 38248232,
+            "JSHeapTotalSize": 87121920
+          }
+        },
+        {
+          "words": 150000,
+          "bookId": 5,
+          "sceneId": 276,
+          "usableMs": 711.4412480000028,
+          "wholeBookUsableMs": 1074.0356059999976,
+          "windowFetchedScenes": 3,
+          "coldFetchedScenes": 3,
+          "samples": {
+            "canvas": {
+              "count": 51,
+              "p95Ms": 60.60000002384186,
+              "maximumMs": 99.29999995231628,
+              "saveLatencyMs": 950.3596469999975
+            },
+            "semantic": {
+              "count": 51,
+              "p95Ms": 30.300000071525574,
+              "maximumMs": 44.800000071525574,
+              "saveLatencyMs": 268.1182889999982
+            }
+          },
+          "warmNavigationMs": 695.3401210000011,
+          "savedSourceHash": "ff987eea889287aca35c8dbb753735cb16207ce97b40721d5ae4b79520084ecf",
+          "memory": {
+            "LayoutCount": 617,
+            "LayoutDuration": 0.505002,
+            "TaskDuration": 30.512864,
+            "JSHeapUsedSize": 15327472,
+            "JSHeapTotalSize": 90791936
+          }
+        },
+        {
+          "words": 300000,
+          "bookId": 6,
+          "sceneId": 351,
+          "usableMs": 776.5331220000007,
+          "wholeBookUsableMs": 1298.484642000003,
+          "windowFetchedScenes": 3,
+          "coldFetchedScenes": 3,
+          "samples": {
+            "canvas": {
+              "count": 51,
+              "p95Ms": 63.89999997615814,
+              "maximumMs": 110,
+              "saveLatencyMs": 957.6035709999996
+            },
+            "semantic": {
+              "count": 51,
+              "p95Ms": 29.100000023841858,
+              "maximumMs": 48.700000047683716,
+              "saveLatencyMs": 380.86956700000155
+            }
+          },
+          "warmNavigationMs": 681.6043990000035,
+          "savedSourceHash": "4476bc064ec539d96abe03073021e12ed71c1ff5707dee55c2690af9dc26ab1b",
+          "memory": {
+            "LayoutCount": 918,
+            "LayoutDuration": 0.751747,
+            "TaskDuration": 45.998109,
+            "JSHeapUsedSize": 22460880,
+            "JSHeapTotalSize": 91578368
+          }
+        }
+      ]
+    }
+  ],
+  "failures": [],
+  "microsoftWord": "unverified"
+}

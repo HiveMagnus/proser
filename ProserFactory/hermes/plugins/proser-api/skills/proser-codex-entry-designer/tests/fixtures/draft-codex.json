@@ -1,0 +1,26 @@
+{
+  "entries": [
+    {
+      "entryType": "character",
+      "entryName": "Vespera Vale",
+      "entryDescription": "A botanist who owns the Glass Orchard and fears what its fruit remembers.",
+      "attributes": {
+        "role": "protagonist",
+        "voice": "precise and guarded"
+      }
+    },
+    {
+      "entryType": "faction",
+      "entryName": "The Amber Pruners",
+      "entryDescription": "Caretakers who prune memory-bearing trees and suppress family scandals.",
+      "attributes": {
+        "symbols": [
+          "amber shears"
+        ],
+        "goals": [
+          "control orchard memories"
+        ]
+      }
+    }
+  ]
+}

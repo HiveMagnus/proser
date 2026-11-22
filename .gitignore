@@ -1,0 +1,50 @@
+# Secrets and local environment overrides
+**/.env
+**/.env.local
+**/.env.*.local
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+
+# Dependencies and generated output
+**/node_modules/
+**/.next/
+**/.turbo/
+**/coverage/
+**/dist/
+**/output/
+**/test-results/
+**/playwright-report/
+**/.playwright-cli/
+**/__pycache__/
+**/*.py[cod]
+**/*.tsbuildinfo
+
+# Local runtime data and certificates
+ProserFactory/data/
+ProserAuthor/certs/
+
+# OS and editor-local state
+.DS_Store
+ProserAuthor/.vscode/launch.json
+ProserAuthor/.vscode/settings.json
+
+# Root-level Factory runtime images and generated fixture assets
+/public/images/
+
+# Ephemeral GitHub Actions fonts and acceptance output
+/.ci/
+
+# Private local imports, exports and credential files
+/imports/
+**/exports/
+**/*.dump
+**/*.pem
+**/*.crt
+**/*.csr
+**/*.key
+**/*.p12
+**/*.sqlite*
+**/*.db
+**/*.har
+**/.auth/

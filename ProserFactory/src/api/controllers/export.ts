@@ -1,0 +1,263 @@
+import { documentAuthorityEnabled } from '@/documents/capabilities';
+import { exportCanonicalBook } from '@/documents/publication';
+import { DocumentError } from '@/documents/errors';
+import { publicationOptionsSchema } from '@/documents/publicationValidation';
+import { Response } from 'express';
+import { AuthenticatedRequest } from '../types';
+import { databaseService } from '../../lib/database';
+import { NotFoundError, ValidationError } from '../../lib/errors';
+import logger from '../../lib/logger';
+import { respondSuccess } from '../utils/response';
+import { getExportCache, cacheExport } from '../../lib/redis/contentCache';
+function escapeHtml(str: string) { return str.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string)); }
+
+export class ExportController {
+  static async exportBook(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user!.id;
+      const bookId = parseInt(req.params.bookId);
+      const signal = req.operationSignal;
+      signal?.throwIfAborted();
+      const format = (req.query.format as string) || 'markdown';
+      const includeCodex = req.query.includeCodex === 'true' || req.query.includeCodex === '1';
+      const includeMetadata = req.query.includeMetadata === 'true' || req.query.includeMetadata === '1';
+      const includeSummaries = req.query.includeSummaries === 'true' || req.query.includeSummaries === '1';
+      const download = req.query.download === 'true' || req.query.download === '1';
+      const hasExtras = includeCodex || includeMetadata || includeSummaries;
+      if (documentAuthorityEnabled()) {
+        if (hasExtras) throw new DocumentError('PUBLICATION_OPTIONS_UNSUPPORTED', 'Legacy codex/metadata/summary injection is not supported by the canonical export. Use saved front/back matter.', 409);
+        const options = publicationOptionsSchema.parse({ format: format === 'txt' ? 'text' : format, mode: req.query.mode ?? 'final', preset: req.query.preset ?? 'saved' });
+        const result = await exportCanonicalBook(userId, bookId, options.format, { mode: options.mode, preset: options.preset, operationId: typeof req.query.operationId === 'string' ? req.query.operationId : undefined, expectedRevisionId: typeof req.query.expectedRevisionId === 'string' ? req.query.expectedRevisionId : undefined });
+        res.setHeader('Cache-Control', 'private, no-store');
+        res.setHeader('X-Source-Revision', result.job.sourceRevisionId);
+        res.setHeader('X-Publication-Job-Id', result.job.id);
+        res.setHeader('X-Content-Sha256', result.artifact.sha256);
+        if (download || ['docx', 'epub', 'pdf'].includes(options.format)) {
+          res.setHeader('Content-Type', result.artifact.mediaType);
+          res.setHeader('Content-Disposition', `attachment; filename="${result.artifact.filename}"`);
+          res.send(Buffer.from(result.artifact.bytes));
+        } else respondSuccess(res, { format: options.format, content: Buffer.from(result.artifact.bytes).toString('utf8'), jobId: result.job.id, artifactId: result.artifact.id, sourceRevisionId: result.job.sourceRevisionId, fidelity: (result.artifact.provenance as { fidelity?: unknown }).fidelity });
+        return;
+      }
+
+
+      // Explicitly reject PDF as an unsupported query option unless later enabled path handles it
+  if (format === 'pdf') throw new ValidationError('Unsupported format');
+      const book = await databaseService.client.book.findFirst({ where: { id: bookId, userId } });
+  if (!book) throw new NotFoundError('Book not found');
+      signal?.throwIfAborted();
+
+      // Try cache only when no extra flags are set (standard export)
+      if (!hasExtras) {
+        const cached = await getExportCache(bookId, format);
+        signal?.throwIfAborted();
+        if (cached.data) {
+          const { content } = cached.data as { format: string; content: string };
+          const etag = 'W/"' + content.length + '-' + (content.charCodeAt(0) ^ content.charCodeAt(content.length - 1 || 0)) + '"';
+          if (req.headers['if-none-match'] === etag) { res.status(304).end(); return; }
+          res.setHeader('ETag', etag);
+          res.setHeader('Cache-Control', 'public, max-age=60');
+          if (download) {
+            const mimeTypes: Record<string, string> = { markdown: 'text/markdown', html: 'text/html', rtf: 'application/rtf' };
+            const exts: Record<string, string> = { markdown: 'md', html: 'html', rtf: 'rtf' };
+            const filename = (book.title || 'book').replace(/[^a-z0-9]+/gi, '_') + '.' + (exts[format] || 'txt');
+            res.setHeader('Content-Type', mimeTypes[format] || 'text/plain');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+            res.status(200).send(content);
+            return;
+          }
+          respondSuccess(res, cached.data); return;
+        }
+      }
+
+      const acts = await databaseService.client.act.findMany({ where: { bookId }, orderBy: { actNumber: 'asc' }, include: { chapters: { orderBy: { chapterNumber: 'asc' }, include: { scenes: { where: { deletedAt: null }, orderBy: { sceneNumber: 'asc' } } } } } });
+
+      // Fetch codex entries if requested
+      let codexEntries: Array<{ entryType: string; entryName: string; entryDescription: string | null }> = [];
+      if (includeCodex) {
+        codexEntries = await databaseService.client.codexEntry.findMany({
+          where: { bookId, deletedAt: null },
+          orderBy: [{ entryType: 'asc' }, { entryName: 'asc' }],
+          select: { entryType: true, entryName: true, entryDescription: true },
+        });
+      }
+  let output = '';
+      if (format === 'markdown') {
+        output += `# ${book.title || 'Untitled Book'}\n\n`;
+        if (includeMetadata) {
+          if (book.genre) output += `**Genre:** ${book.genre}\n\n`;
+          if (book.targetAudience) output += `**Target Audience:** ${book.targetAudience}\n\n`;
+          if (book.summary) output += `**Summary:** ${book.summary}\n\n`;
+          output += '---\n\n';
+        }
+        for (const act of acts) {
+          output += `## Act ${act.actNumber}${act.title ? ': ' + act.title : ''}\n\n`;
+          if (includeSummaries && act.summary) output += `*${act.summary}*\n\n`;
+          for (const chapter of act.chapters) {
+            output += `### Chapter ${chapter.chapterNumber}${chapter.title ? ': ' + chapter.title : ''}\n\n`;
+            if (includeSummaries && chapter.summary) output += `*${chapter.summary}*\n\n`;
+            for (const scene of chapter.scenes) {
+              output += `#### Scene ${chapter.chapterNumber}.${scene.sceneNumber}\n\n`;
+              if (includeSummaries && scene.summary) output += `> ${scene.summary}\n\n`;
+              if (scene.prose) output += scene.prose + '\n\n';
+            }
+          }
+        }
+        if (includeCodex && codexEntries.length > 0) {
+          output += '---\n\n## Codex\n\n';
+          let lastType = '';
+          for (const entry of codexEntries) {
+            if (entry.entryType !== lastType) {
+              output += `### ${entry.entryType.charAt(0).toUpperCase() + entry.entryType.slice(1)}s\n\n`;
+              lastType = entry.entryType;
+            }
+            output += `**${entry.entryName}**`;
+            if (entry.entryDescription) output += `: ${entry.entryDescription}`;
+            output += '\n\n';
+          }
+        }
+  } else if (format === 'html') {
+  const safeTitle = book.title || 'Untitled Book';
+  output += `<html><head><meta charset=\"utf-8\"/><title>${escapeHtml(safeTitle)}</title></head><body>`;
+  output += `<h1>${escapeHtml(safeTitle)}</h1>`;
+        if (includeMetadata) {
+          output += '<div class="metadata">';
+          if (book.genre) output += `<p><strong>Genre:</strong> ${escapeHtml(book.genre)}</p>`;
+          if (book.targetAudience) output += `<p><strong>Target Audience:</strong> ${escapeHtml(book.targetAudience)}</p>`;
+          if (book.summary) output += `<p><strong>Summary:</strong> ${escapeHtml(book.summary)}</p>`;
+          output += '<hr/></div>';
+        }
+        for (const act of acts) {
+          output += `<h2>Act ${act.actNumber}${act.title ? ': ' + escapeHtml(act.title) : ''}</h2>`;
+          if (includeSummaries && act.summary) output += `<p><em>${escapeHtml(act.summary)}</em></p>`;
+          for (const chapter of act.chapters) {
+            output += `<h3>Chapter ${chapter.chapterNumber}${chapter.title ? ': ' + escapeHtml(chapter.title) : ''}</h3>`;
+            if (includeSummaries && chapter.summary) output += `<p><em>${escapeHtml(chapter.summary)}</em></p>`;
+            for (const scene of chapter.scenes) {
+              output += `<h4>Scene ${chapter.chapterNumber}.${scene.sceneNumber}</h4>`;
+              if (includeSummaries && scene.summary) output += `<blockquote>${escapeHtml(scene.summary)}</blockquote>`;
+              if (scene.prose) output += `<p>${escapeHtml(scene.prose).replace(/\n+/g, '<br/>')}</p>`;
+            }
+          }
+        }
+        if (includeCodex && codexEntries.length > 0) {
+          output += '<hr/><h2>Codex</h2>';
+          let lastType = '';
+          for (const entry of codexEntries) {
+            if (entry.entryType !== lastType) {
+              output += `<h3>${escapeHtml(entry.entryType.charAt(0).toUpperCase() + entry.entryType.slice(1))}s</h3>`;
+              lastType = entry.entryType;
+            }
+            output += `<p><strong>${escapeHtml(entry.entryName)}</strong>`;
+            if (entry.entryDescription) output += `: ${escapeHtml(entry.entryDescription)}`;
+            output += '</p>';
+          }
+        }
+        output += '</body></html>';
+  } else if (format === 'rtf') {
+        const esc = (s: string) => s.replace(/[\\{}]/g, m => '\\' + m).replace(/\n/g, '\\par ');
+        output += `{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0 Times New Roman;}}`;
+  output += `\\f0\\fs36 ${esc(book.title || 'Untitled Book')}\\par `;
+        if (includeMetadata) {
+          if (book.genre) output += `\\fs20 Genre: ${esc(book.genre)}\\par `;
+          if (book.targetAudience) output += `\\fs20 Target Audience: ${esc(book.targetAudience)}\\par `;
+          if (book.summary) output += `\\fs20 Summary: ${esc(book.summary)}\\par `;
+        }
+        for (const act of acts) {
+          output += `\\fs28 Act ${act.actNumber}${act.title ? ': ' + esc(act.title) : ''}\\par `;
+          if (includeSummaries && act.summary) output += `\\fs18\\i ${esc(act.summary)}\\i0\\par `;
+          for (const chapter of act.chapters) {
+            output += `\\fs24 Chapter ${chapter.chapterNumber}${chapter.title ? ': ' + esc(chapter.title) : ''}\\par `;
+            if (includeSummaries && chapter.summary) output += `\\fs18\\i ${esc(chapter.summary)}\\i0\\par `;
+            for (const scene of chapter.scenes) {
+              output += `\\fs20 Scene ${chapter.chapterNumber}.${scene.sceneNumber}\\par `;
+              if (includeSummaries && scene.summary) output += `\\fs18\\i ${esc(scene.summary)}\\i0\\par `;
+              if (scene.prose) output += esc(scene.prose) + '\\par ';
+            }
+          }
+        }
+        output += '}';
+    } else if (format === 'pdf') {
+        // PDF requires rendering the HTML export; only allowed if enabled via env
+        const enablePdf = process.env.EXPORT_ENABLE_PDF === '1';
+        if (!enablePdf) {
+      throw new ValidationError('PDF export disabled');
+        }
+        // Build HTML first
+        const safeTitle = book.title || 'Untitled Book';
+        let html = `<html><head><meta charset=\"utf-8\"/><title>${escapeHtml(safeTitle)}</title>` +
+          `<style>body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height:1.6; padding:2rem;}
+          h1,h2,h3,h4{margin-top:1.2em} p{margin:0.7em 0; white-space:pre-wrap}</style></head><body>`;
+        html += `<h1>${escapeHtml(safeTitle)}</h1>`;
+        for (const act of acts) {
+          html += `<h2>Act ${act.actNumber}${act.title ? ': ' + escapeHtml(act.title) : ''}</h2>`;
+          for (const chapter of act.chapters) {
+            html += `<h3>Chapter ${chapter.chapterNumber}${chapter.title ? ': ' + escapeHtml(chapter.title) : ''}</h3>`;
+            for (const scene of chapter.scenes) {
+              html += `<h4>Scene ${chapter.chapterNumber}.${scene.sceneNumber}</h4>`;
+              if (scene.prose) html += `<p>${escapeHtml(scene.prose).replace(/\n+/g, '<br/>')}</p>`;
+            }
+          }
+        }
+        html += '</body></html>';
+
+        // Dynamically import puppeteer to avoid adding overhead when not used
+        let pdfBuffer: Buffer | null = null;
+        try {
+          // Use require to avoid TypeScript type resolution issues when types are not present
+          // eslint-disable-next-line @typescript-eslint/no-require-imports -- puppeteer is an optional, lazily-loaded dependency
+          const puppeteer = require('puppeteer');
+          const launchOpts: { executablePath?: string; args?: string[] } = {};
+          if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+            launchOpts.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+          }
+          // For many Linux servers, disable sandbox if needed
+          launchOpts.args = ['--no-sandbox', '--disable-setuid-sandbox'];
+          const browser = await puppeteer.launch(launchOpts);
+          const page = await browser.newPage();
+          await page.setContent(html, { waitUntil: 'networkidle0' });
+          signal?.throwIfAborted();
+          pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' } });
+          await browser.close();
+          signal?.throwIfAborted();
+  } catch (err) {
+          logger.error({ err }, 'Puppeteer PDF generation failed');
+          throw err;
+        }
+  if (!pdfBuffer) throw new Error('Failed to generate PDF');
+        signal?.throwIfAborted();
+        // Send as binary buffer payload rather than JSON wrapper
+        const filename = (book.title || 'book').replace(/[^a-z0-9]+/gi, '_') + '.pdf';
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Cache-Control', 'no-cache');
+  res.status(200).send(pdfBuffer);
+        return;
+      } else {
+        throw new ValidationError('Unsupported format');
+      }
+  // Simple ETag based on length + hash of first/last chars
+  const etag = 'W/"' + output.length + '-' + (output.charCodeAt(0) ^ output.charCodeAt(output.length - 1 || 0)) + '"';
+  if (req.headers['if-none-match'] === etag) { res.status(304).end(); return; }
+  res.setHeader('ETag', etag);
+  res.setHeader('Cache-Control', 'public, max-age=60');
+  const payload = { format, content: output };
+  signal?.throwIfAborted();
+  if (!hasExtras) await cacheExport(bookId, format, payload);
+  signal?.throwIfAborted();
+  if (download) {
+    const mimeTypes: Record<string, string> = { markdown: 'text/markdown', html: 'text/html', rtf: 'application/rtf' };
+    const exts: Record<string, string> = { markdown: 'md', html: 'html', rtf: 'rtf' };
+    const filename = (book.title || 'book').replace(/[^a-z0-9]+/gi, '_') + '.' + (exts[format] || 'txt');
+    res.setHeader('Content-Type', mimeTypes[format] || 'text/plain');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.status(200).send(output);
+    return;
+  }
+  respondSuccess(res, payload);
+    } catch (error) {
+      logger.error({ error, bookId: req.params.bookId, userId: req.user?.id }, 'Failed to export book');
+      throw error;
+    }
+  }
+}
