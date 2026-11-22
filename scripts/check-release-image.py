@@ -11,7 +11,7 @@ PACKAGE_ROOT = PurePosixPath("opt/proser")
 COMPONENTS = {"factory": "ProserFactory", "author": "ProserAuthor"}
 PRIVATE_PARTS = {".auth", ".git", "certs", "exports", "imports"}
 PRIVATE_EXTENSIONS = {".db", ".docx", ".dump", ".epub", ".har", ".key", ".p12", ".pem", ".pgcustom", ".sqlite", ".sqlite3"}
-REQUIRED_ENV = {"NODE_ENV", "NEXT_TELEMETRY_DISABLED", "PLAYWRIGHT_BROWSERS_PATH", "PUBLICATION_FONT_MANIFEST"}
+REQUIRED_ENV = {"NODE_ENV", "NEXT_TELEMETRY_DISABLED", "PLAYWRIGHT_BROWSERS_PATH", "PROSER_AUTHOR_CONTAINER", "PUBLICATION_FONT_MANIFEST"}
 
 
 def inspect_layer(image, layer_name, destination):

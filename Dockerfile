@@ -27,6 +27,7 @@ WORKDIR /opt/proser
 COPY LICENSE NOTICE ./
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
+    PROSER_AUTHOR_CONTAINER=true \
     PLAYWRIGHT_BROWSERS_PATH=/opt/proser/browsers \
     PUBLICATION_FONT_MANIFEST=/opt/proser/fonts/manifest.json
 COPY --from=build /opt/proser/factory /opt/proser/factory

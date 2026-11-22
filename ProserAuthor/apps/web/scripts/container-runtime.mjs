@@ -52,8 +52,9 @@ if (preparing) {
     },
     Buffer.alloc(32).toString('base64'),
   );
-} else {
-  const secret = process.env.NEXTAUTH_SECRET;
+}
+
+export function configureContainerRuntime(secret) {
   if (!secret) throw new Error('NEXTAUTH_SECRET is required to start Author');
   const derive = (label) => createHmac('sha256', secret).update(`Proser Next container ${label}`);
   configure(
@@ -64,5 +65,4 @@ if (preparing) {
     },
     derive('server actions encryption').digest('base64'),
   );
-  await import('../server.js');
 }

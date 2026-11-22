@@ -25,7 +25,7 @@ printf 'PROSER_IMAGE=%s\nPROSER_WEB_PORT=%s\nPROSER_FACTORY_PORT=%s\nPROSER_ORIG
 "${compose[@]}" exec -T author node - <<'JS'
 const assert = require('node:assert/strict');
 const preview = require('./.next/prerender-manifest.json').preview;
-assert.deepEqual(preview, require('./.next/server/preview-props.json'));
+assert(JSON.stringify(preview) === JSON.stringify(require('./.next/server/preview-props.json')));
 for (const key of Object.values(preview)) assert(new Set(key).size > 1);
 const { encryptionKey } = require('./.next/server/server-reference-manifest.json');
 assert(Buffer.from(encryptionKey, 'base64').some(byte => byte !== 0));
