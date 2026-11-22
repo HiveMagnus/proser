@@ -6,14 +6,16 @@ EPUB. Connect compatible model providers to use AI-assisted writing and images.
 
 ## Quick start
 
-Install Git, Docker with the Compose plugin, and Node.js. Clone the repository
-and run:
+Install Git, Docker with the Compose plugin, and Node.js. The prebuilt release
+image supports Linux on x86-64, including Docker Desktop on x86-64 hosts.
 
 ```bash
-git clone https://github.com/HiveMagnus/proser.git
+git clone --branch v1.0.1 https://github.com/HiveMagnus/proser.git
 cd proser
 node scripts/init-compose-env.mjs
-docker compose --env-file .env.compose up -d --build --wait
+printf '\nPROSER_IMAGE=ghcr.io/hivemagnus/proser:1.0.1\n' >> .env.compose
+docker pull ghcr.io/hivemagnus/proser:1.0.1
+docker compose --env-file .env.compose up -d --no-build --wait
 ```
 
 Open [http://localhost:3000](http://localhost:3000). Sign in with
@@ -21,6 +23,9 @@ Open [http://localhost:3000](http://localhost:3000). Sign in with
 `.env.compose` file. Keep the file with your installation and backups.
 Compose starts Author, Factory, and the worker from **one application image**.
 PostgreSQL, Redis, manuscripts, and images persist in named volumes.
+
+To build from source, generate a fresh `.env.compose` in your checkout and run
+`docker compose --env-file .env.compose up -d --build --wait`.
 
 ## Initial configuration
 
@@ -35,7 +40,7 @@ The generated config enables direct Factory access at `http://127.0.0.1:3001`
 for CLI and agent clients. Use the base Compose file to keep Factory internal:
 
 ```bash
-docker compose --env-file .env.compose -f compose.yml up -d --wait
+docker compose --env-file .env.compose -f compose.yml up -d --no-build --wait
 ```
 
 Text and image providers run separately. The app can start and edit documents

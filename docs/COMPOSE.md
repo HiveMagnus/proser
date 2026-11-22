@@ -21,9 +21,11 @@ random credentials and preserves any existing environment file. If you change
 the web port, update `PROSER_ORIGIN` to match the URL you use in the browser.
 Set `PROSER_REVISION` to the source commit when building a newer checkout.
 
-For an image that is already built, set `PROSER_IMAGE` to its local tag and
-start Compose with `--no-build`. Author, Factory, the worker and the database
-initializer must all use that same image.
+For a prebuilt release, set `PROSER_IMAGE` in `.env.compose` to the image tag or
+digest listed in the [release notes](https://github.com/HiveMagnus/proser/releases).
+Pull that reference with `docker pull`, then start Compose with `--no-build`.
+Author, Factory, the worker and the database initializer all use the same image.
+The public registry image supports `linux/amd64`.
 
 The initializer installs or verifies the reviewed document-enforcement SQL.
 Automatic activation runs only against a fresh Compose-managed database. On

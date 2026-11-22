@@ -16,7 +16,7 @@ description = "Editorial judging profile identifiers are public configuration ke
 condition = "AND"
 targetRules = ["generic-api-key"]
 regexTarget = "secret"
-paths = ['''^ProserFactory/src/services/editorial/judging/judgeProfiles\.ts$''']
+paths = ['''^ProserFactory/(src/services/editorial/judging/judgeProfiles\.ts|dist/services/editorial/judging/judgeProfiles\.(js|d\.ts))$''']
 regexes = [
   '''^blind_pairwise_v1$''',
   '''^blind_pairwise_adversarial_v1$''',

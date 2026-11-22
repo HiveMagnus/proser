@@ -37,8 +37,10 @@ for at most thirty seconds; public output contains bounded readiness states.
 The legacy Markdown bundle importer now preserves exact original bytes and a
 reviewable conversion/report before committing an append operation. It creates
 fresh hierarchy identities and retains all existing prose, structure, codex,
-review and revision history. Boundary whitespace/heading mapping, literal
-Markdown objects and limited codex frontmatter are disclosed losses. Commit
+review and revision history. Manuscript emphasis, strong emphasis, strikethrough
+and code spans become native text styles. Links, HTML, image references and tables
+stay as text. Boundary whitespace and heading mapping and the supported codex
+frontmatter fields are disclosed in the conversion report. Commit
 requires explicit consent to the exact report checksum and source book,
 structure and canon revisions. Originals survive failed conversion and remain
 available only to their owner, including after the book is tombstoned.

@@ -1,0 +1,131 @@
+name: Publish Proser image
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: proser-image-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  acceptance:
+    if: github.repository == 'HiveMagnus/proser'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      revision: ${{ steps.tag.outputs.revision }}
+      version: ${{ steps.tag.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Resolve the release tag on main
+        id: tag
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          revision=$(git rev-parse HEAD)
+          git merge-base --is-ancestor "$revision" refs/remotes/origin/main
+          printf 'revision=%s\nversion=%s\n' "$revision" "${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Wait for verification and Gitleaks on the release tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REVISION: ${{ steps.tag.outputs.revision }}
+        run: |
+          set -euo pipefail
+          for workflow in verify.yml gitleaks.yml; do
+            for attempt in $(seq 1 60); do
+              status=$(gh api --method GET "repos/$GITHUB_REPOSITORY/actions/workflows/$workflow/runs" \
+                -f event=push -f branch="$GITHUB_REF_NAME" -f head_sha="$REVISION" -f per_page=1 \
+                --jq '.workflow_runs[0] | if .status == "completed" then .conclusion else "pending" end')
+              case "$status" in
+                success) break ;;
+                pending) sleep 25 ;;
+                *) echo "$workflow completed with $status" >&2; exit 1 ;;
+              esac
+            done
+            test "$status" = success
+          done
+
+  publish:
+    needs: acceptance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.push.outputs.image }}
+      digest: ${{ steps.push.outputs.digest }}
+    env:
+      REVISION: ${{ needs.acceptance.outputs.revision }}
+      VERSION: ${{ needs.acceptance.outputs.version }}
+      IMAGE: ghcr.io/hivemagnus/proser
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.acceptance.outputs.revision }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Build the versioned linux/amd64 image
+        run: |
+          docker build --platform linux/amd64 --build-arg PROSER_REVISION="$REVISION" \
+            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.version=$VERSION" \
+            --label org.opencontainers.image.title=Proser \
+            --label org.opencontainers.image.licenses=Apache-2.0 \
+            --tag "$IMAGE:$VERSION" .
+      - name: Check image layers and scan application files for secrets
+        run: |
+          docker run --rm --network none --entrypoint sh "$IMAGE:$VERSION" \
+            -c 'test -s /opt/proser/LICENSE && test -s /opt/proser/NOTICE'
+          bash scripts/check-release-image.sh "$IMAGE:$VERSION"
+      - name: Start and verify the prebuilt image with fresh volumes
+        run: bash scripts/smoke-compose-image.sh "$IMAGE:$VERSION" "$REVISION"
+      - name: Push the verified image
+        id: push
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          if docker manifest inspect "$IMAGE:$VERSION" >/dev/null 2>&1; then
+            echo "The release image tag already exists" >&2
+            exit 1
+          fi
+          docker push "$IMAGE:$VERSION" | tee "$RUNNER_TEMP/proser-image-push.log"
+          digest=$(awk '/digest: sha256:/ { print $3 }' "$RUNNER_TEMP/proser-image-push.log")
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          printf 'image=%s\ndigest=%s\n' "$IMAGE" "$digest" >> "$GITHUB_OUTPUT"
+          printf 'Published `%s:%s` at `%s`\n' "$IMAGE" "$VERSION" "$digest" >> "$GITHUB_STEP_SUMMARY"
+
+  attest:
+    needs: publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      packages: write
+    steps:
+      - name: Authenticate to GHCR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ needs.publish.outputs.image }}
+          subject-digest: ${{ needs.publish.outputs.digest }}
+          push-to-registry: true

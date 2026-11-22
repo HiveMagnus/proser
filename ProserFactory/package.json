@@ -82,6 +82,7 @@
     "ioredis": "^5.11.1",
     "jsonwebtoken": "^9.0.3",
     "ky": "^2.2.0",
+    "markdown-it": "15.0.3",
     "ora": "^10.0.0",
     "pg": "^8.23.1",
     "pg-copy-streams": "^7.0.0",
