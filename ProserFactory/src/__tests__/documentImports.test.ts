@@ -5,6 +5,7 @@ import { databaseService } from '@/lib/database';
 import { documentService } from '@/documents/service';
 import { preserveImportOriginal, prepareLegacyBundleImport, readImportOriginal, readImportPreview, commitLegacyBundleImport } from '@/documents/imports';
 import { documentFromText, projectDocument } from '@/documents/model';
+import { documentFromLegacyMarkdown } from '@/lib/importers/legacyMarkdown';
 
 describe('original-preserving append imports', () => {
   const prior = process.env.DOCUMENT_AUTHORITY_ENABLED;
@@ -41,11 +42,23 @@ describe('original-preserving append imports', () => {
     return { operationId: randomUUID(), expectedRevisionId: source.revisionId, expectedScopes: { structure: source.scopes!.structure.revisionId, canon: source.scopes!.canon.revisionId }, consentReportHash: reportHash };
   };
   const auth = (value: request.Test) => value.set('x-user-id', String(userId)).set('x-github-id', githubId).set('x-username','Import author');
+  test('converts nested inline marks while retaining unsupported markup as text', () => {
+    const literal = '<span>plain</span> ![Cover](cover.png) [Notes](notes.md)';
+    const document = documentFromLegacyMarkdown(`***Both*** ~~old~~ \`code\`\n\n${literal}`, randomUUID);
+    expect(projectDocument(document).text).toBe(`Both old code\n\n${literal}`);
+    expect(document.blocks[0]).toMatchObject({ runs: [
+      { text: 'Both', style: { bold: true, italic: true } },
+      { text: ' ', style: {} },
+      { text: 'old', style: { strikeout: true } },
+      { text: ' ', style: {} },
+      { text: 'code', style: { font: 'monospace' } },
+    ] });
+  });
   test('preview preserves exact CR/Unicode bytes, exposes hierarchy/losses, and creates no hierarchy identities', async () => {
     const before = await documentService.manifest(userId, bookId); const bytes = bundle(); const prepared = await preview(bytes);
     const original = await readImportOriginal(userId, bookId, prepared.original.id); expect(Buffer.from(original.bytes)).toEqual(bytes);
     expect(prepared.record.mapping.acts[0].chapters[0].scenes).toHaveLength(2);
-    expect(prepared.record.report).toMatchObject({ strategy: 'append-new-identities', sceneCount: 2, codexCount: 1, losses: [{ code: 'LEGACY_HEADING_WHITESPACE_MAPPING' }, { code: 'MARKDOWN_FORMATTING_LITERAL' }, { code: 'CODEX_FRONTMATTER_SUBSET' }] });
+    expect(prepared.record.report).toMatchObject({ strategy: 'append-new-identities', sceneCount: 2, codexCount: 1, losses: [{ code: 'LEGACY_HEADING_WHITESPACE_MAPPING' }, { code: 'MARKDOWN_INLINE_STYLE_SUBSET' }, { code: 'CODEX_FRONTMATTER_SUBSET' }] });
     expect(await documentService.manifest(userId, bookId)).toEqual(before); expect(await db().scene.count({ where: { chapter: { act: { bookId } } } })).toBe(1);
     expect(await prepareLegacyBundleImport(userId, bookId, prepared.input)).toEqual(prepared.record);
     expect(await db().documentImportPreview.count({ where: { bookId } })).toBe(1);
@@ -61,7 +74,9 @@ describe('original-preserving append imports', () => {
     expect((await documentService.read(userId, bookId, sceneId)).document).toEqual(old.document);
     expect((await documentService.read(userId, bookId, sceneId)).revisionId).toBe(old.revisionId);
     const first = receipt.result.hierarchy.acts[0].chapters[0].sceneIds[0];
-    expect((await documentService.read(userId, bookId, first)).projection.text).toBe('First **bold** paragraph 😀 é.');
+    const imported = await documentService.read(userId, bookId, first);
+    expect(imported.projection.text).toBe('First bold paragraph 😀 é.');
+    expect(imported.document.blocks[0]).toMatchObject({ runs: [{ text: 'First ', style: {} }, { text: 'bold', style: { bold: true } }, { text: ' paragraph 😀 é.', style: {} }] });
     expect((await readImportOriginal(userId, bookId, prepared.original.id)).sha256).toBe(prepared.original.sha256);
     expect(await db().auditLog.count({ where: { userId, entityId: bookId, metadata: { path: ['action'], equals: 'import-conversion-consent' } } })).toBe(1);
     // Lost acknowledgement recovery remains exact after a later edit.

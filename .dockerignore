@@ -1,5 +1,7 @@
 **
 !Dockerfile
+!LICENSE
+!NOTICE
 
 !ProserFactory/
 ProserFactory/**
@@ -52,6 +54,9 @@ ProserAuthor/apps/web/**
 !ProserAuthor/apps/web/postcss.config.js
 !ProserAuthor/apps/web/server.js
 !ProserAuthor/apps/web/trusted-auth-source.js
+!ProserAuthor/apps/web/scripts/
+ProserAuthor/apps/web/scripts/**
+!ProserAuthor/apps/web/scripts/container-runtime.mjs
 !ProserAuthor/apps/web/tsconfig.json
 !ProserAuthor/apps/web/next-env.d.ts
 !ProserAuthor/apps/web/src/

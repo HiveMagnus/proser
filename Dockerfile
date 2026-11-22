@@ -19,10 +19,12 @@ COPY ProserAuthor/package.json ProserAuthor/pnpm-lock.yaml ProserAuthor/pnpm-wor
 COPY ProserAuthor/apps/web ./author/apps/web
 COPY ProserAuthor/packages ./author/packages
 RUN cd author && corepack pnpm install --frozen-lockfile && corepack pnpm build \
-    && find . -type d -name .turbo -prune -exec rm -r {} +
+    && find . -type d -name .turbo -prune -exec rm -r {} + \
+    && node apps/web/scripts/container-runtime.mjs --prepare
 
 FROM node:24.22.1-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205 AS runtime
 WORKDIR /opt/proser
+COPY LICENSE NOTICE ./
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PLAYWRIGHT_BROWSERS_PATH=/opt/proser/browsers \
@@ -38,6 +40,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build /opt/proser/author /opt/proser/author
 RUN install -d -o node -g node -m 0700 /opt/proser/author/apps/web/.next/cache
+RUN cd /opt/proser/author/apps/web/.next \
+    && chown node:node . server prerender-manifest.json server/preview-props.json \
+        server/server-reference-manifest.json server/server-reference-manifest.js
 ARG PROSER_REVISION
 LABEL org.opencontainers.image.revision=$PROSER_REVISION
 RUN test "${#PROSER_REVISION}" -eq 40 && printf '%s\n' "$PROSER_REVISION" | grep -Eq '^[a-f0-9]{40}$' \

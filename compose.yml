@@ -35,7 +35,7 @@ services:
       args:
         PROSER_REVISION: ${PROSER_REVISION:-}
     working_dir: /opt/proser/author/apps/web
-    command: [node, server.js]
+    command: [node, scripts/container-runtime.mjs]
     ports:
       - "${PROSER_WEB_BIND:-127.0.0.1}:${PROSER_WEB_PORT:-3000}:3000"
     environment:
