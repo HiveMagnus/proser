@@ -67,7 +67,8 @@ export async function requireMetricsToken(
   const suppliedHeader = req.headers['x-metrics-token'];
   const supplied = typeof suppliedHeader === 'string' ? suppliedHeader : '';
 
-  if (!expected && process.env.NODE_ENV !== 'production') {
+  // Only an explicit development or test process may scrape without a token.
+  if (!expected && (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test')) {
     next();
     return;
   }
