@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 jest.mock('../../lib/database', () => ({ databaseService: { client: {} } }));
 import { resolveServicePrincipal } from '../../api/middleware/servicePrincipal';
+import { novaAction } from '../../api/middleware/novaGrant';
 const token = 'pnv_' + 'a'.repeat(43);
 afterEach(() => { delete process.env.PROSER_SERVICE_PRINCIPALS_JSON; });
 test('Nova uses a separate credential and caller on the shared library, without administrative access', () => {
@@ -27,4 +28,14 @@ test('workflow publication needs both the registered grant and content:publish p
   expect(resolveServicePrincipal(token,'POST',pathname,'senti')).toBeNull();
   process.env.PROSER_SERVICE_PRINCIPALS_JSON = JSON.stringify([{ ...principal, scopes: [...principal.scopes, 'content:publish'] }]);
   expect(resolveServicePrincipal(token,'POST',pathname,'senti')).not.toBeNull();
+});
+test('non-canonical paths cannot downgrade the publish scope', () => {
+  const run = '/api/workflows/5ec31909-9caa-4d94-b6e7-265764101796';
+  process.env.PROSER_SERVICE_PRINCIPALS_JSON = JSON.stringify([{ sha256:createHash('sha256').update(token).digest('hex'),name:'nova',
+    ownerGithubId:'shared-owner',scopes:['content:read','content:write'],callers:['senti'],expiresAt:'2099-01-01T00:00:00.000Z' }]);
+  expect(resolveServicePrincipal(token,'POST',`${run}/pause`,'senti')).not.toBeNull();
+  for (const suffix of ['/finalize/', '/FINALIZE', '/Decision', '/finalize//', '/finalize%2f', '/x/../finalize'])
+    expect(resolveServicePrincipal(token,'POST',run + suffix,'senti')).toBeNull();
+  expect(novaAction('POST', `${run}/FINALIZE`, {})).toBe('workflows.publish');
+  expect(novaAction('POST', `${run}/Cancel`, {})).toBe('workflows.control');
 });

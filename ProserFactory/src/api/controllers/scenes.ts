@@ -106,6 +106,14 @@ export class ScenesController {
         const receipt = await scenesService.reorderScenes(userId, Number(req.params.bookId), chapterId, reorderedScenes.map((scene) => scene.id), parseDocumentMutationPreconditions(req.body.documentPreconditions));
         respondSuccess(res, { message: 'Scenes reordered successfully', documentReceipt: receipt }); return;
       }
+      // Scene IDs come from the request body. They must be exactly this
+      // chapter's scenes, or another author's scenes could be renumbered.
+      const requestedIds = reorderedScenes.map((scene) => Number(scene?.id));
+      const chapterScenes = await databaseService.client.scene.findMany({ where: { chapterId, deletedAt: null }, select: { id: true } });
+      const chapterSceneIds = new Set(chapterScenes.map((scene) => scene.id));
+      if (requestedIds.length !== chapterSceneIds.size || new Set(requestedIds).size !== requestedIds.length || !requestedIds.every((id) => chapterSceneIds.has(id))) {
+        throw new ValidationError('reorderedScenes must list every scene in this chapter exactly once');
+      }
       // Two-phase update to prevent unique constraint collisions on (chapterId, sceneNumber)
       await databaseService.client.$transaction(async (tx) => {
         const tempOffset = 1000;

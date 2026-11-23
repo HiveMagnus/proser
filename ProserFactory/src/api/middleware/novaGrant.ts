@@ -300,17 +300,17 @@ export function novaAction(method: string, pathname: string, _body: unknown): No
   if (/^\/api\/(?:models|ollama)(?:\/|$)/.test(pathname)) return 'capabilities.read';
   if (pathname === '/api/images/health' || pathname === '/api/image/health') return 'capabilities.read';
   if (/^\/api\/workflows(?:\/|$)/.test(pathname)) {
-    if (/\/(?:finalize|decision)$/.test(pathname)) return 'workflows.publish';
-    if (/\/workflows\/[^/]+\/(?:pause|resume|cancel)$/.test(pathname)) return 'workflows.control';
+    if (/\/(?:finalize|decision)$/i.test(pathname)) return 'workflows.publish';
+    if (/\/workflows\/[^/]+\/(?:pause|resume|cancel)$/i.test(pathname)) return 'workflows.control';
     return read ? 'workflows.read' : 'workflows.create';
   }
   if (/^\/api\/(?:reviews|findings|editorial|editorial-runs)(?:\/|$)/.test(pathname)) return read ? 'editorial.read' : 'editorial.write';
   if (/^\/api\/codex(?:\/|$)/.test(pathname) || /^\/api\/books\/\d+\/codex(?:\/|$)/.test(pathname)) return read ? 'codex.read' : 'codex.write';
-  if (/^\/api\/generate(?:\/|$)/.test(pathname)) return /\/cancel$/.test(pathname) ? 'generation.control' : read ? 'generation.read' : 'generation.create';
+  if (/^\/api\/generate(?:\/|$)/.test(pathname)) return /\/cancel$/i.test(pathname) ? 'generation.control' : read ? 'generation.read' : 'generation.create';
   if (/^\/api\/images(?:\/|$)/.test(pathname)) return read ? 'images.read' : 'images.create';
   if (pathname === '/api/books' && method === 'POST') return 'books.create';
   if (/^\/api\/books(?:\/|$)/.test(pathname)) return read ? 'books.read' : 'books.write';
-  if (/\/workflows\/[^/]+\/(?:pause|resume|cancel)$/.test(pathname)) return 'workflows.control';
+  if (/\/workflows\/[^/]+\/(?:pause|resume|cancel)$/i.test(pathname)) return 'workflows.control';
   throw new NovaGrantError('DELEGATED_ACTION_DENIED', 'This service route has no Nova grant action.');
 }
 
