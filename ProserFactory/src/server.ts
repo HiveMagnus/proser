@@ -1,3 +1,4 @@
+import { hermesAgentCredentials } from './api/middleware/auth';
 import express from 'express';
 import { expensivePayloadGuard } from './api/middleware/expensiveRouteLimit';
 import https from 'https';
@@ -160,6 +161,7 @@ let activeServer: http.Server | https.Server | null = null;
 
 export async function startServer(port: number | string = process.env.PORT || 3001, app = createApp()) {
   validateProductionMetricsConfig();
+  hermesAgentCredentials(); // Refuse to start on a malformed per-agent credential set.
   await databaseService.connect();
   logger.info('Database connection established');
   try { await redis.ping(); logger.info('Redis connection verified'); } catch { logger.warn('Redis not available, continuing without caching'); }

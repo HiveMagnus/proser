@@ -1,8 +1,18 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { User, Cpu, Key, Loader2, PenTool, RefreshCw, Save, CheckCircle2 } from 'lucide-react';
+import { signOut, useSession } from 'next-auth/react';
+import {
+  User,
+  Cpu,
+  Key,
+  Loader2,
+  LogOut,
+  PenTool,
+  RefreshCw,
+  Save,
+  CheckCircle2,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input, Textarea } from '@/components/ui/input';
@@ -75,6 +85,8 @@ export default function SettingsPage() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
   const [profileError, setProfileError] = useState('');
+  const [sessionsRevoking, setSessionsRevoking] = useState(false);
+  const [sessionsError, setSessionsError] = useState('');
 
   // ── AI Config state ──
   const [inferenceUrl, setInferenceUrl] = useState('http://127.0.0.1:8000');
@@ -180,6 +192,21 @@ export default function SettingsPage() {
       await loadModels();
     })();
   }, [loadInferenceSettings, loadModels]);
+
+  async function handleRevokeSessions() {
+    setSessionsRevoking(true);
+    setSessionsError('');
+    try {
+      const res = await fetch('/api/settings/sessions/revoke', { method: 'POST' });
+      if (!res.ok) {
+        throw new Error(await getResponseErrorMessage(res, 'Sessions could not be signed out.'));
+      }
+      await signOut({ callbackUrl: '/auth/signin' });
+    } catch (error) {
+      setSessionsError(getErrorMessage(error, 'Sessions could not be signed out.'));
+      setSessionsRevoking(false);
+    }
+  }
 
   async function handleSaveProfile() {
     setProfileSaving(true);
@@ -353,6 +380,37 @@ export default function SettingsPage() {
               {profileError ? (
                 <p className="text-[length:--text-sm] text-red-300" role="alert">
                   {profileError}
+                </p>
+              ) : null}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Sessions</CardTitle>
+              <CardDescription>
+                Sign out of every browser and device, including this one. Use this if a device is
+                lost or you think someone else has access.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-end">
+                <Button
+                  variant="secondary"
+                  onClick={handleRevokeSessions}
+                  disabled={sessionsRevoking}
+                >
+                  {sessionsRevoking ? (
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                  ) : (
+                    <LogOut className="mr-2 size-4" />
+                  )}
+                  Sign out everywhere
+                </Button>
+              </div>
+              {sessionsError ? (
+                <p className="text-[length:--text-sm] text-red-300" role="alert">
+                  {sessionsError}
                 </p>
               ) : null}
             </CardContent>

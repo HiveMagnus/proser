@@ -23,6 +23,8 @@ declare module 'next-auth' {
       username?: string;
       roles?: string[];
       provider?: string;
+      /** Seconds since the epoch at which this session was signed in. */
+      sessionIssuedAt?: number;
     } & DefaultSession['user'];
   }
 }

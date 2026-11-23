@@ -106,6 +106,35 @@ function signBackendJwt(payload: Record<string, unknown>, secret: string) {
   return `${header}.${body}.${signature}`;
 }
 
+const SESSION_COOKIE_NAMES = ['authjs.session-token', '__Secure-authjs.session-token'];
+
+function sessionWasRevoked(body: ArrayBuffer | Uint8Array | string | null): boolean {
+  if (!body) return false;
+  try {
+    const text = typeof body === 'string' ? body : new TextDecoder().decode(body);
+    if (text.length > 4096) return false;
+    const parsed = JSON.parse(text) as { error?: { details?: { code?: unknown } } };
+    return parsed.error?.details?.code === 'SESSION_REVOKED';
+  } catch {
+    return false;
+  }
+}
+
+/** Sign this browser out once Factory reports that its session was revoked. */
+function expireSessionCookies(response: NextResponse): void {
+  for (const name of SESSION_COOKIE_NAMES) {
+    for (const suffix of ['', '.0', '.1', '.2', '.3']) {
+      response.cookies.set(`${name}${suffix}`, '', {
+        httpOnly: true,
+        maxAge: 0,
+        path: '/',
+        sameSite: 'lax',
+        secure: name.startsWith('__Secure-'),
+      });
+    }
+  }
+}
+
 class SessionScopeChanged extends Error {}
 async function buildAuthorizationHeader(expectedIdentity: string | null) {
   const session = await auth();
@@ -150,6 +179,8 @@ async function buildAuthorizationHeader(expectedIdentity: string | null) {
       username,
       email: typeof user.email === 'string' ? user.email : undefined,
       avatarUrl: typeof user.image === 'string' ? user.image : undefined,
+      // Lets Factory refuse sessions signed in before the account revoked them.
+      sessionIssuedAt: typeof user.sessionIssuedAt === 'number' ? user.sessionIssuedAt : undefined,
       iss: FACTORY_AUTH_ISSUER,
       aud: FACTORY_AUTH_AUDIENCE,
       iat: now,
@@ -526,10 +557,13 @@ async function proxy(req: NextRequest) {
       }
 
       const responseBody = await readBoundedBody(upstream, policy.responseLimit);
-      return new NextResponse(responseBody, {
+      const response = new NextResponse(responseBody, {
         status: upstream.status,
         headers: responseHeaders,
       });
+      if (upstream.status === 401 && sessionWasRevoked(responseBody))
+        expireSessionCookies(response);
+      return response;
     } finally {
       if (!cleanupDeferredToStream) cleanup();
     }

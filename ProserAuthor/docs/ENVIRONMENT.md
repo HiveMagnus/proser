@@ -17,6 +17,7 @@ application secrets. See [Compose configuration](../../docs/COMPOSE.md).
 | `FACTORY_URL`                    | Yes               | —                | ProserFactory base URL used by the Next.js `/api/*` proxy       |
 | `NEXTAUTH_URL`                   | No                | —                | Compatibility setting for the Auth.js browser origin            |
 | `NEXTAUTH_SECRET`                | Yes               | -                | NextAuth.js session encryption secret                           |
+| `AUTH_SESSION_MAX_LIFETIME_DAYS` | No                | `90`             | Days after sign-in at which a session ends even if still in use |
 | `AUTH_URL`                       | See below         | —                | Canonical Auth.js browser origin                                |
 | `FACTORY_AUTH_SECRET`            | Yes               | -                | Dedicated secret for Author-to-Factory JWTs; must match Factory |
 | `FACTORY_AUTH_ISSUER`            | No                | `proser-author`  | JWT issuer expected by Factory                                  |

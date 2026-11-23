@@ -71,6 +71,24 @@ service identity. Use `HERMES_AGENT_ALLOWED_GITHUB_IDS` when multiple Hermes
 hosts need separate Proser user scopes while sharing the dedicated Hermes
 signing secret.
 
+A shared secret lets any host that holds it sign a token for every permitted
+agent identity. Give each host its own secret instead:
+
+```dotenv
+HERMES_AGENT_CREDENTIALS={"service:hermes-agent:host-a":"<32+ random characters>","service:hermes-agent:host-b":{"secret":"<32+ random characters>","owners":["iam:author"]}}
+```
+
+An identity listed in `HERMES_AGENT_CREDENTIALS` is accepted only when its
+token is signed with its own secret, never with the shared one, and needs no
+entry in `HERMES_AGENT_ALLOWED_GITHUB_IDS`. The optional `owners` list limits
+which accounts that agent may act for; without it
+`HERMES_AGENT_ALLOWED_OWNER_GITHUB_IDS` applies. Set
+`HERMES_AGENT_CREDENTIALS_FILE` to an owner-only JSON file to keep the secrets
+out of the environment file. To revoke one host, remove its entry and restart
+Factory. Once every host has its own entry, unset `HERMES_AGENT_AUTH_SECRET`.
+Factory refuses to start if the value is malformed, a secret is shorter than
+32 characters, or two identities share a secret.
+
 ## ProserAuthor service auth
 
 Stage the same random `FACTORY_AUTH_SECRET` in ProserAuthor and ProserFactory. ProserAuthor must mint short-lived HS256 tokens with `iss=proser-author` and `aud=proser-factory`. `NEXTAUTH_SECRET`/`AUTH_SECRET` are a temporary logged fallback, not the target configuration.
