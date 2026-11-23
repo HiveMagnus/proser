@@ -167,7 +167,7 @@ BEGIN
     EXECUTE format('DROP TRIGGER IF EXISTS proser_document_admission ON %I',table_name);
     EXECUTE format('CREATE TRIGGER proser_document_admission BEFORE INSERT OR UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION proser_document_guard()',table_name);
   END LOOP;
-  FOREACH table_name IN ARRAY ARRAY['release_fence_receipts','release_mutation_admissions','release_admission_bindings','scene_document_search_indexes','scene_document_revisions','book_document_revisions','book_document_scope_revisions','document_legacy_revision_mappings','document_operations','document_originals','document_import_originals','document_import_previews','document_publication_artifacts','document_proposal_validations','document_story_discussions','document_story_proposal_validations','document_compare_validations','manuscript_revisions','audit_log'] LOOP
+  FOREACH table_name IN ARRAY ARRAY['release_fence_receipts','release_mutation_admissions','release_admission_bindings','scene_document_search_indexes','scene_document_revisions','book_document_revisions','book_document_scope_revisions','document_legacy_revision_mappings','document_operations','document_originals','document_publication_artifacts','document_proposal_validations','document_story_discussions','document_story_proposal_validations','document_compare_validations','manuscript_revisions','audit_log'] LOOP
     IF to_regclass(table_name) IS NULL THEN CONTINUE; END IF;
     EXECUTE format('DROP TRIGGER IF EXISTS proser_document_immutable ON %I',table_name);
     EXECUTE format('CREATE TRIGGER proser_document_immutable BEFORE UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION proser_document_guard(''immutable'')',table_name);
@@ -175,6 +175,43 @@ BEGIN
   FOREACH table_name IN ARRAY ARRAY['books','scenes','book_document_heads'] LOOP
     EXECUTE format('DROP TRIGGER IF EXISTS proser_document_consistent ON %I',table_name);
     EXECUTE format('CREATE CONSTRAINT TRIGGER proser_document_consistent AFTER INSERT OR UPDATE ON %I DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION proser_document_consistency()',table_name);
+  END LOOP;
+END $$;
+
+-- Import originals and their previews never change. An owner may delete one
+-- that no committed import used, inside the document service's transaction for
+-- that book. A committed import's original and preview remain its evidence:
+-- legacy bundle commits audit them as originalId/previewId, DOCX commits under
+-- importSource.
+CREATE OR REPLACE FUNCTION proser_document_import_evidence_guard()
+RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE admitted text;
+BEGIN
+  IF NOT (SELECT enabled FROM proser_document_enforcement WHERE singleton) THEN RETURN coalesce(NEW,OLD); END IF;
+  IF TG_OP <> 'DELETE' THEN RAISE EXCEPTION 'PROSER_DOCUMENT_IMMUTABLE: % evidence cannot change', TG_TABLE_NAME USING ERRCODE='23514'; END IF;
+  admitted := current_setting('proser.document_book',true);
+  IF admitted IS NULL OR admitted <> OLD.book_id::text THEN
+    RAISE EXCEPTION 'PROSER_DOCUMENT_ADMISSION_REQUIRED: % deletion requires scoped document transaction', TG_TABLE_NAME USING ERRCODE='23514';
+  END IF;
+  IF TG_TABLE_NAME = 'document_import_previews' THEN
+    IF EXISTS (SELECT 1 FROM audit_log WHERE entity_type='book' AND entity_id=OLD.book_id AND OLD.id IN (metadata->>'previewId', metadata->'importSource'->>'previewId')) THEN
+      RAISE EXCEPTION 'PROSER_DOCUMENT_IMMUTABLE: committed import preview % is evidence', OLD.id USING ERRCODE='23514';
+    END IF;
+  ELSIF EXISTS (SELECT 1 FROM document_import_previews WHERE original_id = OLD.id)
+     OR EXISTS (SELECT 1 FROM audit_log WHERE entity_type='book' AND entity_id=OLD.book_id AND OLD.id IN (metadata->>'originalId', metadata->'importSource'->>'originalId')) THEN
+    RAISE EXCEPTION 'PROSER_DOCUMENT_IMMUTABLE: import original % is still referenced', OLD.id USING ERRCODE='23514';
+  END IF;
+  RETURN OLD;
+END $$;
+DO $$
+DECLARE table_name text;
+BEGIN
+  FOREACH table_name IN ARRAY ARRAY['document_import_originals','document_import_previews'] LOOP
+    IF to_regclass(table_name) IS NULL THEN CONTINUE; END IF;
+    -- Earlier enforcement made these tables wholly immutable.
+    EXECUTE format('DROP TRIGGER IF EXISTS proser_document_immutable ON %I',table_name);
+    EXECUTE format('DROP TRIGGER IF EXISTS proser_document_import_evidence ON %I',table_name);
+    EXECUTE format('CREATE TRIGGER proser_document_import_evidence BEFORE UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION proser_document_import_evidence_guard()',table_name);
   END LOOP;
 END $$;
 

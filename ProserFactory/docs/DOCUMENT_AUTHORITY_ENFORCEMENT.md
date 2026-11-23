@@ -94,6 +94,18 @@ A database restore keeps writes fenced and reconciles post-backup revisions,
 artifacts and uncertain operations first. Preserve unknown provider outcomes;
 never infer that an interrupted request is safe to repeat.
 
+## Import original deletion
+
+Import originals and previews never change. Since the change that added
+`proser_document_import_evidence`, the service may delete an original inside its
+admitted document transaction when no preview references it and no audit
+record shows a committed import from it. It may delete a preview when no
+committed import came from it. Legacy bundle commits audit `originalId` and
+`previewId`; DOCX commits audit them under `importSource`. A native installation
+whose guards predate this change keeps refusing every deletion until operators
+apply the new SQL through the candidate-specific procedure above. Compose
+installations upgrade the guards on start from the known earlier SQL digest.
+
 ## Legacy conversion operations
 
 `backfill-document-history.ts` previews a single owned legacy revision and

@@ -5,6 +5,7 @@ import { Client } from 'pg';
 import {captureEnforcementTestState,restoreEnforcementTestState,type EnforcementTestState} from './fixtures/enforcementState';
 import { databaseService } from '@/lib/database';
 import { documentService } from '@/documents/service';
+import { preserveImportOriginal, deleteImportOriginal } from '@/documents/imports';
 import { documentFromText, projectDocument, type ProserDocument } from '@/documents/model';
 
 const sql = readFileSync(resolve(__dirname, '../../deploy/document-authority/enforcement.sql'), 'utf8');
@@ -28,6 +29,8 @@ const explicitIsolated = /^postgres(?:ql)?:\/\/[^/]+@127\.0\.0\.1:55441\/proser_
   afterEach(async () => {
     await db().$executeRawUnsafe('UPDATE proser_document_enforcement SET enabled=false');
     await db().sceneDocumentSearchIndex.deleteMany({where:{bookId}});
+    await db().documentImportPreview.deleteMany({ where: { bookId } });
+    await db().documentImportOriginal.deleteMany({ where: { bookId } });
     await db().documentPublicationArtifact.deleteMany({ where: { bookId } });
     await db().imageAsset.deleteMany({ where: { bookId } });
     await db().documentLegacyRevisionMapping.deleteMany({ where: { bookId } });
@@ -39,6 +42,26 @@ const explicitIsolated = /^postgres(?:ql)?:\/\/[^/]+@127\.0\.0\.1:55441\/proser_
     await db().book.delete({ where: { id: bookId } });
   });
   afterAll(async () => { try { if(userId)await db().user.delete({ where: { id: userId } }); } finally { if(priorEnforcement)await restoreEnforcementTestState(priorEnforcement); } });
+  test('lets only the document service delete an unused import original and keeps committed import evidence', async () => {
+    const unused = randomUUID();
+    const used = randomUUID();
+    await preserveImportOriginal(userId, bookId, unused, 'docx', Buffer.from('unused fixture'));
+    await preserveImportOriginal(userId, bookId, used, 'docx', Buffer.from('used fixture'));
+    await expect(db().documentImportOriginal.update({ where: { id: unused }, data: { format: 'forged' } })).rejects.toThrow('PROSER_DOCUMENT_IMMUTABLE');
+    await expect(db().documentImportOriginal.delete({ where: { id: unused } })).rejects.toThrow('PROSER_DOCUMENT_ADMISSION_REQUIRED');
+    const audit = await db().auditLog.create({ data: { userId, entityType: 'book', entityId: bookId, action: 'update', metadata: { importSource: { originalId: used, previewId: randomUUID() } } } });
+    // Even an admitted transaction that skips the service check cannot remove it.
+    await expect(db().$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT set_config('proser.document_book', ${String(bookId)}, true)`;
+      await tx.documentImportOriginal.delete({ where: { id: used } });
+    })).rejects.toThrow('PROSER_DOCUMENT_IMMUTABLE');
+    await expect(deleteImportOriginal(userId, bookId, used)).rejects.toMatchObject({ status: 409 });
+    await expect(deleteImportOriginal(userId, bookId, unused)).resolves.toMatchObject({ deleted: true });
+    expect(await db().documentImportOriginal.count({ where: { id: { in: [unused, used] } } })).toBe(1);
+    await db().$executeRawUnsafe('UPDATE proser_document_enforcement SET enabled=false');
+    await db().auditLog.delete({ where: { id: audit.id } });
+  });
+
   test('blocks stale code and evidence mutation while allowing a complete guarded document commit', async () => {
     const before = await documentService.read(userId, bookId, sceneId);
     await expect(db().scene.update({ where: { id: sceneId }, data: { prose: 'Stale overwrite' } })).rejects.toThrow('PROSER_DOCUMENT_ADMISSION_REQUIRED');

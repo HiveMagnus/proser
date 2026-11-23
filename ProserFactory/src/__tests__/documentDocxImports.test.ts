@@ -11,7 +11,7 @@ import {
   commitDocxImport,
   readDocxImportPreview,
 } from '@/documents/docxImports';
-import { readImportOriginal } from '@/documents/imports';
+import { deleteImportOriginal, readImportOriginal } from '@/documents/imports';
 import { createZipBuffer } from '@/lib/zipArchive';
 import { validateDocxPackage } from '@/documents/packageValidation';
 const fixture = () => {
@@ -224,6 +224,7 @@ describe('original-preserving DOCX preview and explicit commit', () => {
       }),
     ).rejects.toMatchObject({ code: 'DOCUMENT_IMPORT_CONSENT_REQUIRED' });
     const receipt = await commitDocxImport(userId, bookId, prepared.preview.id, prepared.request);
+    await expect(deleteImportOriginal(userId, bookId, prepared.original.id)).rejects.toMatchObject({ code: 'DOCUMENT_IMPORT_ORIGINAL_COMMITTED' });
     const importedId = receipt.result.hierarchy.acts[0].chapters[0].sceneIds[0];
     const body = await documentService.read(userId, bookId, importedId);
     expect(body.document.changes[0]).toMatchObject({

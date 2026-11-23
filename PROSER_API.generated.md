@@ -97,6 +97,8 @@ The rate-limit column is sourced from the same constants used by rate-limited ru
 | GET | `/api/books/{bookId}/export-artifacts/{artifactId}/download` | Bearer JWT | — | No route-specific limit | Download a Markdown export artifact |
 | GET | `/api/books/{bookId}/export-artifacts/{artifactId}/read` | Bearer JWT | — | No route-specific limit | Read a bounded book, chapter, or scene slice |
 | GET | `/api/books/{bookId}/findings` | Bearer JWT | — | No route-specific limit | Hermes-supported API operation |
+| GET | `/api/books/{bookId}/import-originals` | Bearer JWT | — | No route-specific limit | List owned preserved originals with preview counts, committed status and storage use against the quota |
+| DELETE | `/api/books/{bookId}/import-originals/{originalId}` | Bearer JWT | — | No route-specific limit | Delete an owned original no committed import used, with its uncommitted previews; account owner only |
 | POST | `/api/books/{bookId}/import-originals/{originalId}` | Bearer JWT | — | No route-specific limit | Preserve exact original bundle bytes before invoking conversion (1 byte to 32 MiB) |
 | GET | `/api/books/{bookId}/import-originals/{originalId}/content` | Bearer JWT | — | No route-specific limit | Download owned preserved original bytes with exact checksum and no external fetching |
 | POST | `/api/books/{bookId}/import-previews` | Bearer JWT | JSON: operationId, originalId, expectedRevisionId | No route-specific limit | Convert preserved legacy Markdown originals into a reviewable append mapping and fidelity report |

@@ -139,6 +139,12 @@ docker compose --env-file .env.compose run --rm --no-deps initialize node node_m
 docker compose --env-file .env.compose up -d --no-build --wait
 ```
 
+A release can also replace the document enforcement guards. The `initialize`
+service applies the new guards to a database whose guards came from a known
+earlier release, records the change in `proser_compose.enforcement_upgrades`,
+and continues. Guards from any other source stop the start with
+`Existing databases require reviewed document enforcement changes.`
+
 For an existing production installation, rehearse the database and Redis
 restore before stopping writers. Preserve the exact image reference,
 PostgreSQL and Redis snapshots, assets, imports, signing material, and private
