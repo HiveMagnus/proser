@@ -86,7 +86,8 @@ describe('global API rate limit', () => {
   it('uses a bounded default and ignores invalid overrides', () => {
     expect(apiRateLimitPerMinute({})).toBe(1200);
     expect(apiRateLimitPerMinute({ API_RATE_LIMIT_PER_MINUTE: '300' })).toBe(300);
-    expect(apiRateLimitPerMinute({ API_RATE_LIMIT_PER_MINUTE: '5' })).toBe(1200);
+    expect(apiRateLimitPerMinute({ API_RATE_LIMIT_PER_MINUTE: '120' })).toBe(120);
+    expect(apiRateLimitPerMinute({ API_RATE_LIMIT_PER_MINUTE: '60' })).toBe(1200);
     expect(apiRateLimitPerMinute({ API_RATE_LIMIT_PER_MINUTE: 'lots' })).toBe(1200);
   });
 });

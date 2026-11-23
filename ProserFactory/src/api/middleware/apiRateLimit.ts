@@ -7,12 +7,14 @@ import { ErrorCodes, respondError } from '@/api/utils/response';
 
 const WINDOW_SECONDS = 60;
 const DEFAULT_PER_MINUTE = 1200;
+// Container health checks alone send about 12 requests a minute from loopback.
+const MINIMUM_PER_MINUTE = 120;
 const SUBJECT = /^[A-Za-z0-9:._@+-]{1,160}$/;
 
-/** Requests per caller per minute across the whole API (default 1200). */
+/** Requests per caller per minute across the whole API (default 1200, minimum 120). */
 export function apiRateLimitPerMinute(environment: NodeJS.ProcessEnv = process.env): number {
   const configured = Number(environment.API_RATE_LIMIT_PER_MINUTE);
-  return Number.isInteger(configured) && configured >= 10 ? configured : DEFAULT_PER_MINUTE;
+  return Number.isInteger(configured) && configured >= MINIMUM_PER_MINUTE ? configured : DEFAULT_PER_MINUTE;
 }
 
 function claimedSubject(token: string): string | null {

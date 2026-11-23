@@ -205,7 +205,7 @@ Required:
 - POSTGRES_PASSWORD: Password for the native development PostgreSQL container. The root stack uses `PROSER_DB_PASSWORD`.
 - DATABASE_POOL_SIZE: Per-process pool ceiling (default: 20, bounded to 2..100)
 - FACTORY_AUTH_SECRET: Dedicated ProserAuthor-to-Factory JWT signing secret. Tokens require `iss=proser-author` and `aud=proser-factory`. Every accepted token must carry `exp` and expire within `FACTORY_TOKEN_MAX_LIFETIME_SECONDS` (default 86400).
-- API_RATE_LIMIT_PER_MINUTE: Requests per caller per minute across the whole API (default 1200, minimum 10), counted in Redis per identity, service principal, or client address. Expensive routes keep their own tighter limits. A caller over the limit gets `429` with `Retry-After`.
+- API_RATE_LIMIT_PER_MINUTE: Requests per caller per minute across the whole API (default 1200, minimum 120, since container health checks alone send about 12 a minute), counted in Redis per identity, service principal, or client address. Expensive routes keep their own tighter limits. A caller over the limit gets `429` with `Retry-After`.
 - IMPORT_ORIGINALS_BOOK_QUOTA_BYTES, IMPORT_ORIGINALS_USER_QUOTA_BYTES: Total preserved import original bytes one book (default 512 MiB) and one account (default 2 GiB) may hold. An upload beyond either returns `413 DOCUMENT_IMPORT_QUOTA_EXCEEDED`. Uploads are also limited to 30 per account per hour.
 - IMAGE_IMPORTS_BOOK_LIMIT, IMAGE_IMPORTS_USER_LIMIT: Imported images one book (default 500) and one account (default 5000) may hold, counting superseded revisions.
 - INTERNAL_API_SECRET: Secret for internal administrative endpoints.
