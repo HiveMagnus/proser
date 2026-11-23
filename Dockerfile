@@ -1,4 +1,4 @@
-FROM node:24.22.1-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205 AS build
+FROM node:26.13.1-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS build
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl g++ make openssl python3 && rm -rf /var/lib/apt/lists/*
 RUN npm install --global corepack@0.36.0 && corepack enable
 WORKDIR /opt/proser
@@ -22,7 +22,7 @@ RUN cd author && corepack pnpm install --frozen-lockfile && corepack pnpm build 
     && find . -type d -name .turbo -prune -exec rm -r {} + \
     && node apps/web/scripts/container-runtime.mjs --prepare
 
-FROM node:24.22.1-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205 AS runtime
+FROM node:26.13.1-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS runtime
 WORKDIR /opt/proser
 COPY LICENSE NOTICE ./
 ENV NODE_ENV=production \
