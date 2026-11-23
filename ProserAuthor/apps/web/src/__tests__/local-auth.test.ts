@@ -10,6 +10,7 @@ import {
   constantTimeLocalCredentialsMatch,
   localAuthAccount,
   localAuthFailureAllowed,
+  localAuthFailureTableSizeForTests,
   localAuthSource,
   recordLocalAuthFailure,
   resetLocalAuthFailuresForTests,
@@ -100,6 +101,20 @@ describe('local authentication hardening', () => {
       headers: { 'x-forwarded-for': '192.0.2.10' },
     };
     expect(attachTrustedAuthSource(tooShort, '2', '10.0.0.0/24')).toBe(false);
+  });
+
+  it('keeps the failure table bounded when one blocked source cycles usernames', () => {
+    const source = localAuthSource(
+      new Request('https://proser.example/auth', {
+        headers: { 'x-proser-auth-source': '192.0.2.44' },
+      }),
+    );
+    for (let attempt = 0; attempt < 12_000; attempt += 1) {
+      const account = localAuthAccount(`guess-${attempt}`);
+      localAuthFailureAllowed(source, account, 1_000);
+      recordLocalAuthFailure(source, account, 1_000);
+    }
+    expect(localAuthFailureTableSizeForTests()).toBeLessThanOrEqual(10_000);
   });
 
   it('throttles both the hashed account and trusted network source', () => {
