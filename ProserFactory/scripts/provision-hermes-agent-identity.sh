@@ -24,17 +24,27 @@ GATEWAY_SERVICE="hermes-gateway.service"
 REMOTE_PLUGIN_DIR=""
 RESTART_FACTORY="1"
 RESTART_GATEWAY="1"
+FACTORY_USER="proser-factory"
+ROTATE_SECRET="0"
+REVOKE="0"
 
 usage() {
   cat <<'USAGE'
 Provision a per-host Proser identity for a Hermes Agent plugin.
 
 The script:
-  1. Adds the identity to ProserFactory's HERMES_AGENT_ALLOWED_GITHUB_IDS.
-  2. Reads the dedicated HERMES_AGENT_AUTH_SECRET from the Factory host.
-  3. Deploys/configures the Hermes Proser plugin on the target agent host.
+  1. Gives the identity its own signing secret in the Factory's
+     HERMES_AGENT_CREDENTIALS_FILE (created beside the Factory .env if unset),
+     scoped to --owner-github-id when given. The secret is generated on the
+     Factory host and an existing one is reused unless --rotate-secret is set.
+  2. Restarts Factory so it loads the credential.
+  3. Deploys/configures the Hermes Proser plugin on the target agent host with
+     that secret. No other agent host can sign as this identity.
   4. Enrolls the identity with a remote Proser list_books call.
   5. Restarts the target Hermes gateway.
+
+With --revoke, the script removes the identity's credential, restarts Factory
+and stops: tokens from that agent host are refused from then on.
 
 Required:
   --agent-host HOST              Logical agent host name, e.g. agent-host.
@@ -66,6 +76,9 @@ Options:
   --remote-plugin-dir PATH       Target plugin path. Default: ~/.hermes/plugins/proser-api.
   --no-restart-factory           Update Factory env but do not restart Factory.
   --no-restart-gateway           Deploy plugin but do not restart target gateway.
+  --factory-user USER            User the Factory service runs as. Default: proser-factory.
+  --rotate-secret                Replace the identity's existing secret.
+  --revoke                       Remove the identity's credential and stop.
 
 Example:
   scripts/provision-hermes-agent-identity.sh --agent-host agent-host
@@ -114,6 +127,9 @@ while [[ $# -gt 0 ]]; do
     --remote-plugin-dir) REMOTE_PLUGIN_DIR="${2:-}"; shift 2 ;;
     --no-restart-factory) RESTART_FACTORY="0"; shift ;;
     --no-restart-gateway) RESTART_GATEWAY="0"; shift ;;
+    --factory-user) FACTORY_USER="${2:-}"; shift 2 ;;
+    --rotate-secret) ROTATE_SECRET="1"; shift ;;
+    --revoke) REVOKE="1"; shift ;;
     -h|--help) usage; exit 0 ;;
     *) die "Unknown option: $1" ;;
   esac
@@ -137,6 +153,12 @@ PROSER_BASE_URL="${PROSER_BASE_URL:-$(read_env_value "$REPO_DIR/.env" PUBLIC_BAS
 safe_agent="${AGENT_HOST//[!A-Za-z0-9_.-]/-}"
 IDENTITY_ID="${IDENTITY_ID:-service:hermes-agent:${safe_agent}}"
 PROSER_USERNAME="${PROSER_USERNAME:-hermes-agent-${safe_agent}}"
+identity_pattern='^[A-Za-z0-9:._@+-]{1,160}$'
+[[ "$IDENTITY_ID" =~ $identity_pattern ]] || die "--identity-id may contain only letters, digits and :._@+-"
+[[ -z "$OWNER_GITHUB_ID" || "$OWNER_GITHUB_ID" =~ $identity_pattern ]] || die "--owner-github-id may contain only letters, digits and :._@+-"
+[[ "$FACTORY_USER" =~ ^[a-z_][a-z0-9_-]{0,31}$ ]] || die "--factory-user is not a valid user name"
+[[ "$FACTORY_ENV" =~ ^/[A-Za-z0-9/._-]+$ ]] || die "--factory-env must be an absolute path without spaces or quotes"
+[[ "$REVOKE" == "0" || "$ROTATE_SECRET" == "0" ]] || die "--revoke and --rotate-secret cannot be combined"
 
 SSH_OPTS=(
   -p "$SSH_PORT"
@@ -186,82 +208,46 @@ cleanup() {
 }
 trap cleanup EXIT
 
-printf 'Adding %s to Factory Hermes identity allowlist on %s...\n' "$IDENTITY_ID" "$FACTORY_HOST"
-allowlist_helper="$tmpdir/provision-hermes-allowlist.py"
-cat > "$allowlist_helper" <<'PY'
-from pathlib import Path
-import sys
+# The helper runs as root from an inline argument, so nothing is staged in a
+# shared temporary directory. sudo -k always reads the password from stdin.
+credential_helper="$(base64 -w0 "$SCRIPT_DIR/hermes-agent-credential.py")"
+run_credential_helper() {
+  local args=("$@")
+  printf '%s\n' "$SUDO_PASSWORD" | "${SSH_CMD[@]}" "${SSH_USER}@${FACTORY_HOST}" \
+    "sudo -k -S -p '' python3 -I -c 'import base64,sys;exec(compile(base64.b64decode(sys.argv.pop(1)),\"hermes-agent-credential.py\",\"exec\"),{\"__name__\":\"__main__\"})' '$credential_helper' ${args[*]}"
+}
 
-path = Path(sys.argv[1])
-identity = sys.argv[2]
-owner = sys.argv[3]
-if not path.exists():
-    raise SystemExit(f"Factory env not found: {path}")
+restart_factory() {
+  if [[ "$RESTART_FACTORY" == "1" ]]; then
+    printf 'Restarting Factory service %s on %s...\n' "$FACTORY_SERVICE" "$FACTORY_HOST"
+    remote_sudo "$FACTORY_HOST" "systemctl restart '$FACTORY_SERVICE'"
+    remote "$FACTORY_HOST" "systemctl is-active '$FACTORY_SERVICE'"
+  else
+    printf 'Restart Factory service %s on %s to apply the change.\n' "$FACTORY_SERVICE" "$FACTORY_HOST"
+  fi
+}
 
-lines = path.read_text().splitlines()
+helper_args=("'$FACTORY_ENV'" "'$IDENTITY_ID'" --factory-user "'$FACTORY_USER'")
 
-def split_ids(value: str) -> list[str]:
-    return [item.strip() for item in value.split(",") if item.strip()]
-
-values: dict[str, str] = {}
-for line in lines:
-    if not line or line.lstrip().startswith("#") or "=" not in line:
-        continue
-    key, value = line.split("=", 1)
-    values[key.strip()] = value.strip().strip('"').strip("'")
-
-ids: list[str] = []
-primary = values.get("HERMES_AGENT_GITHUB_ID", "service:hermes-agent")
-for item in [primary, *split_ids(values.get("HERMES_AGENT_ALLOWED_GITHUB_IDS", "")), identity]:
-    if item and item not in ids:
-        ids.append(item)
-
-new_line = "HERMES_AGENT_ALLOWED_GITHUB_IDS=" + ",".join(ids)
-owners = split_ids(values.get("HERMES_AGENT_ALLOWED_OWNER_GITHUB_IDS", ""))
-if owner and owner not in owners:
-    owners.append(owner)
-owner_line = "HERMES_AGENT_ALLOWED_OWNER_GITHUB_IDS=" + ",".join(owners)
-updated = False
-owner_updated = False
-out: list[str] = []
-for line in lines:
-    if line.startswith("HERMES_AGENT_ALLOWED_GITHUB_IDS="):
-        out.append(new_line)
-        updated = True
-    elif owner and line.startswith("HERMES_AGENT_ALLOWED_OWNER_GITHUB_IDS="):
-        out.append(owner_line)
-        owner_updated = True
-    else:
-        out.append(line)
-
-if not updated:
-    if out and out[-1].strip():
-        out.append("")
-    out.append(new_line)
-if owner and not owner_updated:
-    out.append(owner_line)
-
-path.write_text("\n".join(out) + "\n")
-print(f"allowlist_count={len(ids)}")
-PY
-remote_allowlist_helper="/tmp/provision-hermes-allowlist.py"
-"${SCP_CMD[@]}" "$allowlist_helper" "${SSH_USER}@${FACTORY_HOST}:${remote_allowlist_helper}"
-remote_sudo "$FACTORY_HOST" "python3 '$remote_allowlist_helper' '$FACTORY_ENV' '$IDENTITY_ID' '$OWNER_GITHUB_ID'"
-remote "$FACTORY_HOST" "rm -f '$remote_allowlist_helper'"
-
-if [[ "$RESTART_FACTORY" == "1" ]]; then
-  printf 'Restarting Factory service %s on %s...\n' "$FACTORY_SERVICE" "$FACTORY_HOST"
-  remote_sudo "$FACTORY_HOST" "systemctl restart '$FACTORY_SERVICE'"
-  remote "$FACTORY_HOST" "systemctl is-active '$FACTORY_SERVICE'"
+if [[ "$REVOKE" == "1" ]]; then
+  printf 'Revoking the dedicated credential for %s on %s...\n' "$IDENTITY_ID" "$FACTORY_HOST"
+  run_credential_helper revoke "${helper_args[@]}"
+  restart_factory
+  printf 'Revoked %s. Remove the plugin configuration from %s separately.\n' "$IDENTITY_ID" "$AGENT_SSH_HOST"
+  exit 0
 fi
 
-printf 'Reading dedicated Hermes signing secret from Factory host...\n'
-HERMES_SECRET="$(remote "$FACTORY_HOST" "awk -F= '\$1 == \"HERMES_AGENT_AUTH_SECRET\" { value = substr(\$0, index(\$0, \"=\") + 1); gsub(/^[[:space:]]+|[[:space:]]+$/, \"\", value); gsub(/^\"|\"$/, \"\", value); gsub(/^'\''|'\''$/, \"\", value); print value; exit }' '$FACTORY_ENV'")"
-[[ -n "$HERMES_SECRET" ]] || die "HERMES_AGENT_AUTH_SECRET is missing from $FACTORY_HOST:$FACTORY_ENV"
+[[ -n "$OWNER_GITHUB_ID" ]] && helper_args+=(--owner "'$OWNER_GITHUB_ID'")
+[[ "$ROTATE_SECRET" == "1" ]] && helper_args+=(--rotate)
+
+printf 'Provisioning the dedicated signing secret for %s on %s...\n' "$IDENTITY_ID" "$FACTORY_HOST"
 HERMES_SECRET_FILE="$tmpdir/proser-auth-secret"
-printf '%s\n' "$HERMES_SECRET" >"$HERMES_SECRET_FILE"
+(umask 077; run_credential_helper provision "${helper_args[@]}" >"$HERMES_SECRET_FILE")
+[[ "$(wc -l <"$HERMES_SECRET_FILE")" -eq 1 && "$(wc -c <"$HERMES_SECRET_FILE")" -ge 33 ]] \
+  || die "The Factory host did not return a signing secret for $IDENTITY_ID"
 chmod 0600 "$HERMES_SECRET_FILE"
-unset HERMES_SECRET
+
+restart_factory
 
 ca_file="$PROSER_CA_FILE"
 if [[ -z "$ca_file" ]]; then

@@ -97,7 +97,10 @@ workflows, so those runs appear in Author. Both allowlists must match.
 
 For a native systemd Factory deployment, the
 `scripts/provision-hermes-agent-identity.sh --agent-host HOST --owner-github-id AUTHOR_ID`
-helper configures the native Factory environment and enrolls a Hermes host.
+helper gives that Hermes host its own signing secret on Factory, scopes it to
+that author, deploys the plugin with the secret and enrolls the host. Add
+`--rotate-secret` to replace the secret or `--revoke` to remove it. See the
+[deployment notes](deploy/README.md).
 
 ## Small-model operating rules
 

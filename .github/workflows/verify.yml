@@ -195,6 +195,7 @@ jobs:
       - run: corepack pnpm --dir ProserAuthor install --frozen-lockfile
       - run: npm run documents:check && npm run format:check
       - run: python3 scripts/test-node-runtime.py
+      - run: python3 ProserFactory/scripts/test-hermes-agent-credential.py
       - run: node --test document-tools/render-docx.test.mjs
       - run: node scripts/check-canvas-shared-packages.mjs
       - run: npm --prefix ProserFactory run codec:build && node ProserFactory/scripts/generate-canvas-release-ledger.mjs --check
