@@ -59,6 +59,17 @@ describe('Workflow and private image security boundaries', () => {
     expect(rejected.status).toBe(401);
   });
 
+  it('rejects signed tokens that never expire or outlive the permitted lifetime', async () => {
+    const claims = { sub: String(owner.id), githubId: owner.githubId, username: owner.githubId };
+    const options = { algorithm: 'HS256', issuer: 'proser-author', audience: 'proser-factory' } as const;
+    const withoutExpiry = jwt.sign(claims, 'jest-factory-auth-secret', options);
+    expect((await request(app).get(`/api/books/${bookId}`).set('Authorization', `Bearer ${withoutExpiry}`)).status).toBe(401);
+    const longLived = jwt.sign(claims, 'jest-factory-auth-secret', { ...options, expiresIn: '30d' });
+    expect((await request(app).get(`/api/books/${bookId}`).set('Authorization', `Bearer ${longLived}`)).status).toBe(401);
+    const shortLived = jwt.sign(claims, 'jest-factory-auth-secret', { ...options, expiresIn: '10m' });
+    expect((await request(app).get(`/api/books/${bookId}`).set('Authorization', `Bearer ${shortLived}`)).status).toBe(200);
+  });
+
   it('never accepts bearer JWTs from query strings, including SSE routes', async () => {
     const valid = jwt.sign(
       { sub: String(owner.id), githubId: owner.githubId, username: owner.githubId },
