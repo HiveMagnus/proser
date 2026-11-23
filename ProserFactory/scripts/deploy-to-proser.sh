@@ -284,7 +284,7 @@ log "Installing dependencies on proser..."
 DEPLOY_STAGE="dependency install"
 rsync -az "$REPO_DIR/../scripts/install-node-runtime.py" "$REMOTE:$REMOTE_DIR/scripts/install-node-runtime.py"
 _sudo "python3 '$REMOTE_DIR/scripts/install-node-runtime.py'"
-NODE_RUNTIME="/opt/proser-runtime/node-v24.22.1/bin"
+NODE_RUNTIME="/opt/proser-runtime/node-v24.22.3/bin"
 ssh "$REMOTE" "set -o pipefail; export PATH='$NODE_RUNTIME':\$PATH; cd $REMOTE_DIR && npm ci --omit=dev 2>&1 | tail -20"
 
 log "Installing checksum-pinned licensed publication fonts..."

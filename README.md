@@ -6,7 +6,7 @@ EPUB. Connect compatible model providers to use AI-assisted writing and images.
 
 ## Quick start
 
-Install Git, Docker with the Compose plugin, and Node.js `24.22.1`. The prebuilt
+Install Git, Docker with the Compose plugin, and Node.js `24.22.3`. The prebuilt
 image is `linux/amd64`. Run these commands in Bash from a fresh checkout.
 
 ```bash

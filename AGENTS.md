@@ -9,7 +9,7 @@ Read the component `AGENTS.md` before changing that subtree. Preserve the API/au
 
 ## Commands
 
-Use Node `24.22.1` from `.nvmrc`. From the repository root, install the two
+Use Node `24.22.3` from `.nvmrc`. From the repository root, install the two
 locked dependency trees and generate the Factory Prisma client.
 [Author toolchain setup](ProserAuthor/docs/DEVELOPMENT.md)
 
