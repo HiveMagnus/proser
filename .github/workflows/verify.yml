@@ -50,7 +50,7 @@ jobs:
         run: node scripts/classify-ci-changes.mjs "$RUNNER_TEMP/proser-ci-changes.json"
       - name: Cache npm downloads
         if: steps.changes.outputs.documentationOnly == 'true'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.npm
           key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-npm-v2-${{ hashFiles('ProserFactory/package-lock.json', 'ProserFactory/vendor/**/package-lock.json') }}
@@ -103,7 +103,7 @@ jobs:
           node-version-file: .nvmrc
           package-manager-cache: false
       - name: Cache npm downloads
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.npm
           key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-npm-v2-${{ hashFiles('ProserFactory/package-lock.json', 'ProserFactory/vendor/**/package-lock.json') }}
@@ -142,7 +142,7 @@ jobs:
         shell: bash
         run: echo "path=$(corepack pnpm --dir "$GITHUB_WORKSPACE/ProserAuthor" store path --silent)" >> "$GITHUB_OUTPUT"
       - name: Cache pnpm downloads
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-corepack-0.36.0-pnpm-12.16.1-${{ hashFiles('ProserAuthor/pnpm-lock.yaml', 'ProserAuthor/pnpm-workspace.yaml', 'ProserAuthor/.npmrc', 'ProserAuthor/patches/**') }}
@@ -177,7 +177,7 @@ jobs:
           node-version-file: .nvmrc
           package-manager-cache: false
       - name: Cache npm downloads
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.npm
           key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-npm-v2-${{ hashFiles('ProserFactory/package-lock.json', 'ProserFactory/vendor/**/package-lock.json') }}
@@ -187,7 +187,7 @@ jobs:
         shell: bash
         run: echo "path=$(corepack pnpm --dir "$GITHUB_WORKSPACE/ProserAuthor" store path --silent)" >> "$GITHUB_OUTPUT"
       - name: Cache pnpm downloads
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-corepack-0.36.0-pnpm-12.16.1-${{ hashFiles('ProserAuthor/pnpm-lock.yaml', 'ProserAuthor/pnpm-workspace.yaml', 'ProserAuthor/.npmrc', 'ProserAuthor/patches/**') }}
@@ -221,7 +221,7 @@ jobs:
           node-version-file: .nvmrc
           package-manager-cache: false
       - name: Cache npm downloads
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.npm
           key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-npm-v2-${{ hashFiles('ProserFactory/package-lock.json', 'ProserFactory/vendor/**/package-lock.json') }}
@@ -292,7 +292,7 @@ jobs:
           node-version-file: .nvmrc
           package-manager-cache: false
       - name: Cache npm downloads
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.npm
           key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-npm-v2-${{ hashFiles('ProserFactory/package-lock.json', 'ProserFactory/vendor/**/package-lock.json') }}
@@ -302,7 +302,7 @@ jobs:
         shell: bash
         run: echo "path=$(corepack pnpm --dir "$GITHUB_WORKSPACE/ProserAuthor" store path --silent)" >> "$GITHUB_OUTPUT"
       - name: Cache pnpm downloads
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-corepack-0.36.0-pnpm-12.16.1-${{ hashFiles('ProserAuthor/pnpm-lock.yaml', 'ProserAuthor/pnpm-workspace.yaml', 'ProserAuthor/.npmrc', 'ProserAuthor/patches/**') }}
@@ -358,7 +358,7 @@ jobs:
           node-version-file: .nvmrc
           package-manager-cache: false
       - name: Cache npm downloads
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.npm
           key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-npm-v2-${{ hashFiles('ProserFactory/package-lock.json', 'ProserFactory/vendor/**/package-lock.json') }}
@@ -368,7 +368,7 @@ jobs:
         shell: bash
         run: echo "path=$(corepack pnpm --dir "$GITHUB_WORKSPACE/ProserAuthor" store path --silent)" >> "$GITHUB_OUTPUT"
       - name: Cache pnpm downloads
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ runner.os }}-ubuntu24-${{ runner.arch }}-node-${{ hashFiles('.nvmrc') }}-corepack-0.36.0-pnpm-12.16.1-${{ hashFiles('ProserAuthor/pnpm-lock.yaml', 'ProserAuthor/pnpm-workspace.yaml', 'ProserAuthor/.npmrc', 'ProserAuthor/patches/**') }}
