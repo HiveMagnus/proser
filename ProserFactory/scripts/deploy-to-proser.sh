@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/deploy-to-proser.sh — Deploy ProserFactory from dev machine to proser
-# Run from the repo root on the dev machine (oculus).
+# Run from the repo root on the development machine.
 #
 # Usage:  bash scripts/deploy-to-proser.sh [--skip-build] [--record-existing-cutover <operation-id>] [--rotate-cutover-evidence-key <operation-id>]
 #
