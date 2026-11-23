@@ -12,10 +12,10 @@ import tarfile
 import tempfile
 import urllib.request
 
-VERSION = '24.22.1'
+VERSION = '24.22.3'
 DIGESTS = {
-    'x86_64': ('x64', '6c172a9ab6718f7b801fb5a7bd486af2ee5e32758086a04b84fcce2aa77095e6'),
-    'aarch64': ('arm64', 'dbabf7a1cbf947e6059ffad2c27b80041db97dea1e553b62afdee7f13fca336e'),
+    'x86_64': ('x64', '4f2b175a6d53a5c617a80dba2676238a0688cef28c6da4eba35c7d844e66fcfb'),
+    'aarch64': ('arm64', '6e51a2ada00f0011cc266f65d98922b403d7ad88f809ca2aa615a5fe1ce6e86c'),
 }
 
 

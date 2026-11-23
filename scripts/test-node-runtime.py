@@ -22,7 +22,7 @@ def archive(unsafe=False):
     result = io.BytesIO()
     release = f'node-v{runtime.VERSION}-linux-x64'
     with tarfile.open(fileobj=result, mode='w:xz') as output:
-        for name, contents, mode in [('bin/node', b"#!/bin/sh\nprintf 'v24.22.1\\n'\n", 0o755), ('LICENSE', b'Isolated runtime test fixture\n', 0o644)]:
+        for name, contents, mode in [('bin/node', b"#!/bin/sh\nprintf 'v24.22.3\\n'\n", 0o755), ('LICENSE', b'Isolated runtime test fixture\n', 0o644)]:
             entry = tarfile.TarInfo(f'{release}/{name}'); entry.size = len(contents); entry.mode = mode
             output.addfile(entry, io.BytesIO(contents))
         if unsafe:

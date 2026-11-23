@@ -12,8 +12,8 @@ EnvironmentFile=/opt/proser-factory/.env
 Environment=NODE_ENV=production
 Environment=PUBLICATION_FONT_MANIFEST=/opt/proser-factory/publication-fonts/manifest.json
 Environment=USE_BULLMQ=true
-ExecStart=/opt/proser-runtime/node-v24.22.1/bin/node dist/workers/index.js
-Environment=PATH=/opt/proser-runtime/node-v24.22.1/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/opt/proser-runtime/node-v24.22.3/bin/node dist/workers/index.js
+Environment=PATH=/opt/proser-runtime/node-v24.22.3/bin:/usr/local/bin:/usr/bin:/bin
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal

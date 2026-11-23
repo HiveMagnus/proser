@@ -7,7 +7,7 @@ The Factory now also backs ProserAuthor's phone-first mobile shell, including co
 ## Setup and operations
 
 Use the [root Compose guide](../docs/COMPOSE.md) for a complete installation.
-For source work, use Node `24.22.1`, run `npm ci` and `npm run db:generate`,
+For source work, use Node `24.22.3`, run `npm ci` and `npm run db:generate`,
 and follow [native development](README.md#native-development) for PostgreSQL,
 Redis, and environment setup. `npm run dev` starts the API. Start the worker
 separately when exercising durable workflows.
@@ -102,7 +102,7 @@ reporting publication complete.
 
 ## Structured document transition
 
-Use the root Node 24.22.1 pin for local builds and checks. Structured documents
+Use the root Node 24.22.3 pin for local builds and checks. Structured documents
 are active in production. Unprepared installations keep
 `DOCUMENT_AUTHORITY_ENABLED=false` until the selected writer and release
 conditions in `../CANVAS_RELEASE_CHECKLIST.md` pass. R2 device/accessibility
@@ -112,7 +112,7 @@ automated gate; unavailable physical-device or actual screen-reader certificatio
 is nonblocking for development and release. R6 performance certification remains
 deferred. Preserve prior release evidence and its original scope.
 Native release installs `../scripts/install-node-runtime.py` on the host and
-selects `/opt/proser-runtime/node-v24.22.1/bin/node`. Retain its exact official
+selects `/opt/proser-runtime/node-v24.22.3/bin/node`. Retain its exact official
 archive checksums and full-tree receipt; never replace host-wide Node as a shortcut.
 `src/documents/model.ts` owns the generated Author contract. Document revisions,
 heads, receipts and projections must commit atomically through the document service.

@@ -53,7 +53,7 @@ fixtures. Word-specific and normal IAM password-login acceptance remain separate
 
 ## Reproduce supported checks
 
-Use the pinned Node `24.22.1`, independent Factory npm and Author pnpm `12.16.1`
+Use the pinned Node `24.22.3`, independent Factory npm and Author pnpm `12.16.1`
 installs. Native mobile fixtures run with `npm run test:canvas-mobile`; the ordinary
 Canvas compatibility corpus runs with `npm run test:canvas`.
 

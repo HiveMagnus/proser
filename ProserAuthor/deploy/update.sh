@@ -23,8 +23,8 @@ fi
 trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 
 cd "$REPO_DIR"
-export PATH=/opt/proser-runtime/node-v24.22.1/bin:$PATH
-if [[ ! -x /opt/proser-runtime/node-v24.22.1/bin/node ]] || [[ "$(node --version)" != v24.22.1 ]]; then
+export PATH=/opt/proser-runtime/node-v24.22.3/bin:$PATH
+if [[ ! -x /opt/proser-runtime/node-v24.22.3/bin/node ]] || [[ "$(node --version)" != v24.22.3 ]]; then
   log "ERROR: Install the pinned runtime through the native deployment before updating."
   exit 1
 fi

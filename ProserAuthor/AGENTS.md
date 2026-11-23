@@ -32,7 +32,7 @@ The retired `apps/api`, `apps/worker`, `proser-v2-api`, and `proser-v2-worker` p
 
 - Run Author commands from `ProserAuthor/` with pnpm, or use the matching root wrapper script.
 - Native deployment installs and verifies the root runtime helper at
-  `/opt/proser-runtime/node-v24.22.1`; systemd and host updates use that exact Node.
+  `/opt/proser-runtime/node-v24.22.3`; systemd and host updates use that exact Node.
   Host updates must fail before pulling code if the pinned runtime is absent.
 - Web imports use `@/*` for `apps/web/src/*`.
 - Shared packages use TypeScript and package-local Vitest suites.

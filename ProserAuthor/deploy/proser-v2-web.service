@@ -8,8 +8,8 @@ User=proser-author
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 WorkingDirectory=/opt/proser-v2/apps/web
 EnvironmentFile=/opt/proser-v2/.env.web
-ExecStart=/opt/proser-runtime/node-v24.22.1/bin/node server.js
-Environment=PATH=/opt/proser-runtime/node-v24.22.1/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/opt/proser-runtime/node-v24.22.3/bin/node server.js
+Environment=PATH=/opt/proser-runtime/node-v24.22.3/bin:/usr/local/bin:/usr/bin:/bin
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal

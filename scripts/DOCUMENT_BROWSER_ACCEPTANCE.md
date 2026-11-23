@@ -1,6 +1,6 @@
 # Authenticated document browser gates
 
-Use pinned Node24.22.1, independent Factory npm and Author pnpm12.16.1 frozen
+Use pinned Node24.22.3, independent Factory npm and Author pnpm12.16.1 frozen
 installs, the built candidate, and installed licensed publication fonts. Prepare a
 **fresh synthetic** `proser_canvas_release_*` PostgreSQL database on
 `127.0.0.1:55441`; deploy Factory migrations only into that database. Use isolated
