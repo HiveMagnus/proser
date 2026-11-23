@@ -10,11 +10,11 @@ Install Git, Docker with the Compose plugin, and Node.js `24.22.3`. The prebuilt
 image is `linux/amd64`. Run these commands in Bash from a fresh checkout.
 
 ```bash
-git clone --branch v1.0.5 https://github.com/HiveMagnus/proser.git
+git clone --branch v1.0.6 https://github.com/HiveMagnus/proser.git
 cd proser
 node scripts/init-compose-env.mjs
-printf '\nPROSER_IMAGE=ghcr.io/hivemagnus/proser:1.0.5\n' >> .env.compose
-docker pull ghcr.io/hivemagnus/proser:1.0.5
+printf '\nPROSER_IMAGE=ghcr.io/hivemagnus/proser:1.0.6\n' >> .env.compose
+docker pull ghcr.io/hivemagnus/proser:1.0.6
 docker compose --env-file .env.compose -f compose.yml -f compose.factory-api.yml up -d --no-build --wait
 ```
 
