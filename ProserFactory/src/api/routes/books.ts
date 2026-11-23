@@ -13,6 +13,7 @@ import { ExportArtifactsController } from '../controllers/exportArtifacts';
 import { authenticateRequest } from '../middleware/auth';
 import { expensiveRouteLimit } from '../middleware/expensiveRouteLimit';
 import { ownedBookBudget } from '../middleware/ownedBookBudget';
+import { generationRateLimit } from '../contracts/routeLimits';
 import { ProseController } from '../controllers/prose';
 import { zBody, zParams, zQuery } from '../middleware/zodValidation';
 import {
@@ -192,6 +193,7 @@ router.post('/:bookId/chapters/:chapterId/scenes/batch',
 router.post('/:bookId/chapters/:chapterId/scenes/generate',
   zParams(bookIdChapterIdParams),
   zBody(sceneBody),
+  generationRateLimit('prose'),
   ScenesController.createAndGenerateScene
 );
 
@@ -215,6 +217,7 @@ router.delete('/:bookId/scenes/:sceneId',
 router.post('/:bookId/scenes/:sceneId/regenerate',
   zParams(bookIdSceneIdParams),
   zBody(sceneGenerationBody),
+  generationRateLimit('prose'),
   ScenesController.regenerateScene
 );
 

@@ -13,6 +13,7 @@ import {
   resolveInferenceModel,
 } from '../../lib/ai/vllm';
 import { respondError, ErrorCodes } from '../utils/response';
+import { inferenceSettingsFilePath, isSafeInferenceSettingValue } from '../../core/inferenceSettingsFile';
 
 const router = Router();
 export const adminModelsRouter = Router();
@@ -21,9 +22,6 @@ const DEFAULT_INFERENCE_PORT = '8000';
 
 type InferenceModel = { id: string; name: string };
 
-function getSettingsFilePath(): string {
-  return process.env.OLLAMA_SETTINGS_FILE || path.resolve(process.cwd(), 'data/ollama-settings.env');
-}
 
 function normalizeInferenceHost(input: unknown): string {
   const raw = String(input ?? '').trim();
@@ -42,6 +40,13 @@ function normalizeInferenceHost(input: unknown): string {
 
 function normalizeInferenceModel(input: unknown): string {
   return String(input ?? '').trim() || resolveInferenceModel() || DEFAULT_INFERENCE_MODEL;
+}
+
+/** Operator-supplied model names are persisted, so they must be one plain token. */
+function requireInferenceModel(input: unknown): string {
+  const model = normalizeInferenceModel(input);
+  if (!/^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,199}$/.test(model)) throw new Error('Enter a valid inference model name.');
+  return model;
 }
 
 function getCurrentInferenceSettings() {
@@ -64,6 +69,9 @@ function requireAllowedAdminHost(input: unknown): string {
 }
 
 function writeEnvFile(filePath: string, updates: Record<string, string>): void {
+  for (const value of Object.values(updates)) {
+    if (!isSafeInferenceSettingValue(value)) throw new Error('Inference settings contain unsupported characters.');
+  }
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   const lines = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8').split(/\r?\n/) : [];
   const seen = new Set<string>();
@@ -87,7 +95,7 @@ function persistInferenceSettings(settings: { host: string; model: string }): vo
     OLLAMA_MODEL: settings.model,
     VLLM_MODEL: settings.model,
   };
-  writeEnvFile(getSettingsFilePath(), updates);
+  writeEnvFile(inferenceSettingsFilePath(), updates);
   Object.assign(process.env, updates);
 }
 
@@ -149,7 +157,7 @@ adminModelsRouter.get(['/probe', '/status'], async (req: AuthenticatedRequest, r
 });
 adminModelsRouter.put('/settings', (req: AuthenticatedRequest, res) => {
   try {
-    const settings = { host: requireAllowedAdminHost(req.body?.host), model: normalizeInferenceModel(req.body?.model) };
+    const settings = { host: requireAllowedAdminHost(req.body?.host), model: requireInferenceModel(req.body?.model) };
     persistInferenceSettings(settings);
     logger.info({ host: settings.host, model: settings.model }, 'Saved inference settings via internal admin API');
     sendSuccess(res, settings);

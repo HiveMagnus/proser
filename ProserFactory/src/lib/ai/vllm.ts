@@ -3,7 +3,7 @@ import {admitReleaseMutation} from '@/operations/releaseAdmission';
 import Ajv, { type SchemaObject } from 'ajv';
 import addFormats from 'ajv-formats';
 import dotenv from 'dotenv';
-import path from 'path';
+import { loadInferenceSettingsFile } from '@/core/inferenceSettingsFile';
 import { createHash } from 'node:crypto';
 import logger, { promptLogger } from '../logger';
 import { stripThinkingBlocks } from './sanitize';
@@ -30,12 +30,7 @@ const inheritedEnvironment = { ...process.env };
 try { dotenv.config({ quiet: true }); } catch {}
 try { dotenv.config({ path: '.env.local', override: true }); } catch {}
 Object.assign(process.env, inheritedEnvironment);
-try {
-  dotenv.config({
-    path: process.env.OLLAMA_SETTINGS_FILE || path.resolve(process.cwd(), 'data/ollama-settings.env'),
-    override: true,
-  });
-} catch {}
+loadInferenceSettingsFile();
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

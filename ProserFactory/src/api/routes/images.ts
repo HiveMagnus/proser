@@ -89,7 +89,7 @@ router.get('/health', async (req, res) => {
     }
 
     if (!reachable) {
-      return res.status(502).json({ success: false, error: { code: 'FORGE_UNREACHABLE', message: `No Forge endpoint reachable at ${base}`, details: { tried: endpoints.map(e => e.path), status: lastStatus } } });
+      return res.status(502).json({ success: false, error: { code: 'FORGE_UNREACHABLE', message: 'No image backend endpoint is reachable', details: { tried: endpoints.map(e => e.path), status: lastStatus } } });
     }
 
     const status: 'ok' | 'warn' = hasTxt2Img === false ? 'warn' : 'ok';
@@ -193,7 +193,7 @@ router.delete('/:id', async (req, res) => {
     if (!current || current.bookId !== asset.bookId) throw new NotFoundError('Image not found');
     // Immutable revisions survive capability deactivation and retain block,
     // inline, table and layout-story assets. Inspect all canonical containers.
-    const referenced = await tx.$queryRaw<Array<{ referenced: boolean }>>`SELECT EXISTS(SELECT 1 FROM scene_document_revisions WHERE book_id=${asset.bookId} AND jsonb_path_exists(document,'$.** ? (@.assetId == $id)',jsonb_build_object('id',${id}::integer))) OR EXISTS(SELECT 1 FROM book_document_scope_revisions WHERE book_id=${asset.bookId} AND kind IN ('layout','structure') AND (jsonb_path_exists(content,'$.** ? (@.assetId == $id)',jsonb_build_object('id',${id}::integer)) OR jsonb_path_exists(content,'$.** ? (@.selectedImageId == $id)',jsonb_build_object('id',${id}::integer)))) OR EXISTS(SELECT 1 FROM books WHERE selected_image_id=${id}) OR EXISTS(SELECT 1 FROM acts WHERE selected_image_id=${id}) OR EXISTS(SELECT 1 FROM chapters WHERE selected_image_id=${id}) OR EXISTS(SELECT 1 FROM scenes WHERE selected_image_id=${id}) AS referenced`;
+    const referenced = await tx.$queryRaw<Array<{ referenced: boolean }>>`SELECT EXISTS(SELECT 1 FROM scene_document_revisions WHERE book_id=${asset.bookId} AND jsonb_path_exists(document,'$.** ? (@.assetId == $id)',jsonb_build_object('id',${id}::integer))) OR EXISTS(SELECT 1 FROM book_document_scope_revisions WHERE book_id=${asset.bookId} AND kind IN ('layout','structure') AND (jsonb_path_exists(content,'$.** ? (@.assetId == $id)',jsonb_build_object('id',${id}::integer)) OR jsonb_path_exists(content,'$.** ? (@.selectedImageId == $id)',jsonb_build_object('id',${id}::integer)))) OR EXISTS(SELECT 1 FROM books b WHERE b.selected_image_id=${id} AND b.user_id=${req.user!.id}) OR EXISTS(SELECT 1 FROM acts a JOIN books b ON b.id=a.book_id WHERE a.selected_image_id=${id} AND b.user_id=${req.user!.id}) OR EXISTS(SELECT 1 FROM chapters c JOIN acts a ON a.id=c.act_id JOIN books b ON b.id=a.book_id WHERE c.selected_image_id=${id} AND b.user_id=${req.user!.id}) OR EXISTS(SELECT 1 FROM scenes s JOIN chapters c ON c.id=s.chapter_id JOIN acts a ON a.id=c.act_id JOIN books b ON b.id=a.book_id WHERE s.selected_image_id=${id} AND b.user_id=${req.user!.id}) AS referenced`;
     if (referenced[0]?.referenced) throw new DocumentError('DOCUMENT_ASSET_REFERENCED', 'Preserved document revisions reference this immutable asset.', 409);
     await tx.imageAsset.delete({ where: { id } });
   }));
@@ -204,7 +204,9 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Suggest an image prompt using AI based on book/act/chapter/scene context
-router.post('/suggest-prompt', authenticateRequest, async (req, res) => {
+router.post('/suggest-prompt', authenticateRequest,
+  redisRateLimit({ key: (req) => `img:${req.user?.id}:suggest`, limit: 20, windowSec: 60 }),
+  async (req, res) => {
   const userId = req.user!.id;
   const { bookId, targetType, info } = req.body as {
     bookId?: number;

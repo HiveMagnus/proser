@@ -24,6 +24,7 @@ application secrets. See [Compose configuration](../../docs/COMPOSE.md).
 | `IAM_CORE_URL`                   | If using IAM      | —                | Magnus IAM login API origin                                     |
 | `GITHUB_CLIENT_ID`               | No                | -                | GitHub OAuth application ID                                     |
 | `GITHUB_CLIENT_SECRET`           | No                | -                | GitHub OAuth application secret                                 |
+| `GITHUB_ALLOWED_IDS`             | If using GitHub   | -                | Comma-separated numeric GitHub account IDs allowed to sign in   |
 | `LOCAL_AUTH_ENABLED`             | No                | `false`          | Explicitly enable local/test credentials                        |
 | `LOCAL_AUTH_USERNAME`            | If local auth     | -                | Username for local credentials                                  |
 | `LOCAL_AUTH_PASSWORD`            | If local auth     | -                | Password for local credentials                                  |

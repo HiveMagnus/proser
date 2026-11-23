@@ -9,6 +9,7 @@ Type=simple
 User=proser-factory
 WorkingDirectory=/opt/proser-factory
 EnvironmentFile=/opt/proser-factory/.env
+Environment=NODE_ENV=production
 Environment=PUBLICATION_FONT_MANIFEST=/opt/proser-factory/publication-fonts/manifest.json
 ExecStart=/opt/proser-runtime/node-v24.22.1/bin/node dist/index.js
 Environment=PATH=/opt/proser-runtime/node-v24.22.1/bin:/usr/local/bin:/usr/bin:/bin
