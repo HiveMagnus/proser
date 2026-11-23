@@ -24,8 +24,17 @@ export function stripSurroundingMarkup(input: string): string {
       }
     }
   }
-  // Remove stray leading/trailing punctuation and whitespace
-  s = s.replace(/^[~!@#$%^&*_+=`\"“”'‘’\[\](){},.<>:;…·•\-\s]+/, '')
-       .replace(/[~!@#$%^&*_+=`\"“”'‘’\[\](){},.<>:;…·•\-\s]+$/, '');
-  return s;
+  // Remove stray leading/trailing punctuation and whitespace. A scan from each
+  // end stays linear; an end-anchored regex retries every start position.
+  let start = 0;
+  let end = s.length;
+  while (start < end && isStrayEdge(s[start])) start += 1;
+  while (end > start && isStrayEdge(s[end - 1])) end -= 1;
+  return s.slice(start, end);
+}
+
+const STRAY_EDGE = new Set('~!@#$%^&*_+=`"“”\'‘’[](){},.<>:;…·•-');
+
+function isStrayEdge(character: string): boolean {
+  return STRAY_EDGE.has(character) || /\s/.test(character);
 }

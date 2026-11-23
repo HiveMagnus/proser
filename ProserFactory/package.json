@@ -92,6 +92,7 @@
     "playwright": "^1.64.1",
     "prisma": "7.10.1",
     "puppeteer": "25.16.0",
+    "rate-limiter-flexible": "11.4.1",
     "saxes": "6.0.0",
     "swagger-ui-express": "^5.0.1",
     "tsx": "^4.23.15",

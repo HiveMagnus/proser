@@ -5,7 +5,28 @@ from pathlib import Path
 import os
 import secrets
 import sys
+import tempfile
 from urllib.parse import quote
+
+
+def write_private(path: Path, content: str) -> None:
+    """Replace path atomically. The file is never readable beyond its owner,
+    not even between creation and chmod, and keeps an existing owner."""
+    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    temporary = Path(temporary_name)
+    try:
+        os.fchmod(descriptor, 0o600)
+        if path.exists() and os.geteuid() == 0:
+            current = path.stat()
+            os.fchown(descriptor, current.st_uid, current.st_gid)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    except BaseException:
+        temporary.unlink(missing_ok=True)
+        raise
 
 
 def main() -> int:
@@ -73,8 +94,7 @@ def main() -> int:
         if key not in seen:
             next_lines.append(f"{key}={value}")
 
-    path.write_text("\n".join(next_lines).rstrip() + "\n", encoding="utf-8")
-    os.chmod(path, 0o600)
+    write_private(path, "\n".join(next_lines).rstrip() + "\n")
     print("PostgreSQL runtime environment present")
     return 0
 

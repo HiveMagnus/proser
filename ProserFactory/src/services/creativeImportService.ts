@@ -10,6 +10,7 @@ import { catalogCommand } from '@/documents/catalogCommands';
 import type { Prisma } from '@prisma/client';
 import { inspectImageMetadata } from '@/lib/imageMetadata';
 import { importedImageQuota } from '@/lib/storageQuota';
+import { resolveInside } from '@/lib/safePath';
 
 export { creativeImageSchema } from '../api/schemas/creativeImports';
 import { creativeImageSchema } from '../api/schemas/creativeImports';
@@ -48,9 +49,9 @@ export async function importCreativeImage(userId: number, raw: unknown, actor: s
   const sourceKey = createHash('sha256').update(JSON.stringify([input.source, input.sourceId, input.artifactKey])).digest('hex');
   const root = path.resolve('public/images');
   await fs.mkdir(root, { recursive: true });
-  await fs.writeFile(path.join(root, name), bytes, { mode: 0o600, flag: 'wx' }).catch(async (error: NodeJS.ErrnoException) => {
+  await fs.writeFile(resolveInside(root, name), bytes, { mode: 0o600, flag: 'wx' }).catch(async (error: NodeJS.ErrnoException) => {
     if (error.code !== 'EEXIST') throw error;
-    if (createHash('sha256').update(await fs.readFile(path.join(root, name))).digest('hex') !== input.sha256) throw new ValidationError('Stored image digest mismatch');
+    if (createHash('sha256').update(await fs.readFile(resolveInside(root, name))).digest('hex') !== input.sha256) throw new ValidationError('Stored image digest mismatch');
   });
   const { bytesBase64: _bytes, ...metadata } = input;
   void _bytes;

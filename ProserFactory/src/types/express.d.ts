@@ -25,6 +25,8 @@ declare global {
       authorizedBookId?: number;
       /** Unique admission lease owned by this request. */
       operationLeaseId?: string;
+      /** Caller the global API rate limit counted this request against. */
+      apiRateLimitKey?: string;
     }
   }
 }

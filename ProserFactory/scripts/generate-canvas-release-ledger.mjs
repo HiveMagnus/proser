@@ -21,7 +21,7 @@ try {
     const ref = id(name, value.version);
     components.set(ref, {
       type: 'library', 'bom-ref': ref, name, version: value.version,
-      purl: `pkg:npm/${name.replace('@', '%40')}@${value.version}`,
+      purl: `pkg:npm/${name.startsWith('@') ? `%40${name.slice(1)}` : name}@${value.version}`,
       licenses: [{ license: { id: value.license ?? 'MIT' } }],
       ...(value.integrity ? { properties: [{ name: 'npm:integrity', value: value.integrity }] } : {}),
       ...(value.resolved ? { externalReferences: [{ type: 'distribution', url: value.resolved }] } : {}),
