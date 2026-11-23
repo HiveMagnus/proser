@@ -78,6 +78,7 @@ describe('settings routes', () => {
     const savedFile = fs.readFileSync(process.env.USER_SETTINGS_FILE!, 'utf8');
     expect(savedFile).toContain('"22"');
     expect(savedFile).toContain('"displayName": "Swarm Lord"');
+    expect(fs.statSync(process.env.USER_SETTINGS_FILE!).mode & 0o777).toBe(0o600);
     expect(savedFile).toContain('"writingStyle": "gothic dread"');
   });
 });

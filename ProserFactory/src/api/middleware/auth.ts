@@ -150,6 +150,26 @@ function extractToken(req: Request): string | null {
 }
 
 /**
+ * A signed token without an expiry, or with one far in the future, stays valid
+ * for as long as the signing secret does. Every accepted token must expire and
+ * must do so within the configured ceiling (24 hours unless overridden).
+ */
+export function tokenMaxLifetimeSeconds(environment: NodeJS.ProcessEnv = process.env): number {
+  const configured = Number(environment.FACTORY_TOKEN_MAX_LIFETIME_SECONDS);
+  return Number.isInteger(configured) && configured >= 60 ? configured : 86_400;
+}
+
+function requireBoundedExpiry<T extends { exp?: number }>(payload: T): T {
+  if (typeof payload.exp !== 'number' || !Number.isFinite(payload.exp)) {
+    throw new jwt.JsonWebTokenError('jwt must carry an exp claim');
+  }
+  if (payload.exp - Math.floor(Date.now() / 1000) > tokenMaxLifetimeSeconds()) {
+    throw new jwt.JsonWebTokenError('jwt lifetime exceeds the permitted maximum');
+  }
+  return payload;
+}
+
+/**
  * Extract and verify a JWT from the Authorization header.
  * Returns the decoded payload or null if no valid token is present.
  */
@@ -168,11 +188,11 @@ function verifyBearerToken(req: Request): BackendTokenPayload | null {
 
   if (primarySecret) {
     try {
-      return jwt.verify(token, primarySecret, {
+      return requireBoundedExpiry(jwt.verify(token, primarySecret, {
         algorithms: ['HS256'],
         issuer: 'proser-author',
         audience: 'proser-factory',
-      }) as BackendTokenPayload;
+      }) as BackendTokenPayload);
     } catch (error) {
       if (!legacySecret && !hermesSecret) throw error;
     }
@@ -180,7 +200,7 @@ function verifyBearerToken(req: Request): BackendTokenPayload | null {
 
   if (legacySecret) {
     try {
-      const payload = jwt.verify(token, legacySecret, { algorithms: ['HS256'] }) as BackendTokenPayload;
+      const payload = requireBoundedExpiry(jwt.verify(token, legacySecret, { algorithms: ['HS256'] }) as BackendTokenPayload);
       if (!warnedLegacyBackendSecret) {
         warnedLegacyBackendSecret = true;
         logger.error('SECURITY: accepted a token using opt-in legacy NEXTAUTH_SECRET/AUTH_SECRET; migrate callers to FACTORY_AUTH_SECRET with issuer and audience claims');
@@ -191,11 +211,11 @@ function verifyBearerToken(req: Request): BackendTokenPayload | null {
     }
   }
 
-  const payload = jwt.verify(token, hermesSecret, {
+  const payload = requireBoundedExpiry(jwt.verify(token, hermesSecret, {
     algorithms: ['HS256'],
     issuer: hermesAgentIssuer(),
     audience: hermesAgentAudience(),
-  }) as BackendTokenPayload;
+  }) as BackendTokenPayload);
   const identity = resolveTokenIdentity(payload);
   const allowedGithubIds = hermesAgentGithubIds();
   if (

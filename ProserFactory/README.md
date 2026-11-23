@@ -204,7 +204,7 @@ Required:
 - DATABASE_URL: PostgreSQL connection URL
 - POSTGRES_PASSWORD: Password for the native development PostgreSQL container. The root stack uses `PROSER_DB_PASSWORD`.
 - DATABASE_POOL_SIZE: Per-process pool ceiling (default: 20, bounded to 2..100)
-- FACTORY_AUTH_SECRET: Dedicated ProserAuthor-to-Factory JWT signing secret. Tokens require `iss=proser-author` and `aud=proser-factory`.
+- FACTORY_AUTH_SECRET: Dedicated ProserAuthor-to-Factory JWT signing secret. Tokens require `iss=proser-author` and `aud=proser-factory`. Every accepted token must carry `exp` and expire within `FACTORY_TOKEN_MAX_LIFETIME_SECONDS` (default 86400).
 - INTERNAL_API_SECRET: Secret for internal administrative endpoints.
 
 Inference defaults:
