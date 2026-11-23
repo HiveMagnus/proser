@@ -26,7 +26,7 @@ import { databaseService } from '@/lib/database';
 import { createDocumentQuickDraft } from '@/documents/quickDraft';
 import { readDocumentTraceReview, revalidateBoundCompare, readTraceAnalysis, cancelTraceAnalysis } from '@/documents/traceAnalysis';
 import { documentCompareRevalidateSchema } from '@/documents/traceValidation';
-import { preserveImportOriginal, prepareLegacyBundleImport, readImportPreview, readImportOriginal, commitLegacyBundleImport } from '@/documents/imports';
+import { preserveImportOriginal, prepareLegacyBundleImport, readImportPreview, readImportOriginal, commitLegacyBundleImport, listImportOriginals, deleteImportOriginal } from '@/documents/imports';
 import { importCommitSchema, importPreviewSchema, requireImportCommitPreconditions } from '@/documents/importValidation';
 import { workflowEffectPage, cancelWorkflowEffect, listWorkflowEffects } from '@/documents/workflowEffects';
 function requireComparePreconditions(req: { body?: Record<string, unknown> }, _res: unknown, next: () => void) {
@@ -90,6 +90,15 @@ export function registerDocumentRoutes(router: Router) {
   const previewParams = params.extend({ previewId: z.string().uuid() });
   router.post('/:bookId/import-originals/:originalId', zParams(originalParams), ownedBookBudget({ source: 'params', required: true }), redisRateLimit({ key: (req) => `import-original:${req.user?.id}`, limit: 30, windowSec: 3600 }), (req, _res, next) => { if (!req.is('application/octet-stream')) throw new DocumentError('DOCUMENT_IMPORT_MEDIA_TYPE_INVALID', 'Upload original bytes as application/octet-stream.', 415); next(); }, (req, res, next) => { raw({ type: 'application/octet-stream', limit: '32mb' })(req, res, (error: unknown) => { if (error && typeof error === 'object' && 'type' in error && error.type === 'entity.too.large') next(new DocumentError('DOCUMENT_IMPORT_TOO_LARGE', 'Original exceeds 32 MiB.', 413)); else next(error); }); }, async (req, res) => {
     respondSuccess(res, await preserveImportOriginal(req.user!.id, Number(req.params.bookId), String(req.params.originalId), 'legacy-markdown-bundle-v1', req.body), 201);
+  });
+  router.get('/:bookId/import-originals', zParams(params), async (req, res) => {
+    res.setHeader('Cache-Control', 'private, no-store');
+    respondSuccess(res, await listImportOriginals(req.user!.id, Number(req.params.bookId)));
+  });
+  // Deleting preserved bytes is the account owner's decision, not a delegated agent's.
+  router.delete('/:bookId/import-originals/:originalId', zParams(originalParams), async (req, res) => {
+    if (req.authActor) throw new DocumentError('DOCUMENT_OWNER_REQUIRED', 'Only the account owner can delete preserved originals.', 403);
+    respondSuccess(res, await deleteImportOriginal(req.user!.id, Number(req.params.bookId), String(req.params.originalId)));
   });
   router.get('/:bookId/import-originals/:originalId/content', zParams(originalParams), async (req, res) => {
     const original = await readImportOriginal(req.user!.id, Number(req.params.bookId), String(req.params.originalId));

@@ -19,6 +19,15 @@ if (
 const sql = await readFile("deploy/document-authority/enforcement.sql", "utf8");
 const revision = (await readFile("REVISION", "utf8")).trim();
 const digest = (value) => createHash("sha256").update(value).digest("hex");
+// Enforcement SQL installed by earlier releases that this release's SQL may
+// replace in place. The SQL keeps the activation state and only replaces guard
+// functions and triggers. Any other digest still needs a reviewed procedure.
+const UPGRADABLE_ENFORCEMENT = new Map([
+  [
+    "3995b374b447894edf17fb276aded5cf307c7dac2b52b81d100197806b923f19",
+    "v1.0.0 to v1.0.5",
+  ],
+]);
 const prisma = (action) =>
   execFileSync(
     process.execPath,
@@ -67,8 +76,44 @@ try {
     throw new Error("Compose database bootstrap state is missing.");
   if (bootstrap.enforcement_sha256) {
     if (bootstrap.enforcement_sha256 !== digest(sql)) {
-      throw new Error(
-        "Existing databases require reviewed document enforcement changes.",
+      const from = UPGRADABLE_ENFORCEMENT.get(bootstrap.enforcement_sha256);
+      if (!from) {
+        throw new Error(
+          "Existing databases require reviewed document enforcement changes.",
+        );
+      }
+      await client.query("BEGIN");
+      try {
+        await client.query(sql);
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS proser_compose.enforcement_upgrades (
+            applied_at timestamptz PRIMARY KEY DEFAULT clock_timestamp(),
+            from_sha256 text NOT NULL,
+            to_sha256 text NOT NULL,
+            revision text NOT NULL
+          )
+        `);
+        await client.query(
+          "INSERT INTO proser_compose.enforcement_upgrades(from_sha256, to_sha256, revision) VALUES ($1, $2, $3)",
+          [bootstrap.enforcement_sha256, digest(sql), revision],
+        );
+        await client.query(
+          "UPDATE proser_compose.bootstrap SET enforcement_sha256 = $1 WHERE singleton",
+          [digest(sql)],
+        );
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      }
+      console.log(
+        JSON.stringify({
+          kind: "compose-enforcement-upgrade",
+          from: bootstrap.enforcement_sha256,
+          releases: from,
+          to: digest(sql),
+          revision,
+        }),
       );
     }
     const {

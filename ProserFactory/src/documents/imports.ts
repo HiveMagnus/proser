@@ -22,7 +22,8 @@ async function owned(userId: number, bookId: number) {
   if (currentDocumentMutationContext()?.userId !== undefined && currentDocumentMutationContext()!.userId !== userId || !await db().book.findFirst({ where: { id: bookId, userId, deletedAt: {} }, select: { id: true } })) throw new DocumentError('DOCUMENT_SCOPE_NOT_FOUND', 'Book not found.', 404);
 }
 /** Preserve exact bytes before invoking any converter, including on malformed
- * input. Originals are append-only and have no delete/update API. */
+ * input. Originals never change. An unused one can be deleted with
+ * deleteImportOriginal; a committed import's original is kept as evidence. */
 export async function preserveImportOriginal(userId: number, bookId: number, id: string, format: 'legacy-markdown-bundle-v1' | 'docx', bytes: Uint8Array) {
   z.string().uuid().parse(id); await owned(userId, bookId);
   if (!(bytes instanceof Uint8Array) || !bytes.byteLength || bytes.byteLength > 32 * 1024 * 1024) throw new DocumentError('DOCUMENT_IMPORT_TOO_LARGE', 'Original uploads must contain 1 byte to 32 MiB.', 413);
@@ -41,6 +42,45 @@ export async function preserveImportOriginal(userId: number, bookId: number, id:
     return { id, sha256, byteLength: bytes.byteLength };
   });
 }
+/** Originals a committed import came from, by the audit record of that commit:
+ * legacy bundle commits record originalId, DOCX commits importSource.originalId. */
+async function committedOriginalIds(client: Pick<Prisma.TransactionClient, '$queryRaw'>, bookId: number): Promise<Set<string>> {
+  const rows = await client.$queryRaw<Array<{ id: string | null }>>`SELECT DISTINCT unnest(ARRAY[metadata->>'originalId', metadata->'importSource'->>'originalId']) AS id FROM audit_log WHERE entity_type = 'book' AND entity_id = ${bookId} AND (metadata ? 'originalId' OR metadata ? 'importSource')`;
+  return new Set(rows.flatMap((row) => (row.id ? [row.id] : [])));
+}
+
+/** The owner's preserved originals for one book, with storage use against the quota. */
+export async function listImportOriginals(userId: number, bookId: number) {
+  await owned(userId, bookId);
+  const [rows, previews, committed, bookUse, userUse] = await Promise.all([
+    db().documentImportOriginal.findMany({ where: { bookId, userId }, select: { id: true, format: true, sha256: true, byteLength: true, createdAt: true }, orderBy: [{ createdAt: 'desc' }, { id: 'asc' }] }),
+    db().documentImportPreview.groupBy({ by: ['originalId'], where: { bookId }, _count: { _all: true } }),
+    committedOriginalIds(db(), bookId),
+    db().documentImportOriginal.aggregate({ where: { bookId }, _sum: { byteLength: true } }),
+    db().documentImportOriginal.aggregate({ where: { userId }, _sum: { byteLength: true } }),
+  ]);
+  const previewCounts = new Map(previews.map((row) => [row.originalId, row._count._all]));
+  return {
+    originals: rows.map((row) => ({ ...row, previewCount: previewCounts.get(row.id) ?? 0, committed: committed.has(row.id), deletable: !committed.has(row.id) })),
+    usage: { bookBytes: bookUse._sum.byteLength ?? 0, userBytes: userUse._sum.byteLength ?? 0 },
+    quota: importOriginalQuota(),
+  };
+}
+
+/** Delete an original no committed import used, with its uncommitted previews.
+ * A committed import's original and preview stay as its evidence. */
+export async function deleteImportOriginal(userId: number, bookId: number, id: string) {
+  z.string().uuid().parse(id); await owned(userId, bookId);
+  return documentService.sideRecord(userId, bookId, async (tx) => {
+    const original = await tx.documentImportOriginal.findFirst({ where: { id, bookId, userId }, select: { id: true, byteLength: true } });
+    if (!original) throw new DocumentError('DOCUMENT_SCOPE_NOT_FOUND', 'Original not found.', 404);
+    if ((await committedOriginalIds(tx, bookId)).has(id)) throw new DocumentError('DOCUMENT_IMPORT_ORIGINAL_COMMITTED', 'A committed import came from this original, so it is kept as evidence.', 409);
+    const previews = await tx.documentImportPreview.deleteMany({ where: { originalId: id, bookId } });
+    await tx.documentImportOriginal.delete({ where: { id } });
+    return { id, deleted: true, byteLength: original.byteLength, previewsDeleted: previews.count };
+  });
+}
+
 export async function readImportOriginal(userId: number, bookId: number, id: string) {
   await owned(userId, bookId);
   const row = await db().documentImportOriginal.findFirst({ where: { id, userId, bookId } });

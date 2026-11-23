@@ -3,7 +3,7 @@ import request from 'supertest';
 import app from '@/index';
 import { databaseService } from '@/lib/database';
 import { documentService } from '@/documents/service';
-import { preserveImportOriginal, prepareLegacyBundleImport, readImportOriginal, readImportPreview, commitLegacyBundleImport } from '@/documents/imports';
+import { preserveImportOriginal, prepareLegacyBundleImport, readImportOriginal, readImportPreview, commitLegacyBundleImport, listImportOriginals, deleteImportOriginal } from '@/documents/imports';
 import { documentFromText, projectDocument } from '@/documents/model';
 import { documentFromLegacyMarkdown } from '@/lib/importers/legacyMarkdown';
 
@@ -42,6 +42,40 @@ describe('original-preserving append imports', () => {
     return { operationId: randomUUID(), expectedRevisionId: source.revisionId, expectedScopes: { structure: source.scopes!.structure.revisionId, canon: source.scopes!.canon.revisionId }, consentReportHash: reportHash };
   };
   const auth = (value: request.Test) => value.set('x-user-id', String(userId)).set('x-github-id', githubId).set('x-username','Import author');
+  test('lists originals and deletes only those no committed import used', async () => {
+    const unused = await preview();
+    const used = await preview();
+    await commitLegacyBundleImport(userId, bookId, used.record.id, await conditions(used.record.reportHash));
+    const listed = await listImportOriginals(userId, bookId);
+    expect(listed.originals.find((row) => row.id === unused.original.id)).toMatchObject({ previewCount: 1, committed: false, deletable: true });
+    expect(listed.originals.find((row) => row.id === used.original.id)).toMatchObject({ previewCount: 1, committed: true, deletable: false });
+    expect(listed.usage.bookBytes).toBe(unused.original.byteLength + used.original.byteLength);
+
+    await expect(deleteImportOriginal(userId, bookId, used.original.id)).rejects.toMatchObject({ code: 'DOCUMENT_IMPORT_ORIGINAL_COMMITTED', status: 409 });
+    const stranger = await db().user.create({ data: { githubId: `import-stranger-${randomUUID()}`, username: 'Stranger' } });
+    try {
+      await expect(deleteImportOriginal(stranger.id, bookId, unused.original.id)).rejects.toMatchObject({ status: 404 });
+    } finally {
+      await db().user.delete({ where: { id: stranger.id } });
+    }
+
+    await expect(deleteImportOriginal(userId, bookId, unused.original.id)).resolves.toMatchObject({ id: unused.original.id, deleted: true, previewsDeleted: 1 });
+    expect(await db().documentImportOriginal.count({ where: { id: unused.original.id } })).toBe(0);
+    expect(await db().documentImportPreview.count({ where: { originalId: unused.original.id } })).toBe(0);
+    await expect(readImportOriginal(userId, bookId, unused.original.id)).rejects.toMatchObject({ status: 404 });
+    expect((await listImportOriginals(userId, bookId)).usage.bookBytes).toBe(used.original.byteLength);
+    expect(await readImportOriginal(userId, bookId, used.original.id)).toMatchObject({ id: used.original.id });
+
+    // A deleted ID is free for a new upload.
+    await expect(preserveImportOriginal(userId, bookId, unused.original.id, 'legacy-markdown-bundle-v1', bundle())).resolves.toMatchObject({ id: unused.original.id });
+    const listedOverHttp = await auth(request(app).get(`/api/books/${bookId}/import-originals`));
+    expect(listedOverHttp.status).toBe(200);
+    expect(listedOverHttp.headers['cache-control']).toBe('private, no-store');
+    expect(listedOverHttp.body.data.originals).toHaveLength(2);
+    expect((await auth(request(app).delete(`/api/books/${bookId}/import-originals/${unused.original.id}`))).status).toBe(200);
+    expect((await auth(request(app).delete(`/api/books/${bookId}/import-originals/${unused.original.id}`))).status).toBe(404);
+    expect((await auth(request(app).delete(`/api/books/${bookId}/import-originals/${used.original.id}`))).status).toBe(409);
+  });
   test('converts nested inline marks while retaining unsupported markup as text', () => {
     const literal = '<span>plain</span> ![Cover](cover.png) [Notes](notes.md)';
     const document = documentFromLegacyMarkdown(`***Both*** ~~old~~ \`code\`\n\n${literal}`, randomUUID);

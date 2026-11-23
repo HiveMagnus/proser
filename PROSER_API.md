@@ -510,6 +510,15 @@ mapping/report at `/import-previews/:previewId` and owned original bytes at
 revisions, an operation UUID and consent to the exact report hash. It appends
 new identities and preserves existing manuscript/review history. Previews support
 the documented legacy Markdown bundle and bounded rich-text DOCX conversion.
+
+`GET /api/books/:bookId/import-originals` lists the book's originals with their
+preview count, whether a committed import came from each one, and storage use
+against the quota. `DELETE /api/books/:bookId/import-originals/:originalId`
+deletes an original that no committed import used, together with its
+uncommitted previews, and frees its quota. An original a committed import came
+from returns `409 DOCUMENT_IMPORT_ORIGINAL_COMMITTED` and stays as that import's
+evidence. Only the account owner can delete; a delegated agent receives `403`.
+A deleted original's UUID can be uploaded again.
 Identified conversion losses require consent to the retained report. Supported
 header/footer review graphs become owned layout stories; scene bodies retain
 empty compatibility fragments. Full exchange/rendering acceptance and production
