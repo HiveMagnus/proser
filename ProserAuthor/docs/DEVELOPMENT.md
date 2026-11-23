@@ -2,7 +2,7 @@
 
 For the full application use the [root Compose guide](../../docs/COMPOSE.md).
 This guide runs Author from source against an existing Factory API. Install Node
-`24.22.1` from `.nvmrc` and use Corepack to run the pinned pnpm `12.16.1`.
+`24.22.3` from `.nvmrc` and use Corepack to run the pinned pnpm `12.16.1`.
 If Corepack is missing, install the version used by CI with
 `npm install --global corepack@0.36.0`.
 

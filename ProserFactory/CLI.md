@@ -8,7 +8,7 @@ The retired `pipeline` and `resume` commands do not exist. Their legacy FactoryR
 
 Run from `ProserFactory/` with:
 
-- Node `24.22.1` and installed npm dependencies;
+- Node `24.22.3` and installed npm dependencies;
 - `DATABASE_URL` pointing to the Factory PostgreSQL database;
 - a reachable OpenAI-compatible inference endpoint for generation commands.
 

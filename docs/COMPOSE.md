@@ -26,7 +26,7 @@ Factory, worker, and initializer can start from the same local image reference.
 
 ### Build from source
 
-From the repository root with Node `24.22.1` and Docker Compose installed:
+From the repository root with Node `24.22.3` and Docker Compose installed:
 
 ```bash
 node scripts/init-compose-env.mjs

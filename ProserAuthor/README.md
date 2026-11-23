@@ -58,7 +58,7 @@ formats selections in accessible editing mode. See
 
 Install the complete application with the [root quick start](../README.md#quick-start).
 For web development, use [the development guide](docs/DEVELOPMENT.md) to start
-against a reachable Factory. It covers Node `24.22.1`, pnpm `12.16.1`, workspace
+against a reachable Factory. It covers Node `24.22.3`, pnpm `12.16.1`, workspace
 builds, `apps/web/.env.local`, and sign-in configuration.
 
 ## Development

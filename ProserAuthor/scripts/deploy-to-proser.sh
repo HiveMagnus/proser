@@ -87,7 +87,7 @@ test \"\$(cat '$REMOTE_DIR/REVISION')\" = \"\$(cat '$CHECKPOINT/candidate-revisi
 test -s '$CHECKPOINT/previous-revision'
 compatible=\$(tar -xOf '$CHECKPOINT/code.tar.gz' ./DOCUMENT_CONTRACT 2>/dev/null || true)
 if [ \"\$compatible\" != structured-document-v1 ]; then
-  curl --silent --show-error --fail --max-time 10 http://127.0.0.1:3001/api/readiness | /opt/proser-runtime/node-v24.22.1/bin/node '$REMOTE_DIR/scripts/check-document-rollback.mjs'
+  curl --silent --show-error --fail --max-time 10 http://127.0.0.1:3001/api/readiness | /opt/proser-runtime/node-v24.22.3/bin/node '$REMOTE_DIR/scripts/check-document-rollback.mjs'
 fi
 systemctl stop proser-v2-web
 stage=\$(mktemp -d /tmp/proser-author-rollback.XXXXXX)
@@ -95,7 +95,7 @@ trap 'rm -rf -- \"\$stage\"' EXIT
 tar -xzf '$CHECKPOINT/code.tar.gz' -C \"\$stage\"
 rsync -a --delete --exclude='node_modules' --exclude='.env' --exclude='.env.*' --exclude='data/' --exclude='certs/' --exclude='checkpoints/' --exclude='.auth/' --exclude='test-results/' --exclude='playwright-report/' \"\$stage/\" '$REMOTE_DIR/'
 cd '$REMOTE_DIR'
-export PATH=/opt/proser-runtime/node-v24.22.1/bin:\$PATH
+export PATH=/opt/proser-runtime/node-v24.22.3/bin:\$PATH
 CI=true corepack pnpm install --frozen-lockfile >/dev/null
 sed 's/^User=.*/User=$WEB_SERVICE_USER/' deploy/proser-v2-web.service > /etc/systemd/system/proser-v2-web.service
 systemctl daemon-reload
@@ -183,7 +183,7 @@ fi
 log "Installing web dependencies on proser..."
 rsync -az "$REPO_DIR/../scripts/install-node-runtime.py" "$REMOTE:$REMOTE_DIR/scripts/install-node-runtime.py"
 _sudo "python3 '$REMOTE_DIR/scripts/install-node-runtime.py'"
-ssh "$REMOTE" "set -o pipefail; export PATH=/opt/proser-runtime/node-v24.22.1/bin:\$PATH; cd $REMOTE_DIR && CI=true corepack pnpm install --frozen-lockfile 2>&1 | tail -5"
+ssh "$REMOTE" "set -o pipefail; export PATH=/opt/proser-runtime/node-v24.22.3/bin:\$PATH; cd $REMOTE_DIR && CI=true corepack pnpm install --frozen-lockfile 2>&1 | tail -5"
 
 # ── 5. Install systemd service ────────────────────────────────
 log "Installing web systemd service..."

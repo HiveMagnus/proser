@@ -143,7 +143,7 @@ It routes through `SceneProseService.reviewProse` so mobile revisions reuse the 
 
 ## Native development
 
-Start from `ProserFactory/` with Node `24.22.1`, Docker, and a C/C++ build
+Start from `ProserFactory/` with Node `24.22.3`, Docker, and a C/C++ build
 toolchain with Python 3 for native npm dependencies. Use loopback ports and a
 disposable database for development.
 
@@ -486,7 +486,7 @@ publication artifacts remain snapshots. For an external integration, configure a
 
 ## Canvas document transition
 
-Use Node 24.22.1. Structured authority and enforcement are active in production.
+Use Node 24.22.3. Structured authority and enforcement are active in production.
 New installations default to inactive authority until their reviewed release gates
 and preservation rehearsal pass. See
 [structured document operations](docs/STRUCTURED_DOCUMENTS.md) for backfill,
