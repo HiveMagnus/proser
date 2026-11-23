@@ -370,11 +370,21 @@ async function ensureUserExists(payload: BackendTokenPayload): Promise<number | 
 }
 
 /**
- * Legacy header-based auth — allowed in non-production environments only.
+ * Unsigned header identities are accepted only by the automated test runner,
+ * or by a non-production process whose operator explicitly opted in. An unset
+ * or misspelled NODE_ENV must never enable them.
+ */
+export function legacyHeaderAuthEnabled(environment: NodeJS.ProcessEnv = process.env): boolean {
+  if (environment.NODE_ENV === 'test') return true;
+  return environment.NODE_ENV === 'development' && environment.ALLOW_LEGACY_HEADER_AUTH === 'true';
+}
+
+/**
+ * Legacy header-based auth for tests and explicitly opted-in local development.
  * Returns true if user was populated, false otherwise.
  */
 function tryLegacyHeaderAuth(req: AuthenticatedRequest): boolean {
-  if (process.env.NODE_ENV === 'production') return false;
+  if (!legacyHeaderAuthEnabled()) return false;
 
   const userId = req.headers['x-user-id'] as string;
   const githubId = req.headers['x-github-id'] as string;

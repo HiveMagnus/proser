@@ -57,7 +57,7 @@ Internal routes use:
 X-Internal-Secret: <INTERNAL_API_SECRET>
 ```
 
-`POST /api/auth/sync-user` creates or updates an integration identity. In non-production only, legacy `x-user-id`, `x-github-id`, `x-username`, `x-email`, and `x-avatar-url` headers are accepted for tests and compatibility.
+`POST /api/auth/sync-user` creates or updates an integration identity. Legacy `x-user-id`, `x-github-id`, `x-username`, `x-email`, and `x-avatar-url` headers are accepted only by the automated test runner (`NODE_ENV=test`) or by a local development process that sets both `NODE_ENV=development` and `ALLOW_LEGACY_HEADER_AUTH=true`.
 
 ### Response envelopes
 
