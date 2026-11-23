@@ -1,9 +1,9 @@
 import { Router, Response } from 'express';
 import { AuthenticatedRequest } from '../types';
-import { authenticateRequest } from '../middleware/auth';
+import { authenticateRequest, revokeUserSessions } from '../middleware/auth';
 import { zBody } from '../middleware/zodValidation';
 import { updateSettingsBody } from '../schemas/settings';
-import { respondSuccess } from '../utils/response';
+import { ErrorCodes, respondError, respondSuccess } from '../utils/response';
 import { userSettingsService } from '../../services/userSettingsService';
 import logger from '../../lib/logger';
 
@@ -32,6 +32,18 @@ router.put('/', zBody(updateSettingsBody), (req: AuthenticatedRequest, res: Resp
 
   logger.info({ userId: user.id }, 'Updated user settings');
   respondSuccess(res, settings);
+});
+
+// Sign out everywhere: every browser session of this account signed in before
+// now stops working, including the one making this request.
+router.post('/sessions/revoke', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  if (req.authActor) {
+    respondError(res, ErrorCodes.FORBIDDEN, 'Only the account owner can revoke sessions', 403);
+    return;
+  }
+  const revokedBefore = await revokeUserSessions(req.user!.id);
+  logger.info({ userId: req.user!.id }, 'Revoked user sessions');
+  respondSuccess(res, { revokedBefore: revokedBefore.toISOString() });
 });
 
 export default router;

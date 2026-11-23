@@ -96,6 +96,13 @@ credential was rejected. Check its expiry, issuer, audience, and enrolled
 service identity. Use the current owned book ID and revision from the API for
 subsequent calls.
 
+A `401` whose `error.details.code` is `SESSION_REVOKED` means the account
+signed out everywhere after this token's session began. Author-signed tokens
+carry the session's sign-in time in `sessionIssuedAt` (seconds since the
+epoch). After a revocation, Factory refuses Author-signed tokens for that
+account that lack the claim or carry an earlier time. Agent tokens are not
+browser sessions and are unaffected.
+
 ## Create a book and first draft
 
 Run the following against a development installation using the default
@@ -312,6 +319,7 @@ bytes for a separate reachability cleanup.
 | `GET`        | `/models/settings`, `/models/status`                     | Optional        | Active backend settings/status                                                    |
 | `GET`        | `/ollama/*`                                              | Same as models  | Compatibility alias                                                               |
 | `GET`, `PUT` | `/settings`                                              | Bearer          | Per-user preferences                                                              |
+| `POST`       | `/settings/sessions/revoke`                              | Bearer          | Sign out everywhere: refuse every browser session signed in before now            |
 | `GET`        | `/prompts`, `/prompts/:key`, `/prompts/additional/:name` | Bearer          | Read internal prompt templates                                                    |
 | `GET`        | `/metrics`                                               | Metrics token   | Incremental server metrics; timing-safe credential check and failed-auth throttle |
 | `POST`       | `/metrics/ingest`                                        | Rate-limited    | UI metric batch                                                                   |

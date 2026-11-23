@@ -14,6 +14,15 @@ import {
 import { isGitHubAccountAllowed, parseGitHubAllowedIds } from '@/lib/github-allow-list';
 
 const providers: Provider[] = [];
+
+// A rolling session is renewed on every use, so without a ceiling a stolen
+// cookie never expires while it is being used.
+const DAY_SECONDS = 24 * 60 * 60;
+const configuredSessionLifetimeDays = Number(process.env.AUTH_SESSION_MAX_LIFETIME_DAYS);
+const SESSION_MAX_LIFETIME_SECONDS =
+  (Number.isFinite(configuredSessionLifetimeDays) && configuredSessionLifetimeDays >= 1
+    ? configuredSessionLifetimeDays
+    : 90) * DAY_SECONDS;
 const isLocalAuthAllowed = process.env.LOCAL_AUTH_ENABLED === 'true';
 
 function normalizeIamUsername(value: unknown): string {
@@ -152,6 +161,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     jwt({ token, user, account, profile }) {
       if (user) {
         token.sub = user.id;
+        // Fixed at sign-in and never renewed: Factory compares it with the
+        // account's revocation time, and it bounds the session's total life.
+        token.sessionIssuedAt = Math.floor(Date.now() / 1000);
 
         if (account?.provider === 'iam') {
           // Store IAM-specific data in the token
@@ -172,6 +184,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.provider = 'github';
         }
       }
+      if (
+        typeof token.sessionIssuedAt === 'number' &&
+        Date.now() / 1000 - token.sessionIssuedAt > SESSION_MAX_LIFETIME_SECONDS
+      ) {
+        return null;
+      }
       return token;
     },
     session({ session, token }) {
@@ -180,6 +198,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.username = typeof token.username === 'string' ? token.username : undefined;
         session.user.roles = Array.isArray(token.roles) ? (token.roles as string[]) : undefined;
         session.user.provider = typeof token.provider === 'string' ? token.provider : undefined;
+        session.user.sessionIssuedAt =
+          typeof token.sessionIssuedAt === 'number' ? token.sessionIssuedAt : undefined;
       }
       return session;
     },

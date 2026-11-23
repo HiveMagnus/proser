@@ -645,3 +645,64 @@ describe('Factory API proxy', () => {
     });
   });
 });
+
+describe('Factory API proxy session revocation', () => {
+  it('forwards the session sign-in time and signs the browser out when Factory reports a revoked session', async () => {
+    authMock.mockResolvedValue({
+      user: { id: '42', username: 'author', provider: 'iam', sessionIssuedAt: 1_800_000_000 },
+    });
+    const fetchMock = vi.fn().mockImplementation(
+      async () =>
+        new Response(
+          JSON.stringify({
+            success: false,
+            error: {
+              code: 'UNAUTHORIZED',
+              message: 'Session revoked. Sign in again.',
+              details: { code: 'SESSION_REVOKED' },
+            },
+          }),
+          { status: 401, headers: { 'content-type': 'application/json' } },
+        ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const { GET } = await import('@/app/api/[...path]/route');
+    const { NextRequest } = await import('next/server');
+    const response = await GET(new NextRequest('https://author.example/api/books'));
+
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const token = String(new Headers(init.headers).get('authorization')).replace(/^Bearer /, '');
+    const claims = JSON.parse(Buffer.from(String(token.split('.')[1]), 'base64url').toString());
+    expect(claims.sessionIssuedAt).toBe(1_800_000_000);
+
+    expect(response.status).toBe(401);
+    const cookies = response.headers.getSetCookie();
+    for (const name of ['authjs.session-token', '__Secure-authjs.session-token']) {
+      expect(
+        cookies.some((cookie) => cookie.startsWith(`${name}=;`) && /Max-Age=0/i.test(cookie)),
+      ).toBe(true);
+    }
+  });
+
+  it('leaves the session alone on an ordinary 401', async () => {
+    authMock.mockResolvedValue({ user: { id: '42', username: 'author', provider: 'iam' } });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(
+        async () =>
+          new Response(
+            JSON.stringify({
+              success: false,
+              error: { code: 'UNAUTHORIZED', message: 'Token expired' },
+            }),
+            { status: 401, headers: { 'content-type': 'application/json' } },
+          ),
+      ),
+    );
+    const { GET } = await import('@/app/api/[...path]/route');
+    const { NextRequest } = await import('next/server');
+    const response = await GET(new NextRequest('https://author.example/api/books'));
+    expect(response.status).toBe(401);
+    expect(response.headers.getSetCookie()).toEqual([]);
+  });
+});

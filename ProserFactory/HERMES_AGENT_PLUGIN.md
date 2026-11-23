@@ -14,7 +14,9 @@ Factory workflows. Factory owns manuscript data and workflow progress.
    `HERMES_AGENT_ALLOWED_GITHUB_IDS` on Factory, then recreate the Compose
    Factory service with those settings. Use a service ID such as
    `service:hermes-agent:agent-host` and keep the Hermes signing secret
-   separate from Author's signing secret.
+   separate from Author's signing secret. With more than one Hermes host,
+   give each its own secret in `HERMES_AGENT_CREDENTIALS` so one host cannot
+   sign as another. See the [deployment notes](deploy/README.md).
 3. From the repository root, run the installer against the Ubuntu Hermes host.
    Set the shell variables below to your SSH configuration, Factory origin,
    service identity, and the path to an owner-only secret file.

@@ -1,5 +1,6 @@
 import {configuredReleaseCanary} from '@/operations/releaseCanary';
 import {releaseRequestKind,admitReleaseMutation,withReleaseAdmission,withReleaseCanaryAdmission} from '@/operations/releaseAdmission';
+import fs from 'node:fs';
 import { Request, Response, NextFunction } from 'express';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { AuthenticatedRequest } from '../types';
@@ -30,6 +31,53 @@ function legacyBackendAuthSecret(): string {
 
 function hermesAgentAuthSecret(): string {
   return process.env.HERMES_AGENT_AUTH_SECRET || '';
+}
+
+export interface HermesAgentCredential {
+  secret: string;
+  /** Owners this agent may act for. Null defers to HERMES_AGENT_ALLOWED_OWNER_GITHUB_IDS. */
+  owners: Set<string> | null;
+}
+
+const MINIMUM_AGENT_SECRET_LENGTH = 32;
+let cachedAgentCredentials: { source: string; credentials: Map<string, HermesAgentCredential> } | null = null;
+
+/**
+ * Per-agent Hermes signing secrets. With one shared secret, any host holding it
+ * can mint a token for every permitted agent identity. An identity listed here
+ * is accepted only when its token is signed with its own secret, so a
+ * compromised host can be revoked alone and cannot impersonate another.
+ *
+ * HERMES_AGENT_CREDENTIALS holds a JSON object, or HERMES_AGENT_CREDENTIALS_FILE
+ * names a file that does: {"service:agent-a": "<secret>",
+ * "service:agent-b": {"secret": "<secret>", "owners": ["iam:author"]}}.
+ * A malformed value throws: falling back to the shared secret would silently
+ * widen what each host can do.
+ */
+export function hermesAgentCredentials(environment: NodeJS.ProcessEnv = process.env): Map<string, HermesAgentCredential> {
+  const file = environment.HERMES_AGENT_CREDENTIALS_FILE?.trim();
+  const raw = file ? fs.readFileSync(file, 'utf8') : environment.HERMES_AGENT_CREDENTIALS?.trim() || '';
+  if (cachedAgentCredentials?.source === raw) return cachedAgentCredentials.credentials;
+  const credentials = new Map<string, HermesAgentCredential>();
+  if (raw) {
+    let parsed: unknown;
+    try { parsed = JSON.parse(raw); } catch { throw new Error('HERMES_AGENT_CREDENTIALS must be a JSON object'); }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('HERMES_AGENT_CREDENTIALS must be a JSON object');
+    const secrets = new Set<string>();
+    for (const [identity, value] of Object.entries(parsed)) {
+      const entry = typeof value === 'string' ? { secret: value } : value as { secret?: unknown; owners?: unknown };
+      const secret = entry && typeof entry === 'object' ? entry.secret : undefined;
+      if (!identity.trim() || identity !== identity.trim()) throw new Error('HERMES_AGENT_CREDENTIALS contains an invalid agent identity');
+      if (typeof secret !== 'string' || secret.length < MINIMUM_AGENT_SECRET_LENGTH) throw new Error(`HERMES_AGENT_CREDENTIALS secret for ${identity} must be at least ${MINIMUM_AGENT_SECRET_LENGTH} characters`);
+      if (secrets.has(secret) || secret === (environment.HERMES_AGENT_AUTH_SECRET || '')) throw new Error(`HERMES_AGENT_CREDENTIALS secret for ${identity} must be unique to that agent`);
+      secrets.add(secret);
+      const owners = entry.owners;
+      if (owners !== undefined && (!Array.isArray(owners) || owners.some((owner) => typeof owner !== 'string' || !owner.trim()))) throw new Error(`HERMES_AGENT_CREDENTIALS owners for ${identity} must be a list of identities`);
+      credentials.set(identity, { secret, owners: owners === undefined ? null : new Set((owners as string[]).map((owner) => owner.trim())) });
+    }
+  }
+  cachedAgentCredentials = { source: raw, credentials };
+  return credentials;
 }
 
 function hermesAgentGithubId(): string {
@@ -79,6 +127,15 @@ interface BackendTokenPayload {
   iat?: number;
   exp?: number;
   ownerGithubId?: string;
+  /** Seconds since the epoch at which the browser session was signed in. */
+  sessionIssuedAt?: number;
+}
+
+type TokenSource = 'author' | 'legacy' | 'hermes';
+const tokenSources = new WeakMap<BackendTokenPayload, TokenSource>();
+function fromSource(payload: BackendTokenPayload, source: TokenSource): BackendTokenPayload {
+  tokenSources.set(payload, source);
+  return payload;
 }
 
 function allowedHermesOwnerGithubIds(): Set<string> {
@@ -179,7 +236,9 @@ function verifyBearerToken(req: Request): BackendTokenPayload | null {
 
   const primarySecret = backendAuthSecret();
   const legacySecret = legacyBackendAuthSecret();
-  const hermesSecret = hermesAgentAuthSecret();
+  const sharedHermesSecret = hermesAgentAuthSecret();
+  const agentCredentials = hermesAgentCredentials();
+  const hermesSecret = sharedHermesSecret || agentCredentials.size > 0;
 
   if (!primarySecret && !legacySecret && !hermesSecret) {
     logger.error('FACTORY_AUTH_SECRET is not configured — cannot verify tokens');
@@ -188,11 +247,11 @@ function verifyBearerToken(req: Request): BackendTokenPayload | null {
 
   if (primarySecret) {
     try {
-      return requireBoundedExpiry(jwt.verify(token, primarySecret, {
+      return fromSource(requireBoundedExpiry(jwt.verify(token, primarySecret, {
         algorithms: ['HS256'],
         issuer: 'proser-author',
         audience: 'proser-factory',
-      }) as BackendTokenPayload);
+      }) as BackendTokenPayload), 'author');
     } catch (error) {
       if (!legacySecret && !hermesSecret) throw error;
     }
@@ -205,29 +264,39 @@ function verifyBearerToken(req: Request): BackendTokenPayload | null {
         warnedLegacyBackendSecret = true;
         logger.error('SECURITY: accepted a token using opt-in legacy NEXTAUTH_SECRET/AUTH_SECRET; migrate callers to FACTORY_AUTH_SECRET with issuer and audience claims');
       }
-      return payload;
+      return fromSource(payload, 'legacy');
     } catch (error) {
       if (!hermesSecret) throw error;
     }
   }
 
-  const payload = requireBoundedExpiry(jwt.verify(token, hermesSecret, {
+  // The claimed identity only selects which secret must have signed the token.
+  // An identity with its own credential is never accepted under the shared one.
+  const claimed = jwt.decode(token);
+  const claimedIdentity = claimed && typeof claimed === 'object'
+    ? resolveTokenIdentity(claimed as BackendTokenPayload).githubId
+    : '';
+  const dedicated = agentCredentials.get(claimedIdentity);
+  const signingSecret = dedicated ? dedicated.secret : sharedHermesSecret;
+  if (!signingSecret) throw new jwt.JsonWebTokenError('Invalid Hermes agent token identity');
+  const payload = requireBoundedExpiry(jwt.verify(token, signingSecret, {
     algorithms: ['HS256'],
     issuer: hermesAgentIssuer(),
     audience: hermesAgentAudience(),
   }) as BackendTokenPayload);
   const identity = resolveTokenIdentity(payload);
-  const allowedGithubIds = hermesAgentGithubIds();
   if (
-    !allowedGithubIds.has(identity.githubId) ||
+    (!dedicated && !hermesAgentGithubIds().has(identity.githubId)) ||
+    identity.githubId !== claimedIdentity ||
     identity.sub !== identity.githubId
   ) {
     throw new jwt.JsonWebTokenError('Invalid Hermes agent token identity');
   }
-  if (payload.ownerGithubId && !allowedHermesOwnerGithubIds().has(payload.ownerGithubId)) {
+  const allowedOwners = dedicated?.owners ?? allowedHermesOwnerGithubIds();
+  if (payload.ownerGithubId && !allowedOwners.has(payload.ownerGithubId)) {
     throw new jwt.JsonWebTokenError('Hermes agent owner delegation is not allowed');
   }
-  return payload;
+  return fromSource(payload, 'hermes');
 }
 
 /**
@@ -244,10 +313,54 @@ function setUserFromToken(req: AuthenticatedRequest, payload: BackendTokenPayloa
   };
 }
 
+export class SessionRevokedError extends Error {
+  constructor() { super('Session revoked'); this.name = 'SessionRevokedError'; }
+}
+
+// A revocation must take effect at once in the process that recorded it, and
+// within this window in any other process serving the same database.
+const SESSION_REVOCATION_CACHE_TTL_MS = 30_000;
+const sessionRevocations = new Map<number, { revokedBefore: number | null; checkedAt: number }>();
+
+async function sessionsRevokedBefore(userId: number): Promise<number | null> {
+  const now = Date.now();
+  const cached = sessionRevocations.get(userId);
+  if (cached && now - cached.checkedAt < SESSION_REVOCATION_CACHE_TTL_MS) return cached.revokedBefore;
+  const row = await databaseService.client.user.findUnique({ where: { id: userId }, select: { sessionsRevokedBefore: true } });
+  const revokedBefore = row?.sessionsRevokedBefore?.getTime() ?? null;
+  if (sessionRevocations.size > 10_000) sessionRevocations.clear();
+  sessionRevocations.set(userId, { revokedBefore, checkedAt: now });
+  return revokedBefore;
+}
+
+/** Invalidate every browser session of this account signed in before now. */
+export async function revokeUserSessions(userId: number): Promise<Date> {
+  const revokedBefore = new Date();
+  await databaseService.client.user.update({ where: { id: userId }, data: { sessionsRevokedBefore: revokedBefore } });
+  sessionRevocations.set(userId, { revokedBefore: revokedBefore.getTime(), checkedAt: Date.now() });
+  return revokedBefore;
+}
+
+export function clearSessionRevocationCacheForTests(): void { sessionRevocations.clear(); }
+
+/**
+ * Author-signed tokens carry the sign-in time of the browser session behind
+ * them. Once an account has revoked its sessions, a token without that claim or
+ * with an earlier one is refused. Agent tokens are not browser sessions.
+ */
+async function assertSessionNotRevoked(payload: BackendTokenPayload, userId: number): Promise<void> {
+  if (tokenSources.get(payload) === 'hermes') return;
+  const revokedBefore = await sessionsRevokedBefore(userId);
+  if (revokedBefore === null) return;
+  const issuedAt = payload.sessionIssuedAt;
+  if (typeof issuedAt !== 'number' || !Number.isFinite(issuedAt) || issuedAt * 1000 < revokedBefore) throw new SessionRevokedError();
+}
+
 async function setAuthenticatedIdentity(req: AuthenticatedRequest, payload: BackendTokenPayload): Promise<boolean> {
   const actor = resolveTokenIdentity(payload);
   const actorUserId = await ensureUserExists(payload);
   if (actorUserId === null || !Number.isFinite(actorUserId)) return false;
+  await assertSessionNotRevoked(payload, actorUserId);
 
   if (!payload.ownerGithubId) {
     setUserFromToken(req, payload, actorUserId);
@@ -479,6 +592,10 @@ export const authenticateRequest = async (
     }
     if (error instanceof SharedResourceError) {
       respondError(res, ErrorCodes.CONFLICT, error.message, 409, { code: error.code });
+      return;
+    }
+    if (error instanceof SessionRevokedError) {
+      respondError(res, ErrorCodes.UNAUTHORIZED, 'Session revoked. Sign in again.', 401, { code: 'SESSION_REVOKED' });
       return;
     }
     const err = error as Error & { name?: string };
