@@ -84,7 +84,8 @@ entry in `HERMES_AGENT_ALLOWED_GITHUB_IDS`. The optional `owners` list limits
 which accounts that agent may act for; without it
 `HERMES_AGENT_ALLOWED_OWNER_GITHUB_IDS` applies. Set
 `HERMES_AGENT_CREDENTIALS_FILE` to an owner-only JSON file to keep the secrets
-out of the environment file. To revoke one host, remove its entry and restart
+out of the environment file. The provisioning script below manages that file
+for native installs. To revoke one host by hand, remove its entry and restart
 Factory. Once every host has its own entry, unset `HERMES_AGENT_AUTH_SECRET`.
 Factory refuses to start if the value is malformed, a secret is shorter than
 32 characters, or two identities share a secret.
@@ -93,11 +94,22 @@ Factory refuses to start if the value is malformed, a secret is shorter than
 
 Stage the same random `FACTORY_AUTH_SECRET` in ProserAuthor and ProserFactory. ProserAuthor must mint short-lived HS256 tokens with `iss=proser-author` and `aud=proser-factory`. `NEXTAUTH_SECRET`/`AUTH_SECRET` are a temporary logged fallback, not the target configuration.
 
-To provision or rotate a per-host Hermes identity, run:
+To provision a Hermes host with its own signing secret, run:
 
 ```bash
 scripts/provision-hermes-agent-identity.sh --agent-host agent-host
 ```
+
+The script generates a new secret on the machine running it, sends it to the
+Factory host over the SSH connection's stdin, and stores it in
+`HERMES_AGENT_CREDENTIALS_FILE`, creating `hermes-agent-credentials.json` beside
+the Factory `.env` when that setting is absent. The file is owned by the Factory
+service user (`--factory-user`, default `proser-factory`) with mode `0600`. The
+identity is removed from `HERMES_AGENT_ALLOWED_GITHUB_IDS`, so the shared secret
+no longer works for it. `--owner-github-id` scopes delegation to that author for
+this agent only. Each run replaces the agent's secret and redeploys the plugin
+with it, so re-running the script rotates the secret. `--revoke` removes the credential and restarts Factory. The
+script refuses to run while `HERMES_AGENT_CREDENTIALS` is set inline in `.env`.
 
 For production, use certificates from a real CA (Let's Encrypt, etc.).
 For development/staging, generate self-signed certs:
