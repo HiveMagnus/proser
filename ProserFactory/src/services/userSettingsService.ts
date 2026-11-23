@@ -76,7 +76,16 @@ function readStore(): SettingsStore {
 function writeStore(store: SettingsStore): void {
   const filePath = getSettingsFilePath();
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, `${JSON.stringify(store, null, 2)}\n`, 'utf8');
+  // The store holds provider API keys: keep it owner-only, and replace it
+  // atomically so an interrupted write cannot leave a truncated file.
+  const temporaryPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  try {
+    fs.writeFileSync(temporaryPath, `${JSON.stringify(store, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
+    fs.renameSync(temporaryPath, filePath);
+  } catch (error) {
+    fs.rmSync(temporaryPath, { force: true });
+    throw error;
+  }
 }
 
 function hasOwn(obj: object | undefined, key: string): boolean {

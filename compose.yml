@@ -2,6 +2,9 @@ x-application: &application
   image: ${PROSER_IMAGE:-proser:local}
   init: true
   restart: unless-stopped
+  # The application runs as an unprivileged user and needs no capabilities.
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
 
 x-factory-env: &factory-env
   DATABASE_URL: postgresql://proser:${PROSER_DB_PASSWORD:?Run scripts/init-compose-env.mjs}@postgres:5432/proser
@@ -104,7 +107,11 @@ services:
         condition: service_healthy
 
   postgres:
-    image: postgres:17-alpine
+    image: postgres:17-alpine@sha256:d3244e8ce3f165ee3c93d9c4a4b1d0fe48b3a89e2287b717fdcbbde92d405065
+    # The entrypoint only prepares the data directory and drops to its service user.
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    security_opt: ["no-new-privileges:true"]
     networks: [data]
     restart: unless-stopped
     environment:
@@ -120,7 +127,11 @@ services:
       retries: 20
 
   redis:
-    image: redis:7.4-alpine
+    image: redis:7.4-alpine@sha256:c5d34a98396a4775e223c74e929162c35c5a2182901ba26b50ade939941ce14b
+    # The entrypoint only prepares the data directory and drops to its service user.
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    security_opt: ["no-new-privileges:true"]
     networks: [data]
     restart: unless-stopped
     command: [redis-server, --appendonly, "yes"]

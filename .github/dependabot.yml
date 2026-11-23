@@ -12,3 +12,18 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 3
+    ignore:
+      # The Node major moves together with .nvmrc and the package engines.
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
+  # Keep the digest-pinned PostgreSQL and Redis images in compose.yml current.
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: postgres
+        update-types: ["version-update:semver-major"]
+      - dependency-name: redis
+        update-types: ["version-update:semver-major"]
