@@ -39,7 +39,8 @@ Release gates block on deterministic hard invariants, original retention,
 expected-match minimums, and the checked-in baseline. Live-model variance is a
 warning unless a release process explicitly promotes it. To prevent evaluator
 gaming, do not expose `evaluation/hidden/`, expected hashes, or
-scoring branches to prompts. Treat benchmark excerpts as private manuscript
+scoring branches to prompts. Here "hidden" means withheld from the model under
+evaluation. The files are regression fixtures and are published with the source. Treat benchmark excerpts as private manuscript
 data and do not send them to an unapproved provider.
 
 ## Domain-neutral corpus isolation profile

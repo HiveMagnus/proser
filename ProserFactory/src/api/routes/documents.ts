@@ -1,3 +1,4 @@
+import { redisRateLimit } from '@/api/middleware/redisRateLimit';
 import { registerRevisionCampaignRoutes } from './revisionCampaigns';
 import { registerPlotThreadRoutes } from './plotThreads';
 import {registerScopeDocumentPassageRoutes} from './scopeDocumentPassages';
@@ -87,7 +88,7 @@ export function registerDocumentRoutes(router: Router) {
   });
   const originalParams = params.extend({ originalId: z.string().uuid() });
   const previewParams = params.extend({ previewId: z.string().uuid() });
-  router.post('/:bookId/import-originals/:originalId', zParams(originalParams), ownedBookBudget({ source: 'params', required: true }), (req, _res, next) => { if (!req.is('application/octet-stream')) throw new DocumentError('DOCUMENT_IMPORT_MEDIA_TYPE_INVALID', 'Upload original bytes as application/octet-stream.', 415); next(); }, (req, res, next) => { raw({ type: 'application/octet-stream', limit: '32mb' })(req, res, (error: unknown) => { if (error && typeof error === 'object' && 'type' in error && error.type === 'entity.too.large') next(new DocumentError('DOCUMENT_IMPORT_TOO_LARGE', 'Original exceeds 32 MiB.', 413)); else next(error); }); }, async (req, res) => {
+  router.post('/:bookId/import-originals/:originalId', zParams(originalParams), ownedBookBudget({ source: 'params', required: true }), redisRateLimit({ key: (req) => `import-original:${req.user?.id}`, limit: 30, windowSec: 3600 }), (req, _res, next) => { if (!req.is('application/octet-stream')) throw new DocumentError('DOCUMENT_IMPORT_MEDIA_TYPE_INVALID', 'Upload original bytes as application/octet-stream.', 415); next(); }, (req, res, next) => { raw({ type: 'application/octet-stream', limit: '32mb' })(req, res, (error: unknown) => { if (error && typeof error === 'object' && 'type' in error && error.type === 'entity.too.large') next(new DocumentError('DOCUMENT_IMPORT_TOO_LARGE', 'Original exceeds 32 MiB.', 413)); else next(error); }); }, async (req, res) => {
     respondSuccess(res, await preserveImportOriginal(req.user!.id, Number(req.params.bookId), String(req.params.originalId), 'legacy-markdown-bundle-v1', req.body), 201);
   });
   router.get('/:bookId/import-originals/:originalId/content', zParams(originalParams), async (req, res) => {

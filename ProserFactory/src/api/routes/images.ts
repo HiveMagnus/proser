@@ -113,7 +113,9 @@ router.post('/generate/flux',
 );
 
 // List only database-owned image assets. Untracked files are never exposed.
-router.post('/import', zBody(creativeImageSchema), async (req, res) => {
+router.post('/import',
+  redisRateLimit({ key: (req) => `img:${req.user?.id}:import`, limit: 60, windowSec: 60 }),
+  zBody(creativeImageSchema), async (req, res) => {
   const asset = await importCreativeImage(req.user!.id, req.body, req.authActor?.githubId || req.user!.githubId, String(req.headers['x-nova-request'] || ''));
   return respondSuccess(res, { ...asset, url: `/api/images/${asset.id}/content` }, asset.replayed ? 200 : 201);
 });
