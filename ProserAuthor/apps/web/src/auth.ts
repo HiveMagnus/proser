@@ -11,6 +11,7 @@ import {
   localAuthSource,
   recordLocalAuthFailure,
 } from '@/lib/local-auth';
+import { isGitHubAccountAllowed, parseGitHubAllowedIds } from '@/lib/github-allow-list';
 
 const providers: Provider[] = [];
 const isLocalAuthAllowed = process.env.LOCAL_AUTH_ENABLED === 'true';
@@ -121,13 +122,22 @@ if (iamCoreUrl) {
 }
 
 // ─── GitHub OAuth Provider (optional) ───────────────────────────────────
+// GitHub sign-in is open to every GitHub account unless it is restricted, so
+// the provider is registered only with an explicit list of numeric account IDs.
+const allowedGitHubIds = parseGitHubAllowedIds(process.env.GITHUB_ALLOWED_IDS);
 if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
-  providers.push(
-    GitHub({
-      clientId: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    }),
-  );
+  if (allowedGitHubIds.size === 0) {
+    console.warn(
+      'GitHub sign-in is disabled: set GITHUB_ALLOWED_IDS to the numeric GitHub account IDs that may sign in.',
+    );
+  } else {
+    providers.push(
+      GitHub({
+        clientId: process.env.GITHUB_CLIENT_ID,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      }),
+    );
+  }
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -135,7 +145,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   session: { strategy: 'jwt' },
   callbacks: {
-    jwt({ token, user, account }) {
+    signIn({ account }) {
+      if (account?.provider !== 'github') return true;
+      return isGitHubAccountAllowed(account.providerAccountId, allowedGitHubIds);
+    },
+    jwt({ token, user, account, profile }) {
       if (user) {
         token.sub = user.id;
 
@@ -147,7 +161,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.roles = user.iamRoles;
           token.provider = 'iam';
         } else if (account?.provider === 'github') {
-          token.username = user.login ?? user.name ?? '';
+          // Auth.js assigns a random user id on every OAuth sign-in when no
+          // database adapter is configured. The provider account id is the
+          // stable identity; the display name is free text and never is.
+          token.sub = account.providerAccountId;
+          token.username =
+            typeof profile?.login === 'string' && profile.login
+              ? profile.login
+              : `github-${account.providerAccountId}`;
           token.provider = 'github';
         }
       }
