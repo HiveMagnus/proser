@@ -128,6 +128,17 @@ For database changes, follow the
 before starting the stack. Use a reviewed import plan for moving data from a
 separate installation.
 
+An existing installation never applies database migrations on its own. When a
+release adds one, the `initialize` service exits with the pending migration
+names and the application services do not start. After backing up and reading
+the release notes, apply the migrations with the new image, then start the
+stack:
+
+```bash
+docker compose --env-file .env.compose run --rm --no-deps initialize node node_modules/prisma/build/index.js migrate deploy
+docker compose --env-file .env.compose up -d --no-build --wait
+```
+
 For an existing production installation, rehearse the database and Redis
 restore before stopping writers. Preserve the exact image reference,
 PostgreSQL and Redis snapshots, assets, imports, signing material, and private
