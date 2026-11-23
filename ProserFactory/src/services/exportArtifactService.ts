@@ -13,6 +13,7 @@ import * as path from "node:path";
 import { databaseService } from "@/lib/database";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { sanitizeFilename } from "@/services/exportService";
+import { resolveInside } from "@/lib/safePath";
 
 export type ExportArtifactScope = "book" | "chapter" | "scene";
 
@@ -168,7 +169,7 @@ function artifactRoot(): string {
 }
 
 function artifactDirectory(userId: number, bookId: number): string {
-  return path.join(artifactRoot(), String(userId), String(bookId));
+  return resolveInside(artifactRoot(), String(userId), String(bookId));
 }
 
 function revisionFingerprint(
@@ -292,8 +293,8 @@ async function loadStoredArtifact(
 ): Promise<StoredArtifact> {
   assertArtifactId(artifactId);
   const directory = artifactDirectory(userId, bookId);
-  const manifestPath = path.join(directory, `${artifactId}.json`);
-  const markdownPath = path.join(directory, `${artifactId}.md`);
+  const manifestPath = resolveInside(directory, `${artifactId}.json`);
+  const markdownPath = resolveInside(directory, `${artifactId}.md`);
   try {
     const parsed = JSON.parse(
       await fs.readFile(manifestPath, "utf8"),
@@ -708,12 +709,10 @@ export class ExportArtifactService {
     operationSignal?.throwIfAborted();
     await fs.mkdir(directory, { recursive: true, mode: 0o700 });
     const nonce = randomUUID();
-    const markdownPath = path.join(directory, `${artifactId}.md`);
-    const manifestPath = path.join(directory, `${artifactId}.json`);
-    const tempMarkdown = path.join(directory, `.${artifactId}.${nonce}.md.tmp`);
-    const tempManifest = path.join(
-      directory,
-      `.${artifactId}.${nonce}.json.tmp`,
+    const markdownPath = resolveInside(directory, `${artifactId}.md`);
+    const manifestPath = resolveInside(directory, `${artifactId}.json`);
+    const tempMarkdown = resolveInside(directory, `.${artifactId}.${nonce}.md.tmp`);
+    const tempManifest = resolveInside(directory, `.${artifactId}.${nonce}.json.tmp`,
     );
     await Promise.all([
       fs.writeFile(tempMarkdown, bytes, { mode: 0o600 }),
@@ -733,7 +732,7 @@ export class ExportArtifactService {
       return match !== null && match[1] !== artifactId;
     });
     await Promise.allSettled(
-      obsolete.map((name) => fs.unlink(path.join(directory, name))),
+      obsolete.map((name) => fs.unlink(resolveInside(directory, name))),
     );
     operationSignal?.throwIfAborted();
     return summary(manifest);
@@ -824,7 +823,7 @@ export class ExportArtifactService {
       const stored = await activeStoredArtifact(userId, bookId, artifactId);
       const directory = artifactDirectory(userId, bookId);
       await fs.mkdir(directory, { recursive: true, mode: 0o700 });
-      const filename = path.join(directory, `${artifactId}.md`);
+      const filename = resolveInside(directory, `${artifactId}.md`);
       try {
         await fs.writeFile(filename, stored.bytes, { flag: "wx", mode: 0o600 });
       } catch (error) {

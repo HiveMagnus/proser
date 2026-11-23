@@ -78,6 +78,8 @@ Errors use:
 
 Common error codes include `NOT_FOUND`, `UNAUTHORIZED`, `FORBIDDEN`, `VALIDATION_FAILED`, `RATE_LIMITED`, `CONFLICT`, `DB_ERROR`, `AI_SERVICE_UNAVAILABLE`, and `INTERNAL_ERROR`.
 
+Every caller is limited to `API_RATE_LIMIT_PER_MINUTE` requests per minute across the API (default 1200, minimum 120), counted per signed identity, service principal, or client address. Generation, imports and other expensive routes have tighter limits of their own. Over a limit, the response is `429 RATE_LIMITED` with `Retry-After` in seconds.
+
 ## Make the first request
 
 Use Bash and a short-lived Factory token issued for your identity. This

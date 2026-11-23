@@ -1,6 +1,7 @@
 import { hermesAgentCredentials } from './api/middleware/auth';
 import express from 'express';
 import { expensivePayloadGuard } from './api/middleware/expensiveRouteLimit';
+import { createApiRateLimit } from './api/middleware/apiRateLimit';
 import https from 'https';
 import http from 'http';
 import fs from 'fs';
@@ -30,11 +31,22 @@ dotenv.config({ quiet: true });
 dotenv.config({ path: '.env.local', override: true });
 Object.assign(process.env, inheritedEnvironment);
 
+/** True for http(s) origins on this machine, such as a local development UI. */
+export function isLoopbackOrigin(origin: string): boolean {
+  try {
+    const url = new URL(origin);
+    return (url.protocol === 'http:' || url.protocol === 'https:') && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
 export function createApp() {
   const app = express();
   app.use(helmet());
-  // CORS: In development/test allow any origin to reduce friction; in production, use allowlist.
-  // The UI (proser-ui) runs on a separate origin and calls this API directly from the browser.
+  // CORS: development and tests accept browser origins on this machine only;
+  // production accepts the configured allowlist. Author calls Factory server
+  // side, so browsers normally never call Factory directly.
   const allowlist = (CONFIG.CORS_ALLOWLIST || '').split(',').map((s: string) => s.trim()).filter(Boolean);
   const sharedCorsHeaders = {
     credentials: true as const,
@@ -42,7 +54,7 @@ export function createApp() {
     exposedHeaders: ['Content-Disposition'],
   };
   if (CONFIG.NODE_ENV !== 'production') {
-    app.use(cors({ origin: true, ...sharedCorsHeaders } as CorsOptions));
+    app.use(cors({ origin: (origin, callback) => callback(null, !origin || isLoopbackOrigin(origin)), ...sharedCorsHeaders } as CorsOptions));
   } else {
     const corsOptions: CorsOptions = {
       ...sharedCorsHeaders,
@@ -59,6 +71,8 @@ export function createApp() {
   app.use(expensivePayloadGuard);
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
+  // Backstop for every route below; expensive routes add their own tighter limits.
+  app.use(createApiRateLimit());
   app.get('/favicon.ico', (_req, res) => {
     res.status(204).end();
   });
