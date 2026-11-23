@@ -50,6 +50,7 @@ services:
       IAM_CORE_URL: ${IAM_CORE_URL:-}
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GITHUB_ALLOWED_IDS: ${GITHUB_ALLOWED_IDS:-}
     depends_on:
       factory:
         condition: service_healthy

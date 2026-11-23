@@ -12,6 +12,7 @@ describe('JWT identity recovery for existing users', () => {
   const originalHermesOwnerGithubIds = process.env.HERMES_AGENT_ALLOWED_OWNER_GITHUB_IDS;
   const originalHermesIssuer = process.env.HERMES_AGENT_ISSUER;
   const originalLegacyOptIn = process.env.ALLOW_LEGACY_AUTH_SECRETS;
+  const originalReconciliation = process.env.ALLOW_LEGACY_IDENTITY_RECONCILIATION;
 
   afterEach(() => {
     if (originalHermesSecret === undefined) delete process.env.HERMES_AGENT_AUTH_SECRET;
@@ -34,6 +35,9 @@ describe('JWT identity recovery for existing users', () => {
 
     if (originalLegacyOptIn === undefined) delete process.env.ALLOW_LEGACY_AUTH_SECRETS;
     else process.env.ALLOW_LEGACY_AUTH_SECRETS = originalLegacyOptIn;
+
+    if (originalReconciliation === undefined) delete process.env.ALLOW_LEGACY_IDENTITY_RECONCILIATION;
+    else process.env.ALLOW_LEGACY_IDENTITY_RECONCILIATION = originalReconciliation;
   });
 
   it('accepts the dedicated Hermes agent secret only for the Hermes service identity', async () => {
@@ -214,8 +218,47 @@ describe('JWT identity recovery for existing users', () => {
     expect(res.body.success).toBe(false);
   });
 
+  it.each([
+    ['username', { username: 'proser-test-takeover' }],
+    ['email handle', { username: 'someone-else', email: 'proser-test-takeover@attacker.example' }],
+  ])('does not bind a new identity to an existing account by %s', async (_label, claims) => {
+    delete process.env.ALLOW_LEGACY_IDENTITY_RECONCILIATION;
+    const attackerGithubId = 'github:proser-test-takeover-attacker';
+    await databaseService.client.user.deleteMany({ where: { githubId: attackerGithubId } });
+    const victim = await databaseService.client.user.upsert({
+      where: { githubId: 'iam:proser-test-takeover' },
+      update: { username: 'proser-test-takeover' },
+      create: { githubId: 'iam:proser-test-takeover', username: 'proser-test-takeover' },
+    });
+    const book = await databaseService.client.book.create({
+      data: { userId: victim.id, title: 'Private Project' },
+    });
+
+    const secret = process.env.FACTORY_AUTH_SECRET || '';
+    expect(secret).toBeTruthy();
+    const token = jwt.sign({
+      iss: 'proser-author',
+      aud: 'proser-factory',
+      sub: attackerGithubId,
+      githubId: attackerGithubId,
+      ...claims,
+    }, secret, { algorithm: 'HS256', expiresIn: '10m' });
+
+    const res = await request(app).get('/api/books').set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.books.some((entry: { id: number }) => entry.id === book.id)).toBe(false);
+    const unchanged = await databaseService.client.user.findUnique({ where: { id: victim.id } });
+    expect(unchanged?.githubId).toBe('iam:proser-test-takeover');
+
+    await databaseService.client.book.deleteMany({ where: { id: book.id } });
+    await databaseService.client.user.deleteMany({ where: { githubId: attackerGithubId } });
+    await databaseService.client.user.deleteMany({ where: { id: victim.id } });
+  });
+
   it('recovers books when githubId shape changes and IAM sends an email-style username', async () => {
     process.env.ALLOW_LEGACY_AUTH_SECRETS = 'true';
+    process.env.ALLOW_LEGACY_IDENTITY_RECONCILIATION = 'true';
     await databaseService.client.user.deleteMany({ where: { githubId: 'iam:proser-test-recovery@magnus.local' } });
 
     const legacyUser = await databaseService.client.user.upsert({
@@ -266,6 +309,7 @@ describe('JWT identity recovery for existing users', () => {
 
   it('ignores a colliding numeric sub when the provider identity points at another user', async () => {
     process.env.ALLOW_LEGACY_AUTH_SECRETS = 'true';
+    process.env.ALLOW_LEGACY_IDENTITY_RECONCILIATION = 'true';
     const unrelatedUser = await databaseService.client.user.upsert({
       where: { githubId: 'legacy-other-user' },
       update: { username: 'other-user' },

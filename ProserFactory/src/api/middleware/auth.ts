@@ -298,22 +298,28 @@ async function ensureUserExists(payload: BackendTokenPayload): Promise<number | 
       return existingByGithubId.id;
     }
 
-    // Compatibility fallback: if the frontend changed how it derives githubId,
-    // recover the prior user row by human identity so existing books stay visible.
-    let legacyUser = username
-      ? await prisma.user.findFirst({ where: { username }, orderBy: { id: 'desc' } })
-      : email
-        ? await prisma.user.findFirst({ where: { email }, orderBy: { id: 'desc' } })
-        : null;
+    // Migration-only fallback: recover a prior user row by its human-readable
+    // name after an identity format change. Usernames and email handles are not
+    // authenticated identifiers, so matching on them lets one identity claim
+    // another account. It stays off unless an operator enables it for a
+    // supervised migration window.
+    const reconcileLegacyIdentity = process.env.ALLOW_LEGACY_IDENTITY_RECONCILIATION === 'true';
+    let legacyUser = !reconcileLegacyIdentity
+      ? null
+      : username
+        ? await prisma.user.findFirst({ where: { username }, orderBy: { id: 'desc' } })
+        : email
+          ? await prisma.user.findFirst({ where: { email }, orderBy: { id: 'desc' } })
+          : null;
 
-    if (!legacyUser && normalizedUsername && normalizedUsername !== username.toLowerCase()) {
+    if (reconcileLegacyIdentity && !legacyUser && normalizedUsername && normalizedUsername !== username.toLowerCase()) {
       legacyUser = await prisma.user.findFirst({
         where: { username: normalizedUsername },
         orderBy: { id: 'desc' },
       });
     }
 
-    if (!legacyUser && normalizedEmailHandle && normalizedEmailHandle !== normalizedUsername) {
+    if (reconcileLegacyIdentity && !legacyUser && normalizedEmailHandle && normalizedEmailHandle !== normalizedUsername) {
       legacyUser = await prisma.user.findFirst({
         where: { username: normalizedEmailHandle },
         orderBy: { id: 'desc' },
