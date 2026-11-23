@@ -11,6 +11,7 @@ import { canonicalDocument, projectDocument, type ProserDocument } from './model
 import { validateDocument } from './validation';
 import { appendHierarchy, outlineTreeSchema, type OutlineTree } from './structureCommands';
 import { importCommitSchema, importPreviewSchema, requireImportCommitPreconditions } from './importValidation';
+import { importOriginalQuota } from '@/lib/storageQuota';
 
 const db = () => databaseService.client;
 const json = (value: unknown) => JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
@@ -29,6 +30,13 @@ export async function preserveImportOriginal(userId: number, bookId: number, id:
   return documentService.sideRecord(userId, bookId, async (tx) => {
     const prior = await tx.documentImportOriginal.findUnique({ where: { id } });
     if (prior) { if (prior.bookId !== bookId || prior.userId !== userId || prior.format !== format || prior.sha256 !== sha256 || byteDigest(prior.bytes) !== sha256) throw new DocumentError('DOCUMENT_OPERATION_CONFLICT', 'Original ID belongs to another upload.', 409); return { id, sha256, byteLength: prior.byteLength }; }
+    const quota = importOriginalQuota();
+    const [book, user] = await Promise.all([
+      tx.documentImportOriginal.aggregate({ where: { bookId }, _sum: { byteLength: true } }),
+      tx.documentImportOriginal.aggregate({ where: { userId }, _sum: { byteLength: true } }),
+    ]);
+    if ((book._sum.byteLength ?? 0) + bytes.byteLength > quota.bookBytes) throw new DocumentError('DOCUMENT_IMPORT_QUOTA_EXCEEDED', 'This book has reached its preserved import storage limit.', 413);
+    if ((user._sum.byteLength ?? 0) + bytes.byteLength > quota.userBytes) throw new DocumentError('DOCUMENT_IMPORT_QUOTA_EXCEEDED', 'This account has reached its preserved import storage limit.', 413);
     await tx.documentImportOriginal.create({ data: { id, userId, bookId, format, sha256, byteLength: bytes.byteLength, bytes: Buffer.from(bytes) } });
     return { id, sha256, byteLength: bytes.byteLength };
   });

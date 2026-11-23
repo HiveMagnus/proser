@@ -1,6 +1,7 @@
 import { ownedBookBudget } from '@/api/middleware/ownedBookBudget';
 import { expensiveRouteLimit } from '@/api/middleware/expensiveRouteLimit';
 import { raw, type Router } from 'express';
+import { redisRateLimit } from '@/api/middleware/redisRateLimit';
 import { z } from 'zod';
 import { zBody, zParams } from '@/api/middleware/zodValidation';
 import { respondSuccess } from '@/api/utils/response';
@@ -38,6 +39,7 @@ export function registerDocumentDocxImportRoutes(router: Router) {
   router.post(
     '/:bookId/docx-import-originals/:originalId',
     zParams(originalParams),
+    redisRateLimit({ key: (req) => `import-original:${req.user?.id}`, limit: 30, windowSec: 3600 }),
     (req, _res, next) => {
       if (!req.is('application/octet-stream'))
         throw new DocumentError(

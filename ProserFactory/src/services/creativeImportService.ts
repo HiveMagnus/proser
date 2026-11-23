@@ -9,6 +9,7 @@ import { documentAuthorityEnabled, documentService } from '@/documents/service';
 import { catalogCommand } from '@/documents/catalogCommands';
 import type { Prisma } from '@prisma/client';
 import { inspectImageMetadata } from '@/lib/imageMetadata';
+import { importedImageQuota } from '@/lib/storageQuota';
 
 export { creativeImageSchema } from '../api/schemas/creativeImports';
 import { creativeImageSchema } from '../api/schemas/creativeImports';
@@ -32,8 +33,19 @@ export async function importCreativeImage(userId: number, raw: unknown, actor: s
     const previous = await databaseService.client.documentOperation.findFirst({ where: { id: input.documentPreconditions!.operationId, userId, bookId: input.bookId }, select: { id: true } });
     if (!previous) await documentService.assertMutationAuthority(userId, input.bookId, input.documentPreconditions!.expectedRevisionId);
   }
-  const sourceKey = createHash('sha256').update(JSON.stringify([input.source, input.sourceId, input.artifactKey])).digest('hex');
   const name = `import-${userId}-${input.bookId}-${input.sha256}.${extension}`;
+  // Refuse before any bytes reach disk. An image this account already imported
+  // for this book is a replay and stays allowed.
+  if (!await databaseService.client.imageAsset.findFirst({ where: { userId, bookId: input.bookId, source: 'nova-import', name }, select: { id: true } })) {
+    const quota = importedImageQuota();
+    const [bookCount, userCount] = await Promise.all([
+      databaseService.client.imageAsset.count({ where: { bookId: input.bookId, source: 'nova-import' } }),
+      databaseService.client.imageAsset.count({ where: { userId, source: 'nova-import' } }),
+    ]);
+    if (bookCount >= quota.bookCount) throw new ValidationError('This book has reached its imported image limit');
+    if (userCount >= quota.userCount) throw new ValidationError('This account has reached its imported image limit');
+  }
+  const sourceKey = createHash('sha256').update(JSON.stringify([input.source, input.sourceId, input.artifactKey])).digest('hex');
   const root = path.resolve('public/images');
   await fs.mkdir(root, { recursive: true });
   await fs.writeFile(path.join(root, name), bytes, { mode: 0o600, flag: 'wx' }).catch(async (error: NodeJS.ErrnoException) => {
