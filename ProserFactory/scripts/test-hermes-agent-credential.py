@@ -43,7 +43,7 @@ class CredentialHelperTest(unittest.TestCase):
         sys.stdin = io.StringIO(stdin)
         try:
             with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(io.StringIO()):
-                helper.main([*args[:1], str(self.env), *args[1:], '--factory-user', USER])
+                helper.main([*args[:2], '--env-file', str(self.env), *args[2:], '--factory-user', USER])
         finally:
             sys.stdin = previous
         return stdout.getvalue()
@@ -117,12 +117,119 @@ class CredentialHelperTest(unittest.TestCase):
         bootstrap = ('import base64,sys;exec(compile(base64.b64decode(sys.argv.pop(1)),'
                      '"hermes-agent-credential.py","exec"),{"__name__":"__main__"})')
         result = subprocess.run(
-            [sys.executable, '-I', '-c', bootstrap, encoded, 'provision', str(self.env),
-             'service:hermes-agent:a', '--factory-user', USER],
+            [sys.executable, '-I', '-c', bootstrap, encoded, 'provision', 'service:hermes-agent:a',
+             '--env-file', str(self.env), '--factory-user', USER],
             input='password\nPROSER_AGENT_SECRET=' + 'j' * 64 + '\n',
             capture_output=True, text=True, check=True)
         self.assertEqual(result.stdout, '')
         self.assertEqual(json.loads(self.credentials.read_text())['service:hermes-agent:a'], 'j' * 64)
+
+
+class ComposeLayoutTest(unittest.TestCase):
+    """Both Compose layouts, with `docker compose` replaced by fixed output."""
+
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.root = Path(self.directory.name)
+        (self.root / 'secrets').mkdir()
+        self.compose = self.root / 'compose.yml'
+        self.compose.write_text('services: {}\n')
+        self.config = {}
+        self.owner_calls = 0
+        self.saved = helper.compose_config, helper.container_owner
+        helper.compose_config = lambda args: self.config
+
+        def owner(args):
+            # Running a command after the secret is read must not lose it.
+            self.owner_calls += 1
+            self.assertEqual(sys.stdin.read(), '')
+            return os.getuid(), os.getgid()
+        helper.container_owner = owner
+
+    def tearDown(self):
+        helper.compose_config, helper.container_owner = self.saved
+        self.directory.cleanup()
+
+    def run_helper(self, *args, secret=None):
+        previous = sys.stdin
+        sys.stdin = io.StringIO(f'PROSER_AGENT_SECRET={secret}\n' if secret else '')
+        try:
+            with contextlib.redirect_stdout(io.StringIO()) as out, contextlib.redirect_stderr(io.StringIO()):
+                helper.main([*args[:2], '--compose-file', str(self.compose), *args[2:]])
+        finally:
+            sys.stdin = previous
+        return out.getvalue()
+
+    def env_file_layout(self, extra=''):
+        env = self.root / 'factory.env'
+        env.write_text('FACTORY_AUTH_SECRET=x\nHERMES_AGENT_AUTH_SECRET=shared-secret-value-000000000000000\n' + extra)
+        os.chmod(env, 0o600)
+        self.config = {'services': {'factory': {
+            'env_file': [{'path': str(env), 'format': 'raw'}],
+            'volumes': [
+                {'type': 'bind', 'source': str(self.root / 'data'), 'target': '/opt/proser-factory/data'},
+                {'type': 'bind', 'source': str(self.root / 'secrets'), 'target': '/opt/proser-factory/secrets', 'read_only': True},
+                {'type': 'volume', 'source': 'named', 'target': '/srv/secrets'},
+            ]}}}
+        return env
+
+    def test_env_file_layout_writes_into_the_secrets_mount_and_records_the_container_path(self):
+        env = self.env_file_layout()
+        self.assertEqual(self.run_helper('provision', 'service:hermes-agent:a', '--owner', 'iam:author', secret='k' * 64), '')
+        stored = self.root / 'secrets' / 'hermes-agent-credentials.json'
+        self.assertEqual(json.loads(stored.read_text()), {'service:hermes-agent:a': {'secret': 'k' * 64, 'owners': ['iam:author']}})
+        self.assertEqual(stat.S_IMODE(stored.stat().st_mode), 0o600)
+        self.assertEqual(stored.stat().st_uid, os.getuid())
+        self.assertEqual(helper.read_env(env)[1]['HERMES_AGENT_CREDENTIALS_FILE'], '/opt/proser-factory/secrets/hermes-agent-credentials.json')
+        self.assertEqual(stat.S_IMODE(env.stat().st_mode), 0o600)
+        self.assertEqual(self.owner_calls, 1)
+        self.run_helper('revoke', 'service:hermes-agent:a')
+        self.assertEqual(json.loads(stored.read_text()), {})
+
+    def test_env_file_layout_follows_an_existing_container_path_and_explicit_owner(self):
+        (self.root / 'data').mkdir()
+        self.env_file_layout('HERMES_AGENT_CREDENTIALS_FILE=/opt/proser-factory/data/agents.json\n')
+        self.run_helper('provision', 'service:hermes-agent:a', '--container-owner', f'{os.getuid()}:{os.getgid()}', secret='l' * 64)
+        self.assertEqual(json.loads((self.root / 'data' / 'agents.json').read_text()), {'service:hermes-agent:a': 'l' * 64})
+        self.assertEqual(self.owner_calls, 0)
+
+    def test_env_file_layout_refuses_without_a_usable_bind_mount(self):
+        self.env_file_layout('HERMES_AGENT_CREDENTIALS_FILE=/elsewhere/agents.json\n')
+        with self.assertRaises(SystemExit):
+            self.run_helper('provision', 'service:hermes-agent:a', secret='m' * 64)
+        self.env_file_layout()
+        self.config['services']['factory']['volumes'] = []
+        with self.assertRaises(SystemExit):
+            self.run_helper('provision', 'service:hermes-agent:a', secret='m' * 64)
+
+    def test_interpolation_layout_keeps_single_quoted_json_in_the_compose_env_file(self):
+        env = self.root / '.env.compose'
+        env.write_text('PROSER_DB_PASSWORD=x\nHERMES_AGENT_CREDENTIALS=\n')
+        self.config = {'services': {'factory': {'environment': {'HERMES_AGENT_CREDENTIALS': ''}}}}
+        with self.assertRaises(SystemExit):
+            self.run_helper('provision', 'service:hermes-agent:a', secret='n' * 64)
+        self.run_helper('provision', 'service:hermes-agent:a', '--compose-env-file', str(env), '--owner', 'iam:author', secret='n' * 64)
+        self.run_helper('provision', 'service:hermes-agent:b', '--compose-env-file', str(env), secret='o' * 64)
+        line = next(l for l in env.read_text().splitlines() if l.startswith('HERMES_AGENT_CREDENTIALS='))
+        self.assertTrue(line.startswith("HERMES_AGENT_CREDENTIALS='{") and line.endswith("}'"))
+        self.assertEqual(json.loads(helper.read_env(env)[1]['HERMES_AGENT_CREDENTIALS']), {
+            'service:hermes-agent:a': {'owners': ['iam:author'], 'secret': 'n' * 64},
+            'service:hermes-agent:b': 'o' * 64,
+        })
+        self.assertFalse((self.root / 'secrets' / 'hermes-agent-credentials.json').exists())
+        with self.assertRaises(SystemExit):
+            self.run_helper('provision', 'service:hermes-agent:c', '--compose-env-file', str(env), secret='n' * 64)
+        self.run_helper('revoke', 'service:hermes-agent:a', '--compose-env-file', str(env))
+        self.run_helper('revoke', 'service:hermes-agent:b', '--compose-env-file', str(env))
+        self.assertNotIn('HERMES_AGENT_CREDENTIALS', helper.read_env(env)[1])
+
+    def test_refuses_a_service_that_cannot_receive_credentials(self):
+        self.config = {'services': {'factory': {'environment': {}}}}
+        with self.assertRaises(SystemExit):
+            self.run_helper('provision', 'service:hermes-agent:a', secret='p' * 64)
+        self.config = {'services': {}}
+        with self.assertRaises(SystemExit):
+            self.run_helper('provision', 'service:hermes-agent:a', secret='p' * 64)
 
 
 if __name__ == '__main__':
