@@ -64,7 +64,7 @@ Optional:
 
 Example:
   scripts/deploy-hermes-proser-plugin-ubuntu24.sh \
-    --host hivehub.example.net \
+    --host agent.example.net \
     --user hermes \
     --identity-file ~/.ssh/hermes_ed25519 \
     --known-hosts-file ~/.ssh/hermes_known_hosts \
@@ -212,7 +212,7 @@ tar -C "$PLUGIN_SRC" \
 
 printf 'Uploading plugin to %s:%s...\n' "$REMOTE" "$REMOTE_PLUGIN_DIR"
 "${SCP_CMD[@]}" "$archive" "$REMOTE:$REMOTE_ARCHIVE"
-remote "set -eu; env_keep=/tmp/${PLUGIN_NAME}.env.keep; ca_keep=/tmp/${PLUGIN_NAME}.ca.keep; [ ! -f $REMOTE_PLUGIN_DIR_Q/.env ] || cp $REMOTE_PLUGIN_DIR_Q/.env \"\$env_keep\"; [ ! -f $REMOTE_PLUGIN_DIR_Q/$REMOTE_CA_BASENAME ] || cp $REMOTE_PLUGIN_DIR_Q/$REMOTE_CA_BASENAME \"\$ca_keep\"; rm -rf -- $REMOTE_PLUGIN_DIR_Q; mkdir -p $REMOTE_PLUGIN_DIR_Q; tar -xzf '$REMOTE_ARCHIVE' -C $REMOTE_PLUGIN_DIR_Q; [ ! -f \"\$env_keep\" ] || { mv \"\$env_keep\" $REMOTE_PLUGIN_DIR_Q/.env; chmod 600 $REMOTE_PLUGIN_DIR_Q/.env; }; [ ! -f \"\$ca_keep\" ] || mv \"\$ca_keep\" $REMOTE_PLUGIN_DIR_Q/$REMOTE_CA_BASENAME; rm -f '$REMOTE_ARCHIVE'"
+remote "set -eu; keep=\$(mktemp -d); env_keep=\"\$keep/env\"; ca_keep=\"\$keep/ca\"; [ ! -f $REMOTE_PLUGIN_DIR_Q/.env ] || cp $REMOTE_PLUGIN_DIR_Q/.env \"\$env_keep\"; [ ! -f $REMOTE_PLUGIN_DIR_Q/$REMOTE_CA_BASENAME ] || cp $REMOTE_PLUGIN_DIR_Q/$REMOTE_CA_BASENAME \"\$ca_keep\"; rm -rf -- $REMOTE_PLUGIN_DIR_Q; mkdir -p $REMOTE_PLUGIN_DIR_Q; tar -xzf '$REMOTE_ARCHIVE' -C $REMOTE_PLUGIN_DIR_Q; [ ! -f \"\$env_keep\" ] || { mv \"\$env_keep\" $REMOTE_PLUGIN_DIR_Q/.env; chmod 600 $REMOTE_PLUGIN_DIR_Q/.env; }; [ ! -f \"\$ca_keep\" ] || mv \"\$ca_keep\" $REMOTE_PLUGIN_DIR_Q/$REMOTE_CA_BASENAME; rmdir \"\$keep\"; rm -f '$REMOTE_ARCHIVE'"
 remote "printf '%s\n' '$DEPLOY_REVISION' > $REMOTE_PLUGIN_DIR_Q/REVISION"
 
 printf 'Linking plugin skills into Hermes skill discovery path...\n'
