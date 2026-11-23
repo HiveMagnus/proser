@@ -108,8 +108,37 @@ service user (`--factory-user`, default `proser-factory`) with mode `0600`. The
 identity is removed from `HERMES_AGENT_ALLOWED_GITHUB_IDS`, so the shared secret
 no longer works for it. `--owner-github-id` scopes delegation to that author for
 this agent only. Each run replaces the agent's secret and redeploys the plugin
-with it, so re-running the script rotates the secret. `--revoke` removes the credential and restarts Factory. The
-script refuses to run while `HERMES_AGENT_CREDENTIALS` is set inline in `.env`.
+with it, so re-running the script rotates the secret. `--revoke` removes the
+credential and restarts Factory. The script refuses to run while
+`HERMES_AGENT_CREDENTIALS` is set inline in `.env`.
+
+For a Compose installation, pass each Compose file instead of `--factory-env`,
+as absolute paths on the Factory host and in the order the stack uses them:
+
+```bash
+scripts/provision-hermes-agent-identity.sh --agent-host agent-host \
+  --compose-file /opt/proser-compose/compose.yml --owner-github-id iam:author
+```
+
+The script reads the factory service from `docker compose config` and
+recreates the `factory` and `worker` services instead of restarting systemd
+units. It handles two layouts:
+
+- **Factory reads an `env_file`.** The secret goes in
+  `hermes-agent-credentials.json` inside the factory service's bind mount
+  whose container path ends in `/secrets`, or beside an existing
+  `HERMES_AGENT_CREDENTIALS_FILE` if that is already inside a bind mount. The
+  env file gets the container path. The file is owned by the user the running
+  factory container reports, or `--container-owner UID:GID`, with mode `0600`.
+  Without a suitable bind mount the script stops and says what to add.
+- **No `env_file`**, as in the repository's `compose.yml`. Factory receives
+  `HERMES_AGENT_CREDENTIALS` through interpolation, so pass
+  `--compose-env-file /path/to/.env.compose` and the credentials are kept
+  there as single-quoted JSON.
+
+`--compose-factory-service` and `--compose-worker-service` select other service
+names; an empty worker name skips that service. TLS CA detection is native-only,
+so pass `--proser-ca-file` when the agent reaches Factory over HTTPS.
 
 For production, use certificates from a real CA (Let's Encrypt, etc.).
 For development/staging, generate self-signed certs:

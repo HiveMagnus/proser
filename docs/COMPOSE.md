@@ -59,10 +59,13 @@ Add the override again to publish it. Change `PROSER_FACTORY_BIND` and
 `PROSER_FACTORY_PORT` to select a different host socket. Keep the bind on
 loopback for a local HTTPS reverse proxy. An agent on another host should use
 an authenticated TLS endpoint and its own scoped Factory credential. The
-[Factory API](../PROSER_API.md) describes authentication and endpoints. For
-Hermes, configure a separate `HERMES_AGENT_AUTH_SECRET` and the permitted
-agent identities in `HERMES_AGENT_ALLOWED_GITHUB_IDS`. See the
-[Hermes plugin setup](../ProserFactory/HERMES_AGENT_PLUGIN.md).
+[Factory API](../PROSER_API.md) describes authentication and endpoints. Give
+each Hermes host its own signing secret in `HERMES_AGENT_CREDENTIALS` rather
+than sharing `HERMES_AGENT_AUTH_SECRET`. From a checkout with SSH access to the
+Docker host, `ProserFactory/scripts/provision-hermes-agent-identity.sh` with
+`--compose-file` for each Compose file and `--compose-env-file` for
+`.env.compose` issues the secret, recreates Factory and configures the agent.
+See the [Hermes plugin setup](../ProserFactory/HERMES_AGENT_PLUGIN.md).
 Author browser requests continue through the same-origin `/api/*` proxy.
 
 ## Access from another machine

@@ -100,8 +100,9 @@ For a native systemd Factory deployment, the
 helper gives that Hermes host its own signing secret on Factory, scopes it to
 that author, deploys the plugin with the secret and enrolls the host. Each run
 issues a new secret, so re-running it rotates the secret; `--revoke` removes
-it. See the
-[deployment notes](deploy/README.md).
+it. For a Compose deployment, add `--compose-file` for each Compose file, and
+`--compose-env-file` for the repository's `compose.yml`. See the
+[deployment notes](deploy/README.md#proserauthor-service-auth).
 
 ## Small-model operating rules
 
