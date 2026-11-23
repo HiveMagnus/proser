@@ -100,15 +100,15 @@ To provision a Hermes host with its own signing secret, run:
 scripts/provision-hermes-agent-identity.sh --agent-host agent-host
 ```
 
-The script generates the secret on the Factory host and stores it in
+The script generates a new secret on the machine running it, sends it to the
+Factory host over the SSH connection's stdin, and stores it in
 `HERMES_AGENT_CREDENTIALS_FILE`, creating `hermes-agent-credentials.json` beside
 the Factory `.env` when that setting is absent. The file is owned by the Factory
 service user (`--factory-user`, default `proser-factory`) with mode `0600`. The
 identity is removed from `HERMES_AGENT_ALLOWED_GITHUB_IDS`, so the shared secret
 no longer works for it. `--owner-github-id` scopes delegation to that author for
-this agent only. Re-running the script keeps the existing secret; add
-`--rotate-secret` to replace it, which also requires redeploying the plugin, as
-the script does. `--revoke` removes the credential and restarts Factory. The
+this agent only. Each run replaces the agent's secret and redeploys the plugin
+with it, so re-running the script rotates the secret. `--revoke` removes the credential and restarts Factory. The
 script refuses to run while `HERMES_AGENT_CREDENTIALS` is set inline in `.env`.
 
 For production, use certificates from a real CA (Let's Encrypt, etc.).

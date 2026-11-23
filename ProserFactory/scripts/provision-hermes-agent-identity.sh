@@ -25,7 +25,6 @@ REMOTE_PLUGIN_DIR=""
 RESTART_FACTORY="1"
 RESTART_GATEWAY="1"
 FACTORY_USER="proser-factory"
-ROTATE_SECRET="0"
 REVOKE="0"
 
 usage() {
@@ -33,10 +32,10 @@ usage() {
 Provision a per-host Proser identity for a Hermes Agent plugin.
 
 The script:
-  1. Gives the identity its own signing secret in the Factory's
-     HERMES_AGENT_CREDENTIALS_FILE (created beside the Factory .env if unset),
-     scoped to --owner-github-id when given. The secret is generated on the
-     Factory host and an existing one is reused unless --rotate-secret is set.
+  1. Generates a new signing secret for the identity on this machine and
+     stores it in the Factory's HERMES_AGENT_CREDENTIALS_FILE (created beside
+     the Factory .env if unset), scoped to --owner-github-id when given. Each
+     run replaces the identity's previous secret.
   2. Restarts Factory so it loads the credential.
   3. Deploys/configures the Hermes Proser plugin on the target agent host with
      that secret. No other agent host can sign as this identity.
@@ -77,7 +76,6 @@ Options:
   --no-restart-factory           Update Factory env but do not restart Factory.
   --no-restart-gateway           Deploy plugin but do not restart target gateway.
   --factory-user USER            User the Factory service runs as. Default: proser-factory.
-  --rotate-secret                Replace the identity's existing secret.
   --revoke                       Remove the identity's credential and stop.
 
 Example:
@@ -128,7 +126,6 @@ while [[ $# -gt 0 ]]; do
     --no-restart-factory) RESTART_FACTORY="0"; shift ;;
     --no-restart-gateway) RESTART_GATEWAY="0"; shift ;;
     --factory-user) FACTORY_USER="${2:-}"; shift 2 ;;
-    --rotate-secret) ROTATE_SECRET="1"; shift ;;
     --revoke) REVOKE="1"; shift ;;
     -h|--help) usage; exit 0 ;;
     *) die "Unknown option: $1" ;;
@@ -158,7 +155,6 @@ identity_pattern='^[A-Za-z0-9:._@+-]{1,160}$'
 [[ -z "$OWNER_GITHUB_ID" || "$OWNER_GITHUB_ID" =~ $identity_pattern ]] || die "--owner-github-id may contain only letters, digits and :._@+-"
 [[ "$FACTORY_USER" =~ ^[a-z_][a-z0-9_-]{0,31}$ ]] || die "--factory-user is not a valid user name"
 [[ "$FACTORY_ENV" =~ ^/[A-Za-z0-9/._-]+$ ]] || die "--factory-env must be an absolute path without spaces or quotes"
-[[ "$REVOKE" == "0" || "$ROTATE_SECRET" == "0" ]] || die "--revoke and --rotate-secret cannot be combined"
 
 SSH_OPTS=(
   -p "$SSH_PORT"
@@ -211,9 +207,16 @@ trap cleanup EXIT
 # The helper runs as root from an inline argument, so nothing is staged in a
 # shared temporary directory. sudo -k always reads the password from stdin.
 credential_helper="$(base64 -w0 "$SCRIPT_DIR/hermes-agent-credential.py")"
+# stdin carries the sudo password, then the agent secret on its own marked
+# line. Both stay out of argv and off disk on the Factory host.
 run_credential_helper() {
   local args=("$@")
-  printf '%s\n' "$SUDO_PASSWORD" | "${SSH_CMD[@]}" "${SSH_USER}@${FACTORY_HOST}" \
+  {
+    printf '%s\n' "$SUDO_PASSWORD"
+    if [[ -n "${HERMES_SECRET_FILE:-}" && -s "$HERMES_SECRET_FILE" ]]; then
+      printf 'PROSER_AGENT_SECRET=%s\n' "$(<"$HERMES_SECRET_FILE")"
+    fi
+  } | "${SSH_CMD[@]}" "${SSH_USER}@${FACTORY_HOST}" \
     "sudo -k -S -p '' python3 -I -c 'import base64,sys;exec(compile(base64.b64decode(sys.argv.pop(1)),\"hermes-agent-credential.py\",\"exec\"),{\"__name__\":\"__main__\"})' '$credential_helper' ${args[*]}"
 }
 
@@ -238,14 +241,11 @@ if [[ "$REVOKE" == "1" ]]; then
 fi
 
 [[ -n "$OWNER_GITHUB_ID" ]] && helper_args+=(--owner "'$OWNER_GITHUB_ID'")
-[[ "$ROTATE_SECRET" == "1" ]] && helper_args+=(--rotate)
 
-printf 'Provisioning the dedicated signing secret for %s on %s...\n' "$IDENTITY_ID" "$FACTORY_HOST"
+printf 'Issuing a new signing secret for %s on %s...\n' "$IDENTITY_ID" "$FACTORY_HOST"
 HERMES_SECRET_FILE="$tmpdir/proser-auth-secret"
-(umask 077; run_credential_helper provision "${helper_args[@]}" >"$HERMES_SECRET_FILE")
-[[ "$(wc -l <"$HERMES_SECRET_FILE")" -eq 1 && "$(wc -c <"$HERMES_SECRET_FILE")" -ge 33 ]] \
-  || die "The Factory host did not return a signing secret for $IDENTITY_ID"
-chmod 0600 "$HERMES_SECRET_FILE"
+(umask 077; python3 -c 'import secrets; print(secrets.token_urlsafe(48))' >"$HERMES_SECRET_FILE")
+run_credential_helper provision "${helper_args[@]}"
 
 restart_factory
 

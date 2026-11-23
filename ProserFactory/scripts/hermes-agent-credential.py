@@ -1,27 +1,39 @@
 #!/usr/bin/env python3
-"""Create, rotate or revoke one Hermes agent's own Factory signing secret.
+"""Set or revoke one Hermes agent's own Factory signing secret.
 
 Runs as root on the Factory host. The credentials live in the JSON file named
 by HERMES_AGENT_CREDENTIALS_FILE in the Factory environment file. The file is
 added to the environment file when it is missing, and is owned by the Factory
 service user with mode 0600 because Factory reads it at runtime.
 
-`provision` prints the agent's secret on stdout and nothing else, so the caller
-can hand it to the agent host without storing it. Status goes to stderr.
+`provision` reads the secret from stdin as a `PROSER_AGENT_SECRET=<value>` line
+and never writes it anywhere else. Other stdin lines, such as a sudo password
+that sudo did not consume, are ignored. The operator generates the secret, so
+it travels only from the operator to the Factory host and the agent host.
 """
 import argparse
 import json
 import os
 import pwd
 import re
-import secrets
 import sys
 import tempfile
 from pathlib import Path
 
 IDENTITY = re.compile(r'^[A-Za-z0-9:._@+-]{1,160}$')
+SECRET = re.compile(r'^[A-Za-z0-9_-]{32,256}$')
+SECRET_PREFIX = 'PROSER_AGENT_SECRET='
+
+
+def read_secret(stream):
+    for line in stream:
+        if line.startswith(SECRET_PREFIX):
+            value = line[len(SECRET_PREFIX):].strip()
+            if not SECRET.match(value):
+                fail('The agent secret must be 32 to 256 URL-safe characters')
+            return value
+    fail('No PROSER_AGENT_SECRET line was supplied on stdin')
 DEFAULT_FILE_NAME = 'hermes-agent-credentials.json'
-MINIMUM_SECRET_LENGTH = 32
 
 
 def fail(message):
@@ -111,7 +123,6 @@ def main(argv):
     parser.add_argument('env_file', type=Path)
     parser.add_argument('identity')
     parser.add_argument('--owner', default='', help='Account this agent may act for; added to its owners list.')
-    parser.add_argument('--rotate', action='store_true', help='Replace an existing secret.')
     parser.add_argument('--factory-user', default='proser-factory', help='User the Factory service runs as.')
     args = parser.parse_args(argv)
 
@@ -150,15 +161,12 @@ def main(argv):
         credentials.pop(args.identity, None)
         secret = None
     else:
+        secret = read_secret(sys.stdin)
+        taken = {entry_secret(value) for name, value in credentials.items() if name != args.identity}
+        if secret in taken or secret == values.get('HERMES_AGENT_AUTH_SECRET', ''):
+            fail('The agent secret is already in use; generate a new one')
         previous = credentials.get(args.identity)
-        entry = previous if isinstance(previous, dict) else {'secret': previous} if isinstance(previous, str) else {}
-        secret = entry.get('secret')
-        if args.rotate or not isinstance(secret, str) or len(secret) < MINIMUM_SECRET_LENGTH:
-            taken = {entry_secret(value) for name, value in credentials.items() if name != args.identity}
-            taken.add(values.get('HERMES_AGENT_AUTH_SECRET', ''))
-            secret = secrets.token_urlsafe(48)
-            while secret in taken:
-                secret = secrets.token_urlsafe(48)
+        entry = previous if isinstance(previous, dict) else {}
         entry['secret'] = secret
         if args.owner:
             owners = entry.get('owners') if isinstance(entry.get('owners'), list) else []
@@ -173,8 +181,6 @@ def main(argv):
     write_atomic(env_path, '\n'.join(update_env(lines, env_updates)) + '\n',
                  env_stat.st_uid, env_stat.st_gid, env_stat.st_mode & 0o777)
     print(f'{args.action}: {args.identity} in {credentials_path} ({len(credentials)} agents)', file=sys.stderr)
-    if secret:
-        print(secret)
 
 
 if __name__ == '__main__':
