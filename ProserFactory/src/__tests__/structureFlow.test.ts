@@ -73,6 +73,16 @@ describe('Acts/Chapters/Scenes flow', () => {
     expect(reorder.status).toBe(200);
   });
 
+  it('rejects scene IDs that do not belong to the addressed chapter', async () => {
+    const before = await databaseService.client.scene.findMany({ where: { id: { in: [scene1Id, scene2Id] } }, select: { id: true, sceneNumber: true }, orderBy: { id: 'asc' } });
+    const foreign = await auth()(request(app).post(`/api/books/${bookId}/chapters/${chapter1Id}/reorder-scenes`)).send({ reorderedScenes: [{ id: scene1Id }, { id: scene2Id }] });
+    expect(foreign.status).toBe(422);
+    const partial = await auth()(request(app).post(`/api/books/${bookId}/chapters/${chapter2Id}/reorder-scenes`)).send({ reorderedScenes: [{ id: scene1Id }, { id: scene1Id }] });
+    expect(partial.status).toBe(422);
+    const after = await databaseService.client.scene.findMany({ where: { id: { in: [scene1Id, scene2Id] } }, select: { id: true, sceneNumber: true }, orderBy: { id: 'asc' } });
+    expect(after).toEqual(before);
+  });
+
   it('updates a scene', async () => {
     const upd = await auth()(request(app).put(`/api/books/${bookId}/scenes/${scene1Id}`)).send({ prose: 'Updated prose text' });
     expect(upd.status).toBe(200);

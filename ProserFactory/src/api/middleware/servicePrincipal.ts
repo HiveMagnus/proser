@@ -26,11 +26,19 @@ export function resolveServicePrincipal(token: string, method: string, pathname:
       || pathname === '/api/nova-grants/generation-read' || pathname === '/api/nova-grants/generation-create'
       || pathname === '/api/nova-grants/workflow-read' || pathname === '/api/nova-grants/workflow-publish'))
     return principal.name === 'nova-creative' && principal.scopes.includes('grant:register') ? principal : null;
+  // Express matches routes case-insensitively and ignores a trailing slash.
+  // Scope classification must see the same route the router will dispatch,
+  // so any path that is not already in canonical form is refused.
+  if (!isCanonicalServicePath(pathname)) return null;
   if (!/^\/api\/(?:books|codex|generate|images|workflows|editorial|reviews|findings|models|shared-resource-operations)(?:\/|$)/.test(pathname)) return null;
   const read = ['GET', 'HEAD'].includes(method);
   if (!read && (!['POST', 'PUT', 'PATCH'].includes(method) || /^\/api\/models(?:\/|$)/.test(pathname))) return null;
-  const scope = read ? 'content:read' : /\/(?:finalize|decision)$/.test(pathname) ? 'content:publish' : 'content:write';
+  const scope = read ? 'content:read' : /\/(?:finalize|decision)$/i.test(pathname) ? 'content:publish' : 'content:write';
   return principal.scopes.includes(scope) ? principal : null;
+}
+
+export function isCanonicalServicePath(pathname: string): boolean {
+  return /^(?:\/[A-Za-z0-9._~:@-]+)+$/.test(pathname) && !/\/\.{1,2}(?:\/|$)/.test(pathname);
 }
 
 export async function authenticateServicePrincipal(req: AuthenticatedRequest): Promise<boolean> {
