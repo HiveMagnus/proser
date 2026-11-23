@@ -203,13 +203,30 @@ describe('Factory API proxy', () => {
     const { NextRequest } = await import('next/server');
     const response = await GET(
       new NextRequest('https://author.example/api/books', {
-        headers: { 'x-proser-expected-user': 'same-author' },
+        headers: {
+          'x-proser-expected-user': 'same-author',
+          'x-user-id': '1',
+          'x-github-id': 'iam:someone-else',
+          'x-internal-secret': 'guess',
+          'x-nova-caller': 'operator',
+          'x-forwarded-for': '203.0.113.9',
+          'idempotency-key': 'kept',
+        },
       }),
     );
     expect(response.status).toBe(200);
-    expect(
-      (fetchMock.mock.calls[0]![1].headers as Headers).get('x-proser-expected-user'),
-    ).toBeNull();
+    const forwarded = fetchMock.mock.calls[0]![1].headers as Headers;
+    expect(forwarded.get('x-proser-expected-user')).toBeNull();
+    for (const name of [
+      'x-user-id',
+      'x-github-id',
+      'x-internal-secret',
+      'x-nova-caller',
+      'x-forwarded-for',
+    ]) {
+      expect(forwarded.get(name)).toBeNull();
+    }
+    expect(forwarded.get('idempotency-key')).toBe('kept');
     expect(authMock).toHaveBeenCalledTimes(1);
   });
   const originalFactoryUrl = process.env.FACTORY_URL;

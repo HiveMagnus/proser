@@ -1,4 +1,5 @@
 import { Feather } from 'lucide-react';
+import { safeCallbackPath } from '@/lib/safe-callback-path';
 import { SignInForm } from './sign-in-form';
 
 export default async function SignInPage(props: {
@@ -7,10 +8,7 @@ export default async function SignInPage(props: {
   const searchParams = await props.searchParams;
   const error = searchParams.error ?? null;
   const requestedCallback = searchParams.callbackUrl || '/';
-  const callbackUrl =
-    requestedCallback.startsWith('/') && !requestedCallback.startsWith('//')
-      ? requestedCallback
-      : '/';
+  const callbackUrl = safeCallbackPath(requestedCallback);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface-base">

@@ -6,7 +6,7 @@ services:
       target: web
     container_name: proser-web
     ports:
-      - '${WEB_PORT:-3000}:3000'
+      - '${WEB_BIND:-127.0.0.1}:${WEB_PORT:-3000}:3000'
     environment:
       PORT: '3000'
       NODE_ENV: production
@@ -19,4 +19,5 @@ services:
       FACTORY_URL: ${FACTORY_URL:?Set FACTORY_URL to a reachable Factory origin}
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GITHUB_ALLOWED_IDS: ${GITHUB_ALLOWED_IDS:-}
     restart: unless-stopped

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import dotenv from 'dotenv';
-import path from 'path';
 import { installedRevision } from './installedRevision';
+import { loadInferenceSettingsFile } from './inferenceSettingsFile';
 
 // Ensure environment variables from .env and .env.local are loaded before parsing
 // This file may be imported before the server initializes dotenv, so we load here too.
@@ -9,12 +9,7 @@ const inheritedEnvironment = { ...process.env };
 try { dotenv.config({ quiet: true }); } catch {}
 try { dotenv.config({ path: '.env.local', override: true }); } catch {}
 Object.assign(process.env, inheritedEnvironment);
-try {
-  dotenv.config({
-    path: process.env.OLLAMA_SETTINGS_FILE || path.resolve(process.cwd(), 'data/ollama-settings.env'),
-    override: true,
-  });
-} catch {}
+loadInferenceSettingsFile();
 
 const revision = installedRevision();
 if (revision) { process.env.GIT_COMMIT = revision; process.env.COMMIT_SHA = revision; }
