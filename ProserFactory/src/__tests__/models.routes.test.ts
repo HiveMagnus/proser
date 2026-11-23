@@ -3,6 +3,7 @@ import os from 'os';
 import path from 'path';
 import request from 'supertest';
 import app from '../index';
+import { loadInferenceSettingsFile } from '../core/inferenceSettingsFile';
 
 describe('authenticated and internal model routes', () => {
   const original = { ...process.env };
@@ -62,6 +63,32 @@ describe('authenticated and internal model routes', () => {
     const saved = await request(app).put('/api/admin/models/settings').set(auth).send({ host: 'http://allowed.test:8000', model: 'model-a' });
     expect(saved.status).toBe(200);
     expect(fs.readFileSync(process.env.OLLAMA_SETTINGS_FILE!, 'utf8')).toContain('VLLM_BASE_URL=http://allowed.test:8000');
+  });
+
+  it.each([
+    'model-a\nFACTORY_AUTH_SECRET=replaced',
+    'model-a\r\nNODE_ENV=development',
+    'model-a # comment',
+    'model "quoted"',
+    '$(id)',
+  ])('rejects a model name that could alter the settings file: %j', async (model) => {
+    const res = await request(app).put('/api/admin/models/settings')
+      .set('X-Internal-Secret', 'jest-internal-models')
+      .send({ host: 'http://allowed.test:8000', model });
+    expect(res.status).toBe(400);
+    expect(fs.existsSync(process.env.OLLAMA_SETTINGS_FILE!)).toBe(false);
+  });
+
+  it('loads only inference keys from the settings file', () => {
+    fs.writeFileSync(process.env.OLLAMA_SETTINGS_FILE!, [
+      'OLLAMA_MODEL=model-b',
+      'FACTORY_AUTH_SECRET=replaced-by-settings-file',
+      'NODE_ENV=development',
+      'DATABASE_URL=postgresql://elsewhere.invalid/proser',
+    ].join('\n'));
+    const environment: NodeJS.ProcessEnv = { OLLAMA_SETTINGS_FILE: process.env.OLLAMA_SETTINGS_FILE, NODE_ENV: 'production' };
+    loadInferenceSettingsFile(environment);
+    expect(environment).toEqual({ OLLAMA_SETTINGS_FILE: process.env.OLLAMA_SETTINGS_FILE, NODE_ENV: 'production', OLLAMA_MODEL: 'model-b' });
   });
 
   it('does not expose a public settings mutation route', async () => {
