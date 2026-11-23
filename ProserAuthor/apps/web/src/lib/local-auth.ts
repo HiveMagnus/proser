@@ -29,14 +29,24 @@ export function localAuthAccount(username: string): string {
   return createHash('sha256').update(username).digest('hex').slice(0, 24);
 }
 
-function throttleAllowed(key: string, now: number): boolean {
-  const state = failures.get(key);
-  if (!state || state.resetAt <= now) {
+/** Keep the table bounded on every insertion, whichever path adds the entry. */
+function setBounded(key: string, state: { count: number; resetAt: number }, now: number): void {
+  if (!failures.has(key) && failures.size >= MAX_SOURCES) {
+    for (const [candidate, entry] of failures) {
+      if (entry.resetAt <= now) failures.delete(candidate);
+    }
     if (failures.size >= MAX_SOURCES) {
       const oldest = failures.keys().next().value;
       if (oldest) failures.delete(oldest);
     }
-    failures.set(key, { count: 0, resetAt: now + FAILURE_WINDOW_MS });
+  }
+  failures.set(key, state);
+}
+
+function throttleAllowed(key: string, now: number): boolean {
+  const state = failures.get(key);
+  if (!state || state.resetAt <= now) {
+    setBounded(key, { count: 0, resetAt: now + FAILURE_WINDOW_MS }, now);
     return true;
   }
   return state.count < FAILURE_LIMIT;
@@ -45,10 +55,14 @@ function throttleAllowed(key: string, now: number): boolean {
 function recordFailure(key: string, now: number): void {
   const state = failures.get(key);
   if (!state || state.resetAt <= now) {
-    failures.set(key, { count: 1, resetAt: now + FAILURE_WINDOW_MS });
+    setBounded(key, { count: 1, resetAt: now + FAILURE_WINDOW_MS }, now);
     return;
   }
   state.count += 1;
+}
+
+export function localAuthFailureTableSizeForTests(): number {
+  return failures.size;
 }
 
 export function localAuthFailureAllowed(

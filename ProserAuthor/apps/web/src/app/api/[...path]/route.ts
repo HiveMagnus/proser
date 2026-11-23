@@ -27,6 +27,24 @@ const PUBLICATION_MEDIA_TYPES = new Set([
 
 const REQUEST_HEADERS_TO_STRIP = new Set([
   'x-proser-expected-user',
+  // Identity, internal and network-origin headers that Factory may interpret.
+  // The proxy alone asserts who the caller is, through the signed token.
+  'forwarded',
+  'x-avatar-url',
+  'x-email',
+  'x-forwarded-for',
+  'x-forwarded-host',
+  'x-forwarded-port',
+  'x-forwarded-proto',
+  'x-github-id',
+  'x-internal-secret',
+  'x-metrics-token',
+  'x-nova-caller',
+  'x-nova-request',
+  'x-proser-auth-source',
+  'x-real-ip',
+  'x-user-id',
+  'x-username',
   'authorization',
   'connection',
   'content-length',
@@ -344,6 +362,11 @@ async function proxy(req: NextRequest) {
   }
 
   const url = new URL(req.nextUrl.pathname + req.nextUrl.search, FACTORY_URL);
+  // Dot segments are resolved while building the URL. Refuse anything that no
+  // longer addresses the Factory API on the configured origin.
+  if (url.origin !== new URL(FACTORY_URL).origin || !url.pathname.startsWith('/api/')) {
+    return NextResponse.json({ ok: false, error: 'Not found' }, { status: 404 });
+  }
   const policy = proxyPolicy(req.nextUrl.pathname);
   const headers = new Headers();
   for (const [key, value] of req.headers.entries()) {

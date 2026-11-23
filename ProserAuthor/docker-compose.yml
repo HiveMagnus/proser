@@ -6,7 +6,7 @@ services:
       target: web
     container_name: proser-web
     ports:
-      - '${WEB_PORT:-3000}:3000'
+      - '${WEB_BIND:-127.0.0.1}:${WEB_PORT:-3000}:3000'
     environment:
       PORT: '3000'
       NODE_ENV: production
