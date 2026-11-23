@@ -77,10 +77,13 @@ pnpm format:check # Prettier check
 
 ```bash
 cd apps/web
-npx playwright test
+corepack pnpm exec playwright test --project=smoke --project=factory-proxy
 ```
 
 ---
+
+Use the [E2E setup guide](docs/DEVELOPMENT.md#playwright-e2e) for browser installation,
+disposable credentials and mobile projects.
 
 ## Project structure rules
 

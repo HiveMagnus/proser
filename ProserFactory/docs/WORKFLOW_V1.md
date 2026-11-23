@@ -1,19 +1,18 @@
 # Multi-workflow Book Factory v1
 
-Workflow v1 also includes `editorial_optimize`. It shares this queue, worker,
-lease, retry, recovery, event, artifact, and revision infrastructure, but is
-checkpoint-free. Risky, disputed, stale, or unverifiable edits are skipped;
-unrecoverable integrity failures terminate as `failed`. See
-`EDITORIAL_ENGINE.md`.
-
-ProserFactory has one durable background platform and five workflow types:
-`full_book`, `quality_review`, `improve_quality`, `guided_improve`, and
-`editorial_optimize`. The API process validates ownership and queues work.
+ProserFactory runs six workflow types on one durable background platform.
+The types are `full_book`, `quality_review`, `improve_quality`,
+`guided_improve`, `editorial_optimize`, and `revision_campaign_analysis`.
+The API process validates ownership and queues work.
 Book-scoped admission uses only the canonical ID returned by that ownership
 lookup. Its HTTP deadline covers queue acceptance, not workflow execution. The
 `proser-worker` service owns background execution under a separate renewable
 workflow lease and absolute lifetime, so agent or browser disconnects do not
 stop a run.
+
+Editorial Optimize is checkpoint-free. It skips risky, disputed, stale,
+or unverifiable edits and fails on unrecoverable integrity errors.
+[Editorial engine](EDITORIAL_ENGINE.md)
 
 Every run stores its source and result `ManuscriptRevision`, task graph, immutable artifacts, checkpoints, events, heartbeat, attempts, and parent/child links. Persisted intermediate phases resume after worker restarts, and an orphaned running row can be safely re-enqueued when no job is active. Execution attempts and orphan recoveries are lifetime counters and never reset; a separate current-delivery counter resets only at an explicit resume or approved human boundary, never during orphan recovery. Status responses expose all three values plus the configured delivery maximum. A malformed or context-incompatible model terminal response is never interpreted as success. Queue retries and recoveries are bounded, and exhausted work pauses with its failure reason.
 

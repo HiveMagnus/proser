@@ -1,10 +1,8 @@
 # Proser application architecture
 
-_Last verified against the source release: 2026-11-22_
-
 ## Repository layout
 
-Proser is one Git repository with two independently deployable components:
+Proser ships two components in one [Compose application image](docs/COMPOSE.md).
 
 | Project          | Responsibility                                                                                                         | Runtime                                                                                             |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
@@ -31,19 +29,19 @@ memory extraction cannot overwrite author-managed threads.
 
 ```text
 Browser
-  -> ProserAuthor (:3000 locally, :443 in production)
+  -> ProserAuthor (:3000 on loopback or via the operator's HTTPS proxy)
      -> authenticated same-origin /api/* proxy
         -> ProserFactory (:3001)
 
-Hermes Agent
+Hermes Agent or API client
   -> proser-api plugin with a short-lived service JWT
      -> ProserFactory (:3001)
 
 ProserFactory API and worker
   -> Prisma/pg -> PostgreSQL on the internal Compose network
   -> BullMQ -> Redis on the internal Compose network -> worker
-  -> OpenAI-compatible inference -> llama.cpp on inference-host:8000
-  -> Stable Diffusion WebUI Forge -> inference-host:7861
+  -> optional OpenAI-compatible text provider
+  -> optional WebUI Forge image provider
 ```
 
 Compose runs Author, Factory, and the worker from the same pinned application
@@ -166,12 +164,13 @@ Retired `apps/api`, `apps/worker`, `proser-v2-api`, and `proser-v2-worker` paths
 
 ## Hermes integration
 
-The source-controlled plugin is `ProserFactory/hermes/plugins/proser-api/`. It provides bounded utility tools and Workflow v1 launch/status/control/publication tools. Its four bundled skills are:
+The source-controlled plugin is `ProserFactory/hermes/plugins/proser-api/`. It provides bounded utility tools and Workflow v1 launch/status/control/publication tools. See [installation and credentials](ProserFactory/HERMES_AGENT_PLUGIN.md) for its five bundled skills.
 
 - `proser-authoring`
 - `proser-workflows`
 - `proser-book-reader`
 - `proser-codex-entry-designer`
+- `proser-editorial`
 
 Hermes calls Factory directly; it does not automate through ProserAuthor. Whole-book and editorial work stays server-side, while status, checkpoint, and bounded read calls keep manuscript-sized payloads out of conversation context.
 
@@ -205,11 +204,12 @@ revision preconditions and operation receipts remain the persistence authority.
 Experimental incremental row layout remains disabled by default and preserves
 Proser paragraph geometry through full-layout fallback. Factory imports the
 shared headless `@hivemagnus/canvas-word-codec` `1.1.0` through its CommonJS
-root entry. Both package versions and their distributions are recorded in Factory's
-Canvas dependency ledger tracks the shipped packages and their public provenance.
+root entry. The [Canvas dependency ledger](ProserFactory/docs/canvas-dependencies.json)
+records the exact shared package versions and their public provenance.
 
-Production runs with structured authority and enforcement active.
-`DOCUMENT_AUTHORITY_ENABLED` defaults to false for an unprepared installation.
+The released Compose stack bootstraps structured authority and enforcement on a
+fresh database. Native installations default `DOCUMENT_AUTHORITY_ENABLED` to false
+until prepared.
 Activation requires the selected release's writer, preservation and operational
 gates in [the release checklist](CANVAS_RELEASE_CHECKLIST.md). R2 mobile/accessibility
 certification is now active after its earlier release deferral; R6 performance

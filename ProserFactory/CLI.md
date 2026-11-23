@@ -1,8 +1,6 @@
 # Proser CLI
 
-_Last verified against `src/cli/index.ts`: 2026-07-20_
-
-`proser-cli` is a local, yargs-based interface for bounded book, structure, codex, prose, review, revision, and export operations. Durable whole-book and editorial work belongs to Workflow v1 through the authenticated API, ProserAuthor Book Factory, or Hermes workflow tools.
+`proser-cli` is a local operator interface that connects directly to Factory’s PostgreSQL database. For remote automation, use the [Factory API](../PROSER_API.md) or [Hermes](HERMES_AGENT_PLUGIN.md). Durable whole-book and editorial work belongs to Workflow v1 through the authenticated API, ProserAuthor Book Factory, or Hermes workflow tools.
 
 The retired `pipeline` and `resume` commands do not exist. Their legacy FactoryRun state was removed so workflow retries, checkpoints, revisions, and audit events have one source of truth.
 
@@ -10,20 +8,21 @@ The retired `pipeline` and `resume` commands do not exist. Their legacy FactoryR
 
 Run from `ProserFactory/` with:
 
-- Node.js and installed npm dependencies;
+- Node `24.22.1` and installed npm dependencies;
 - `DATABASE_URL` pointing to the Factory PostgreSQL database;
 - a reachable OpenAI-compatible inference endpoint for generation commands.
 
 ```bash
-npm install
+npm ci
 npm run db:generate
-npm run cli -- --help
 ```
 
-The CLI imports the database before yargs renders help, so `DATABASE_URL` must be set even for `--help`:
+The CLI initializes its database adapter before rendering help. Use a
+placeholder URL to inspect help. For book operations, use the authorized
+database configuration from [native development](README.md#native-development).
 
 ```bash
-DATABASE_URL=postgresql://proser:password@127.0.0.1:5432/proser npm run cli -- --help
+DATABASE_URL=postgresql://unused:fixture-only@127.0.0.1:5432/unused_fixture npm run cli -- --help
 ```
 
 ## Global options

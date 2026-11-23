@@ -1,6 +1,6 @@
 # AGENTS.md — Proser
 
-Proser is one Git repository with two independently deployable components:
+Proser ships one Compose application image with two runtime components.
 
 - `ProserFactory/` is the authoring system of record: Express API, Prisma/PostgreSQL, BullMQ workers, inference and image integration, CLI, and Hermes plugin.
 - `ProserAuthor/` is the authenticated Next.js desktop/mobile shell. Browser API requests remain relative `/api/*` calls through its same-origin proxy.
@@ -9,7 +9,17 @@ Read the component `AGENTS.md` before changing that subtree. Preserve the API/au
 
 ## Commands
 
-Run cross-project checks from this root:
+Use Node `24.22.1` from `.nvmrc`. From the repository root, install the two
+locked dependency trees and generate the Factory Prisma client.
+[Author toolchain setup](ProserAuthor/docs/DEVELOPMENT.md)
+
+```bash
+npm --prefix ProserFactory ci
+npm --prefix ProserFactory run db:generate
+corepack pnpm --dir ProserAuthor install --frozen-lockfile
+```
+
+Run cross-project checks from the root.
 
 ```bash
 npm run format:check
@@ -20,7 +30,11 @@ npm run build
 npm run audit
 ```
 
-Component commands continue to run from `ProserFactory/` with npm and `ProserAuthor/` with pnpm. Do not introduce a shared dependency lockfile or move runtime services merely because the source now shares a repository.
+Run component commands with npm in `ProserFactory/` and pnpm in `ProserAuthor/`.
+Keep each lockfile with its component. Full tests require the isolated
+PostgreSQL and Redis fixtures in [CI and local validation](docs/CI.md#local-validation).
+Documentation validation may use a placeholder `DATABASE_URL` because it
+loads the Prisma adapter without connecting to a database.
 
 ## Documentation and deployment
 
@@ -35,6 +49,12 @@ environment files, TLS settings, and recovery evidence in private storage.
 - Use the reviewed Compose upgrade procedure for production. The component native scripts apply only to explicitly selected native installations.
 - Never commit `.env` files, local databases, generated certificates, build output, or manuscript exports.
 
+Start from the [installer README](README.md), [Factory API](PROSER_API.md), or
+[Hermes setup](ProserFactory/HERMES_AGENT_PLUGIN.md) for the corresponding task.
+Release builds use [the image publishing workflow](docs/CI.md#container-releases)
+and must use the exact verified release commit. Run the scoped Gitleaks checks
+before staging a release.
+
 See `CANVAS_RELEASE_RECORD.md` for the public release scope and
 `CANVAS_NEXT_RELEASE_BACKLOG.md` for the remaining work. Preserve immutable
 receipts, source data, and unique evidence. Keep installed-host receipts and
@@ -43,21 +63,12 @@ production diagnostics in private operator storage.
 ## Active acceptance scope
 
 R1/R3/R4/R5/R7 are shipped. R2 mobile/accessibility certification remains
-active and incomplete; follow `CANVAS_R2_ACCEPTANCE.md` for candidate-specific
-evidence. The practical automated browser, keyboard, accessibility and recovery
-gate governs revision campaign releases. Unavailable physical-device or actual
-screen-reader certification does not block development or release. R6 performance
-certification remains deferred. Preserve `/m`, `/m/studio`, `/m/read`, the desktop
-override, canonical Factory authority, authenticated draft scope and exact receipt
-recovery. Never report browser emulation or accessibility-tree checks as physical
-device or actual screen-reader acceptance. Preserve historical release decisions.
+active and incomplete, and R6 performance certification remains deferred.
+Follow [R2 acceptance](CANVAS_R2_ACCEPTANCE.md) for candidate-specific evidence.
+Revision campaigns require automated browser, keyboard, accessibility and exact
+recovery checks. Run available physical-device and actual screen-reader checks.
+Record unavailable certification as incomplete and nonblocking. Preserve prior
+evidence and its limits. Report emulation and accessibility-tree checks as such.
 
-## Revision campaign acceptance decision
-
-The author selected a practical release gate for revision campaigns: automated
-browser, keyboard, accessibility and exact recovery checks are required. Run
-available actual screen-reader checks. Unavailable physical-device and actual
-screen-reader certification remains explicitly incomplete and is nonblocking for
-development and release. Preserve the earlier candidate-specific evidence and
-its limits. This current direction supersedes earlier R2 prerequisite wording;
-R6 performance certification remains deferred.
+Preserve `/m`, `/m/studio`, `/m/read`, the desktop override, canonical Factory
+authority, authenticated draft scope, and exact receipt recovery.

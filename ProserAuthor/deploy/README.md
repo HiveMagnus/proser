@@ -1,21 +1,36 @@
-# Deployment — Proser Author (V2)
+# Native ProserAuthor deployment
+
+Use the [root Compose guide](../../docs/COMPOSE.md) for new installations.
+This runbook applies to existing native systems running `proser-v2-web`.
+Run the workstation commands from `ProserAuthor/` after configuring the
+`proser` SSH alias for the intended native host.
 
 ## Quick Deploy (from dev machine)
 
 ```bash
-bash scripts/deploy-to-proser.sh          # build + rsync + restart
-bash scripts/deploy-to-proser.sh --skip-build  # rsync only (already built)
+bash scripts/deploy-to-proser.sh --dry-run
+bash scripts/deploy-to-proser.sh
 ```
 
 This script:
 
 1. Builds the ProserAuthor web shell locally
-2. Rsyncs the repo to `proser:/opt/proser-v2/`
-3. Installs frozen-lockfile dependencies on `proser`
-4. Installs/restarts `proser-v2-web`
-5. Removes retired `apps/api` and `apps/worker` artifacts and keeps their units disabled
+2. Takes a checksummed checkpoint and rsyncs the release to `proser:/opt/proser-v2/`
+3. Installs frozen-lockfile dependencies on the configured host
+4. Removes retired `apps/api` and `apps/worker` artifacts and keeps their units disabled
+5. Restarts `proser-v2-web` and verifies the installed revision and HTTPS readiness
+
+The dry run builds locally and checks the installed service and revision.
+An activation can use `--release-id ID` to name its checkpoint. Use
+`--rollback ID` to restore that release's compatible prior code from its
+checkpoint. For privileged commands, the script uses noninteractive SSH sudo
+or the credential from a protected component environment file.
 
 ## Server-Side Auto-Update
+
+Use the reviewed workstation deployment above for this repository. The
+server-side updater below applies to an existing standalone Author Git
+checkout with a compatible Factory deployment and the pinned runtime.
 
 ```bash
 # On the server — pull latest and rebuild:
@@ -62,22 +77,21 @@ On the server, create/edit these files in `/opt/proser-v2/`:
 
 - `.env.web` — Web config (PORT, TLS, NEXTAUTH, FACTORY_URL, FACTORY_AUTH_SECRET)
 
-These are **not** synced by the deploy script (excluded via rsync).
+Provision `.env.web` on the host. The deploy script preserves it and applies the
+service account ownership and mode `0600`.
 
 ## ProserFactory
 
 ProserAuthor uses ProserFactory for authoring APIs, storage, generation, and image routing.
 
-```bash
-# On the server:
+```dotenv
 FACTORY_URL=http://127.0.0.1:3001
 NEXTAUTH_URL=https://proser.example.com
 AUTH_URL=https://proser.example.com
 FACTORY_AUTH_SECRET=<shared-with-ProserFactory>
 FACTORY_AUTH_ISSUER=proser-author
 FACTORY_AUTH_AUDIENCE=proser-factory
-sudo systemctl disable --now proser-v2-api proser-v2-worker
 ```
 
-Factory currently serves HTTP on the same host. Keep this URL on loopback;
-use a verified HTTPS origin if Factory moves to another host.
+Keep the Factory URL on loopback for a same-host deployment and use a verified
+HTTPS origin for a separate host.

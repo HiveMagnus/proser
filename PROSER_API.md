@@ -1,19 +1,23 @@
 # Proser API
 
-_Last verified against ProserFactory routes: 2026-07-28_
+ProserFactory owns the authoring API and data. A browser uses Author's
+authenticated, same-origin `/api/*` proxy. Agents and scripts use Factory
+directly with their own approved credentials.
 
-ProserFactory is the remotely callable authoring service. ProserAuthor is an authenticated Next.js browser shell that proxies relative `/api/*` requests to Factory; it is not a separate authoring API or datastore.
-
-| Service       | Local URL               | Purpose                                                     |
-| ------------- | ----------------------- | ----------------------------------------------------------- |
-| ProserFactory | `http://localhost:3001` | Direct API, storage, generation, images, workflows, exports |
-| ProserAuthor  | `http://localhost:3000` | Browser UI and session-authenticated Factory proxy          |
+| Service       | Local URL               | Purpose                                                      |
+| ------------- | ----------------------- | ------------------------------------------------------------ |
+| ProserFactory | `http://127.0.0.1:3001` | Direct API when `compose.factory-api.yml` publishes the port |
+| ProserAuthor  | `http://localhost:3000` | Browser UI and session-authenticated Factory proxy           |
 
 The versioned, generated route contract is checked in as
 [`PROSER_API.generated.md`](PROSER_API.generated.md) and served by Factory at
 `GET /api/docs` and `GET /api/docs.json`. `npm run docs:validate` fails when the
 checked-in reference drifts from the OpenAPI/Zod contract. Rate-limited
 generation routes read the same limit constants used by the generator.
+
+For an agent on another host, use an authenticated private HTTPS Factory
+endpoint. See [direct Factory access](docs/COMPOSE.md#direct-factory-api-access)
+and the [Hermes setup](ProserFactory/HERMES_AGENT_PLUGIN.md).
 
 Word exchange is implemented through the shared maintained
 `@hivemagnus/canvas-word-codec` package. Factory retains document validation,
@@ -74,70 +78,64 @@ Errors use:
 
 Common error codes include `NOT_FOUND`, `UNAUTHORIZED`, `FORBIDDEN`, `VALIDATION_FAILED`, `RATE_LIMITED`, `CONFLICT`, `DB_ERROR`, `AI_SERVICE_UNAVAILABLE`, and `INTERNAL_ERROR`.
 
-## Basic authoring sequence
+## Make the first request
 
-When structured authority is active, every content or structure mutation includes
-an operation UUID and current revision preconditions. New-book creation includes
-`operationId`; structural compatibility payloads include `documentPreconditions`
-with `{operationId, expectedRevisionId, expectedScopes:{structure:revisionId}}`.
-Read `/api/books/:bookId/document-manifest` before preparing each such request;
-carry its exact book and structure revisions rather than reusing an older response.
-The generated contract defines the corresponding generation/workflow fences.
-The field examples below omit these variable revision values; attach them to each
-mutation before dispatch. Recover the exact operation receipt after an interrupted
-acknowledgement instead of issuing a new operation against a newer head.
-
-Examples assume:
+Use Bash and a short-lived Factory token issued for your identity. This
+example assumes Factory is published on the same host.
 
 ```bash
-export PROSER_BASE_URL=http://localhost:3001
-export PROSER_TOKEN='<factory-jwt>'
+export PROSER_BASE_URL=http://127.0.0.1:3001
+read -rsp 'Factory bearer token: ' PROSER_TOKEN
+printf '\n'
+curl -fsS "$PROSER_BASE_URL/api/readiness"
+curl -fsS "$PROSER_BASE_URL/api/books" -H "Authorization: Bearer $PROSER_TOKEN"
 ```
 
-Create a book:
+An empty list is valid for an identity that owns no books. A `401` means the
+credential was rejected. Check its expiry, issuer, audience, and enrolled
+service identity. Use the current owned book ID and revision from the API for
+subsequent calls.
+
+## Create a book and first draft
+
+Run the following against a development installation using the default
+structured document authority. The example creates a book and a blank
+first scene. It needs Node.js and `jq`.
 
 ```bash
-curl -sS "$PROSER_BASE_URL/api/books" \
-  -H "Authorization: Bearer $PROSER_TOKEN" \
-  -H 'Content-Type: application/json' \
-  -d '{"title":"The Glass Orchard","genre":"gothic fantasy","targetAudience":"adult","summary":"A botanist inherits an orchard where every tree remembers a buried sin."}'
+(
+  set -euo pipefail
+  auth_header="Authorization: Bearer $PROSER_TOKEN"
+  book_operation=$(node -p 'require("node:crypto").randomUUID()')
+  printf 'Book creation operation: %s\n' "$book_operation" >&2
+  book=$(curl -fsS "$PROSER_BASE_URL/api/books" \
+    -H "$auth_header" -H 'Content-Type: application/json' \
+    --data "$(jq -nc --arg op "$book_operation" \
+      '{operationId: $op, title: "The Glass Orchard"}')")
+  book_url="$PROSER_BASE_URL/api/books/$(jq -er '.data.id' <<< "$book")"
+  head=$(curl -fsS "$book_url/document-manifest" -H "$auth_header")
+  draft_operation=$(node -p 'require("node:crypto").randomUUID()')
+  draft_request=$(jq -ce --arg op "$draft_operation" '{
+    schemaVersion: 1, operationId: $op, expectedRevisionId: .data.revisionId,
+    expectedScopes: {structure: .data.scopes.structure.revisionId},
+    summary: "Mara arrives at the orchard.",
+    outline: "The caretaker warns her to leave before dusk."
+  }' <<< "$head")
+  printf 'Draft operation: %s for %s\n' "$draft_operation" "$book_url" >&2
+  draft=$(curl -fsS "$book_url/document-quick-drafts" \
+    -H "$auth_header" -H 'Content-Type: application/json' --data "$draft_request")
+  scene_id=$(jq -er '.data.result.sceneId' <<< "$draft")
+  curl -fsS "$book_url/scenes/$scene_id/document" -H "$auth_header"
+)
 ```
 
-Create an act, chapter, and scene:
-
-```bash
-curl -sS "$PROSER_BASE_URL/api/books/12/acts" \
-  -H "Authorization: Bearer $PROSER_TOKEN" -H 'Content-Type: application/json' \
-  -d '{"title":"Act I","summary":"The inheritance arrives."}'
-
-curl -sS "$PROSER_BASE_URL/api/books/12/acts/3/chapters" \
-  -H "Authorization: Bearer $PROSER_TOKEN" -H 'Content-Type: application/json' \
-  -d '{"title":"The Locked Greenhouse","summary":"Mara finds the first glass pear."}'
-
-curl -sS "$PROSER_BASE_URL/api/books/12/chapters/7/scenes" \
-  -H "Authorization: Bearer $PROSER_TOKEN" -H 'Content-Type: application/json' \
-  -d '{"title":"Arrival at Dusk","summary":"Mara reaches the estate.","outline":"She meets the caretaker as one tree begins to glow."}'
-```
-
-Add a codex entry:
-
-```bash
-curl -sS "$PROSER_BASE_URL/api/books/12/codex" \
-  -H "Authorization: Bearer $PROSER_TOKEN" -H 'Content-Type: application/json' \
-  -d '{"entryType":"character","entryName":"Mara Vale","entryDescription":"A skeptical botanist who distrusts family myths.","attributes":"{\"voice\":\"precise, dry, guarded\"}"}'
-```
-
-Generate prose:
-
-```bash
-curl -sS "$PROSER_BASE_URL/api/generate/prose" \
-  -H "Authorization: Bearer $PROSER_TOKEN" \
-  -H 'Content-Type: application/json' \
-  -H 'Idempotency-Key: book-12-scene-44-draft-1' \
-  -d '{"bookId":12,"sceneId":44,"instructions":"Draft in close third, past tense.","targetWords":1100,"useCodexRAG":1}'
-```
-
-Persist accepted prose with `PUT /api/books/12/scenes/44`.
+Use `POST /api/books/:bookId/document-commits` to save the scene document with
+its current book and scene revisions. Use `GET /api/books/:bookId/document-operations/:operationId`
+to recover the exact receipt after an interrupted save or quick draft.
+Compatibility structure routes take `documentPreconditions` with the current
+book revision, scoped revisions and a unique operation ID. The generated
+reference lists each route and the smoke script shows a save and reopen.
+[Generated reference](PROSER_API.generated.md) · [Compose smoke script](scripts/smoke-compose-image.mjs)
 
 ## Workflow v1
 

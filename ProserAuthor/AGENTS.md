@@ -47,16 +47,20 @@ The retired `apps/api`, `apps/worker`, `proser-v2-api`, and `proser-v2-worker` p
 
 ## Required checks
 
+Use the pinned Node and pnpm versions from the [development guide](docs/DEVELOPMENT.md).
+For the full installer, use the repository-root Compose configuration.
+
 ```bash
-pnpm install --frozen-lockfile
-pnpm format:check
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
-pnpm audit --prod
-bash -n scripts/deploy-to-proser.sh deploy/update.sh deploy/proser-tailscale-cert-renew
-docker compose config
+corepack pnpm install --frozen-lockfile
+corepack pnpm format:check
+corepack pnpm lint
+corepack pnpm typecheck
+corepack pnpm test
+corepack pnpm build
+corepack pnpm audit --prod
+for script in scripts/deploy-to-proser.sh deploy/update.sh deploy/proser-tailscale-cert-renew; do
+  bash -n "$script"
+done
 ```
 
 Playwright local runs require explicit credentials:

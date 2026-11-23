@@ -7,43 +7,52 @@ fonts. Configure text and image models separately if you need generation.
 
 ## First run
 
-From a committed checkout with Docker Compose and Node installed:
-
-```bash
-node scripts/init-compose-env.mjs
-docker compose --env-file .env.compose up -d --build --wait
-```
+Use the [prebuilt-image quick start](../README.md#quick-start) for the released
+`linux/amd64` image. Use the checkout matching the image's GitHub release tag.
 
 Open `http://localhost:3000` and sign in with `LOCAL_AUTH_USERNAME` and
 `LOCAL_AUTH_PASSWORD` from the owner-only `.env.compose` file. Keep that file
 with the deployment and its backups. The initialization script creates distinct
-random credentials and preserves any existing environment file. If you change
-the web port, update `PROSER_ORIGIN` to match the URL you use in the browser.
-Set `PROSER_REVISION` to the source commit when building a newer checkout.
+random credentials and refuses to overwrite an existing file. The generated
+file enables local Author credentials and publishes Author and Factory on
+loopback only.
 
 For a prebuilt release, set `PROSER_IMAGE` in `.env.compose` to the image tag or
 digest listed in the [release notes](https://github.com/HiveMagnus/proser/releases).
 Pull that reference with `docker pull`, then start Compose with `--no-build`.
 Author, Factory, the worker and the database initializer all use the same image.
-The public registry image supports `linux/amd64`.
+The public registry image supports anonymous pulls. Pull it explicitly so the
+Factory, worker, and initializer can start from the same local image reference.
+
+### Build from source
+
+From the repository root with Node `24.22.1` and Docker Compose installed:
+
+```bash
+node scripts/init-compose-env.mjs
+docker compose --env-file .env.compose -f compose.yml -f compose.factory-api.yml up -d --build --wait
+```
+
+The initializer records the checked-out Git SHA in `PROSER_REVISION`. If you
+reuse a source-build environment after changing commits, update that value to
+the new full SHA. Use a separate source-build environment for an installation
+that currently points `PROSER_IMAGE` at a registry release.
 
 The initializer installs or verifies the reviewed document-enforcement SQL.
 Automatic activation runs only against a fresh Compose-managed database. On
 subsequent starts it checks the saved activation evidence and migration status.
-Review and apply pending migrations to an existing database through the
-project's [database procedure](../ProserFactory/docs/DOCUMENT_AUTHORITY_ENFORCEMENT.md)
-before starting an upgraded stack. Use a separately reviewed import plan when
-moving existing production data. Preserve PostgreSQL, Redis, Factory data and
-image volumes. Ordinary `docker compose down` retains named volumes.
+Review pending migrations before starting an upgraded stack. See
+[upgrades and recovery](#upgrades-and-recovery).
 
 ## Direct Factory API access
 
-The generated local test environment selects `compose.factory-api.yml` and
-opens Factory on `http://127.0.0.1:3001` for local agents and CLI tools.
+The Factory override opens `http://127.0.0.1:3001` for local API clients and
+agents. The generated environment selects both Compose files by default on
+Unix-like hosts. The examples use `-f` to select files explicitly.
 Select only `compose.yml` to keep Factory inside the Compose network:
 
 ```bash
-docker compose --env-file .env.compose -f compose.yml up -d
+docker compose --env-file .env.compose -f compose.yml up -d --no-build --wait
 ```
 
 Add the override again to publish it. Change `PROSER_FACTORY_BIND` and
@@ -56,7 +65,23 @@ agent identities in `HERMES_AGENT_ALLOWED_GITHUB_IDS`. See the
 [Hermes plugin setup](../ProserFactory/HERMES_AGENT_PLUGIN.md).
 Author browser requests continue through the same-origin `/api/*` proxy.
 
-## Providers and data
+## Access from another machine
+
+Keep `PROSER_WEB_BIND=127.0.0.1` and place an HTTPS reverse proxy on the Docker
+host. For access limited to a Tailscale network, use
+[Tailscale Serve](https://tailscale.com/docs/features/tailscale-serve) with
+Author's loopback port as its target. Set `PROSER_ORIGIN` in `.env.compose` to
+the full HTTPS origin users open, including a port when applicable. Recreate
+Author with the same Compose files so Auth.js uses the new origin. If sign-in
+returns users to localhost, check this value first.
+
+Choose the intended Author sign-in provider. Local credentials are enabled by
+default in Compose. For a deployment using Magnus IAM, supply `IAM_CORE_URL`
+and follow the [Author authentication settings](../ProserAuthor/docs/ENVIRONMENT.md).
+Keep PostgreSQL and Redis unpublished. Use a separately authenticated private
+route if agents need direct access to Factory from another host.
+
+## Optional providers
 
 Set `INFERENCE_HOST`, `INFERENCE_API_KEY` and `INFERENCE_MODEL` for a reachable
 OpenAI-compatible text backend. Set `WEBUI_FORGE_URL` for image generation.
@@ -66,11 +91,42 @@ selected manuscript context or image prompts to configured providers when
 requested. Diagnostic content logging is disabled in the Compose environment.
 Keep provider credentials and any diagnostic output private.
 
-For a network deployment, serve Author through HTTPS, set `PROSER_ORIGIN` to
-its external URL, and configure the intended authentication provider. Supply
-certificate keys and provider credentials in owner-only deployment files.
-Keep PostgreSQL and Redis unpublished. A host-specific Compose file can set
-TLS, the production authentication origin, and existing volume bindings.
+## Check and stop the installation
+
+```bash
+docker compose --env-file .env.compose -f compose.yml -f compose.factory-api.yml ps -a
+curl -fsS http://localhost:3000/api/readiness
+curl -fsS http://127.0.0.1:3001/api/readiness
+```
+
+The initializer exits successfully after preparing or verifying the database.
+The Factory host URL is available when the Factory override is selected. For
+startup failures, inspect the service logs.
+
+```bash
+docker compose --env-file .env.compose -f compose.yml -f compose.factory-api.yml logs --tail 100 initialize factory worker author
+```
+
+Stop the stack using the same Compose files and project name. If Factory was
+kept internal, omit the Factory override from these commands.
+
+```bash
+docker compose --env-file .env.compose -f compose.yml -f compose.factory-api.yml down
+```
+
+`down` retains named volumes. Adding `--volumes` deletes the database, queues,
+and Factory files belonging to that project.
+
+## Upgrades and recovery
+
+Keep the Compose project name, existing `.env.compose`, and named volumes.
+Record the running image digest, read the target release notes, and back up
+PostgreSQL, Redis, Factory data and images before changing versions. Switch to
+the matching release checkout, update `PROSER_IMAGE`, and pull the new image.
+For database changes, follow the
+[document authority procedure](../ProserFactory/docs/DOCUMENT_AUTHORITY_ENFORCEMENT.md)
+before starting the stack. Use a reviewed import plan for moving data from a
+separate installation.
 
 For an existing production installation, rehearse the database and Redis
 restore before stopping writers. Preserve the exact image reference,

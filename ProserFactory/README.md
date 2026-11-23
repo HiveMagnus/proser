@@ -1,10 +1,11 @@
-# Backend (Express API)
+# ProserFactory
 
-This service hosts generation endpoints and integrates with llama.cpp on `inference-host:8000` through its OpenAI-compatible API.
-It is intentionally standalone: ProserFactory does not ship its own web UI, and it can be used directly via HTTP or the bundled `proser-cli`. ProserAuthor may proxy into it for both the desktop experience and the phone-first mobile shell, but ProserFactory has no runtime dependency on ProserTrainer.
+Factory owns the Express API, PostgreSQL data, Redis-backed workflows, and
+text and image integrations. [Install the complete application](../README.md#quick-start)
+with Docker Compose, or use the native development steps below to work on Factory.
+Agents connect through [the Factory API](../PROSER_API.md) or
+[Hermes](HERMES_AGENT_PLUGIN.md). The [CLI](CLI.md) is a local operator tool.
 
-Dependency maintenance and supported-version holds are recorded in
-[the repository maintenance record](../docs/MAINTENANCE_2026_11_01.md).
 Factory remains CommonJS with an owned TypeScript 6 compiler build and its own npm
 lockfile; database authority and public API contracts are unchanged.
 Native deployment installs and verifies the exact Playwright Chromium renderer as
@@ -20,10 +21,9 @@ Factory builds with its owned TypeScript compiler pipeline in `scripts/build.mjs
 It rewrites only `@/` module specifiers during JavaScript/declaration emission,
 preserving manuscript strings and compiler source maps. `npm run test:build`
 checks static/dynamic loading, declaration imports and failure without emission.
-Unused Nodemon and the former alias build tool have been removed; the frozen
-Factory development and production dependency audits currently report zero.
-The October 31 security update moves schema validation to Zod 4.6.7 and patches
-request parsing, query encoding, URI handling, telemetry and browser dependencies.
+Run `npm audit` to check the current Factory lockfile. The October 31 security
+update moved schema validation to Zod 4.6.7 and patched request parsing, query
+encoding, URI handling, telemetry and browser dependencies.
 Jest uses the locally patched MIT `vendor/deepmerge` package because upstream has
 no prototype-poisoning fix. `npm run test:build` verifies the patch and its
 installed resolution. See [the security record](../docs/SECURITY_2026_10_31.md).
@@ -53,13 +53,13 @@ operation recovery. Author management protects a thread from extractor updates.
 Recovery can validate retained provider bytes after an interruption. Cancellation
 after dispatch remains unknown and does not authorize another call against the
 same frozen evidence; pending source rejections retain terminal receipts.
-See the root API guide and `../ProserAuthor/docs/PLOT_THREADS.md`; deploy Factory
-before Author so the schema and routes exist before the UI is activated.
+The root Compose initializer applies the schema before Factory starts. In a
+split deployment, update Factory before Author.
+[Plot Threads guide](../ProserAuthor/docs/PLOT_THREADS.md)
 
-The remote llama.cpp inference dependency is also fail-closed: production
-requires `INFERENCE_API_KEY`, every Factory request sends it as a bearer token,
-and inference-host stores the server-side key in `/etc/proser-inference-api-keys` rather
-than in the systemd unit or process arguments.
+For a non-loopback production inference provider, set `INFERENCE_API_KEY`.
+Factory sends it as a bearer credential on inference requests. Keep it in the
+deployment's private environment.
 
 Native releases use the validated installed `REVISION` file for both health
 metadata and worker heartbeat revision checks. Historical `GIT_COMMIT` or
@@ -68,7 +68,9 @@ release file retain the configured-label fallback.
 
 ## Multi-workflow Book Factory v1
 
-`WorkflowRun` is the only background orchestration root. It provides a shared task graph, heartbeat, events, bounded retries, revision snapshots, parent/child runs, and pause/resume/cancel behavior for five workflows:
+`WorkflowRun` is the durable orchestration root. It provides a shared task graph,
+heartbeat, events, bounded retries, revision snapshots, and pause/resume/cancel
+controls. The launch routes are:
 
 - `POST /api/workflows/full-book` builds architecture, codex, style bible, budgets, scene contracts, prose, editorial child runs, verification, and a validated publication package.
 - `POST /api/workflows/quality-review` performs immutable, read-only scene, chapter, act, and book analysis against an exact manuscript revision.
@@ -76,6 +78,11 @@ release file retain the configured-label fallback.
 - `POST /api/workflows/guided-improve` applies an author instruction under the same safe-edit and checkpoint policy.
 - `POST /api/workflows/editorial-optimize` runs a checkpoint-free autonomous
   editorial pass, retaining the original whenever evidence is insufficient.
+- `POST /api/books/:bookId/revision-campaigns/:campaignId/analyses` launches
+  bounded campaign planning, candidate previews, or post-edit re-review.
+
+For workflow clients:
+
 - Workflow creation requires an `Idempotency-Key` header. Reuse the same key for retries; the book, run, root task, initial review row, and enqueue outbox entry commit atomically.
 - `GET /api/books/:bookId/workflows` rediscovers durable top-level runs with their nested editorial children after an agent or browser reconnects.
 - `GET /api/books/:bookId/findings` returns at most 200 findings per page and supports `state`, `model`, `severity`, and `scope` filters. Each item includes its review metadata, replacing per-review browser fan-out.
@@ -134,12 +141,68 @@ This endpoint accepts:
 
 It routes through `SceneProseService.reviewProse` so mobile revisions reuse the same review stack and model-selection logic as the rest of the prose pipeline.
 
+## Native development
+
+Start from `ProserFactory/` with Node `24.22.1`, Docker, and a C/C++ build
+toolchain with Python 3 for native npm dependencies. Use loopback ports and a
+disposable database for development.
+
+```bash
+npm ci
+npm run db:generate
+(umask 077; set -o noclobber; cat .env.example > .env)
+```
+
+Keep any existing `.env`. Set the application secrets and optional provider
+settings below. Match `FACTORY_AUTH_SECRET` with Author when testing the web proxy.
+Use the root Compose stack for a fresh database with structured authority active.
+
+For a new native development database, generate a unique password once and
+keep it with the database volume. Put the generated PostgreSQL settings in
+the ignored `.env.database` file.
+
+```bash
+(
+  umask 077
+  set -o noclobber
+  proser_db_password="$(openssl rand -hex 32)"
+  printf 'POSTGRES_PASSWORD=%s\nDATABASE_URL=postgresql://proser:%s@127.0.0.1:5432/proser\n' "$proser_db_password" "$proser_db_password" > .env.database
+)
+docker compose --env-file .env.database -f docker-compose.postgres.yml up -d --wait
+set -a
+. ./.env.database
+set +a
+npm run db:deploy
+```
+
+Start Redis on a free loopback port or point `REDIS_URL` at your isolated Redis
+service. For a fresh local instance:
+
+```bash
+docker run --rm -d --name proser-dev-redis -p 127.0.0.1:6379:6379 redis:7.4-alpine
+```
+
+Start the API in the terminal with the exported database settings. In a second
+terminal, load the same `.env.database` and start the worker when `USE_BULLMQ=true`.
+
+```bash
+npm run dev
+```
+
+```bash
+set -a
+. ./.env.database
+set +a
+npm run build
+npm run worker
+```
+
 ## Environment variables
 
 Required:
 
 - DATABASE_URL: PostgreSQL connection URL
-- POSTGRES_PASSWORD: Password used by the local/production Compose service
+- POSTGRES_PASSWORD: Password for the native development PostgreSQL container. The root stack uses `PROSER_DB_PASSWORD`.
 - DATABASE_POOL_SIZE: Per-process pool ceiling (default: 20, bounded to 2..100)
 - FACTORY_AUTH_SECRET: Dedicated ProserAuthor-to-Factory JWT signing secret. Tokens require `iss=proser-author` and `aud=proser-factory`.
 - INTERNAL_API_SECRET: Secret for internal administrative endpoints.
@@ -177,24 +240,6 @@ Generation tuning:
 - WEBUI_FORGE_URL: Stable Diffusion WebUI Forge endpoint for image generation (default: http://127.0.0.1:7861)
 - FORGE_MODEL: Forge checkpoint used by default (`qwen-image-2.1`)
 - FORGE_SAMPLER / FORGE_SCHEDULER / FORGE_STEPS: default render settings (`Euler`, `Simple`, `5`)
-
-For a new native development database, generate a unique password once and
-keep it with the database volume. Put the generated PostgreSQL settings in
-the ignored `.env.database` file.
-
-```bash
-(
-  umask 077
-  set -o noclobber
-  proser_db_password="$(openssl rand -hex 32)"
-  printf 'POSTGRES_PASSWORD=%s\nDATABASE_URL=postgresql://proser:%s@127.0.0.1:5432/proser\n' "$proser_db_password" "$proser_db_password" > .env.database
-)
-docker compose --env-file .env.database -f docker-compose.postgres.yml up -d --wait
-set -a
-. ./.env.database
-set +a
-npm run db:deploy
-```
 
 The optional `docker-compose.observability.yml` stack publishes OTLP,
 Prometheus, and Jaeger ports on `127.0.0.1` only because those development
@@ -334,7 +379,8 @@ npm run benchmark:inference -- --iterations=5
 
 See `docs/INFERENCE_OPTIMIZATION.md` for the selected inference-host profile, task-specific sampling policy, promotion gates, and measured results.
 
-Run the Jest test suite:
+Use the [isolated PostgreSQL and Redis fixtures](../docs/CI.md#local-validation)
+for the full Jest suite. The smoke and CLI suites use mocks.
 
 ```
 npm test

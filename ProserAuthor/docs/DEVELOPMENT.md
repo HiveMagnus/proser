@@ -1,130 +1,82 @@
-# Development Setup Guide
+# Develop ProserAuthor
 
-Complete guide to setting up the active ProserAuthor web shell.
+For the full application use the [root Compose guide](../../docs/COMPOSE.md).
+This guide runs Author from source against an existing Factory API. Install Node
+`24.22.1` from `.nvmrc` and use Corepack to run the pinned pnpm `12.16.1`.
+If Corepack is missing, install the version used by CI with
+`npm install --global corepack@0.36.0`.
 
-ProserAuthor is now the authenticated Next.js client for ProserFactory. The local development path should exercise `apps/web` and the shared packages; ProserFactory owns authoring APIs, persistence, workers, model routing, and image generation.
+## Set up the web workspace
 
----
-
-## Prerequisites
-
-| Tool          | Version         | Installation                                                  |
-| ------------- | --------------- | ------------------------------------------------------------- |
-| Node.js       | >= 22.13        | [nodejs.org](https://nodejs.org/) or `nvm install 22`         |
-| pnpm          | 12.16.1         | `corepack enable && corepack prepare pnpm@12.16.1 --activate` |
-| ProserFactory | Running service | `FACTORY_URL`, production default `http://127.0.0.1:3001`     |
-
----
-
-## 1. Clone And Install
+From the repository root:
 
 ```bash
-git clone https://github.com/HiveMagnus/proser.git
-cd proser
 corepack pnpm --dir ProserAuthor install --frozen-lockfile
 cd ProserAuthor
+corepack pnpm --filter '@cheftaco/proser-web^...' build
+(umask 077; set -o noclobber; cat .env.example > apps/web/.env.local)
 ```
 
-This installs the active web workspace and shared packages.
+Keep any existing `apps/web/.env.local`. Populate the following values for a
+local test account.
 
----
+| Setting                                      | Development value                                                    |
+| -------------------------------------------- | -------------------------------------------------------------------- |
+| `FACTORY_URL`                                | Reachable Factory origin, for example `http://127.0.0.1:3001`        |
+| `AUTH_URL`                                   | `http://localhost:3000`, matching the URL you open                   |
+| `NEXTAUTH_SECRET`                            | A random secret for this web workspace                               |
+| `FACTORY_AUTH_SECRET`                        | The signing secret from the Factory installation this workspace uses |
+| `LOCAL_AUTH_ENABLED`                         | `true` for local sign-in                                             |
+| `LOCAL_AUTH_USERNAME`, `LOCAL_AUTH_PASSWORD` | A disposable development account and password                        |
 
-## 2. Environment Configuration
-
-Copy the example environment file and adjust as needed:
+If you use Factory from the combined Compose installation, prepare its
+[environment and image](../../docs/COMPOSE.md#first-run), then start Factory,
+the worker, and their dependencies so port 3000 is available for your local web process.
+Run this from the repository root.
 
 ```bash
-cp .env.example .env
+docker compose --env-file .env.compose -f compose.yml -f compose.factory-api.yml up -d --no-build --wait factory worker
 ```
 
-Key variables:
-
-```env
-FACTORY_URL=http://127.0.0.1:3001
-PORT=3000
-NEXTAUTH_URL=http://localhost:3000
-```
-
-See [ENVIRONMENT.md](ENVIRONMENT.md) for the full variable reference.
-
----
-
-## 3. Start Development
+Run this from `ProserAuthor/` and open `http://localhost:3000`.
 
 ```bash
-pnpm --filter @cheftaco/proser-web dev
+corepack pnpm --filter @cheftaco/proser-web dev
 ```
 
-The web UI runs on `http://localhost:3000`. All browser API calls stay on relative `/api/*` routes and are proxied to `FACTORY_URL`.
+[`ENVIRONMENT.md`](ENVIRONMENT.md) covers auth options. If the Factory proxy is
+unavailable, check `FACTORY_URL`, Factory `/api/readiness`, and the matched
+signing secret. Rebuild the shared packages if the application cannot load their
+`dist` exports. Phone-class user agents enter `/m` through `apps/web/src/proxy.ts`.
 
----
-
-## Mobile Development
-
-ProserAuthor includes a dedicated phone shell under `/m`. Phone-class user agents are automatically redirected there unless the desktop override cookie is set.
+## Quality checks
 
 ```bash
-pnpm --filter @cheftaco/proser-web test:e2e -- e2e/mobile-mode.spec.ts
+corepack pnpm lint
+corepack pnpm typecheck
+corepack pnpm test
+corepack pnpm format:check
+corepack pnpm build
+corepack pnpm audit
 ```
 
----
+## Playwright E2E
 
-## Quality Checks
+Run from `apps/web/` against an isolated installation with a disposable login
+and a reachable Factory. Set `PLAYWRIGHT_IAM_USERNAME` and
+`PLAYWRIGHT_IAM_PASSWORD` in the terminal for authenticated projects. Set
+`PLAYWRIGHT_BASE_URL` to an alternate Author origin when targeting an existing
+installation. Omit it to let Playwright start the local development server.
 
 ```bash
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm format:check
-pnpm build
-pnpm audit
-pnpm audit --prod
+corepack pnpm exec playwright install chromium webkit
+corepack pnpm exec playwright test --project=smoke --project=factory-proxy
+corepack pnpm exec playwright test --project=mobile-chrome --project=mobile-safari
 ```
 
-The current quality toolchain uses ESLint 10, Prettier 3, Vitest 4, and
-Turborepo 2. React hook linting enforces the Rules of Hooks and exhaustive
-dependency checks; React Compiler lint rules are not enabled.
-
----
-
-## Playwright E2E Tests
-
-```bash
-cd apps/web
-npx playwright install
-npx playwright test
-npx playwright test e2e/mobile-mode.spec.ts
-
-# Run against deployed server
-PLAYWRIGHT_BASE_URL=https://proser.example.com \
-  npx playwright test --project=smoke --project=factory-proxy
-```
-
-Playwright verifies HTTPS certificates by default. Set
-`PLAYWRIGHT_IGNORE_HTTPS_ERRORS=true` only for an isolated fixture with a
-self-signed test certificate. Use a synthetic imported book and explicitly set
-`PLAYWRIGHT_IMPORT_FIXTURE_TITLE` for the imported-work regressions.
-
-The default Playwright suite excludes retired API-only specs. Use ProserFactory tests for direct API contract coverage.
-
----
-
-## Troubleshooting
-
-### "Factory proxy unavailable"
-
-- Verify `FACTORY_URL` points at the active ProserFactory service.
-- Check `curl -k https://proser/api/readiness`.
-- Check `journalctl -u proser-v2-web -n 100` on the ProserAuthor host.
-
-### "Module not found" errors
-
-- Run `pnpm install` to ensure all workspace links are resolved.
-- Run `pnpm build` to build dependent packages.
-
-### Retired API Or Worker Paths
-
-`apps/api`, `apps/worker`, `proser-v2-api`, and `proser-v2-worker` are no longer active ProserAuthor runtime paths. Keep fixes and feature work on `apps/web`, shared packages, and ProserFactory.
+Use `PLAYWRIGHT_IGNORE_HTTPS_ERRORS=true` only for an isolated self-signed
+fixture. Set `PLAYWRIGHT_IMPORT_FIXTURE_TITLE` to a synthetic imported book for
+imported-manuscript tests. Session state is written to ignored `e2e/.auth/`.
 
 ## Structured workspace acceptance
 

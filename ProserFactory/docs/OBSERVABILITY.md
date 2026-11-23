@@ -1,6 +1,10 @@
 # Observability (OpenTelemetry)
 
-This backend now emits traces, metrics, and logs via OpenTelemetry. Use Docker Compose to spin up a local Collector and Jaeger to visualize traces.
+This guide pairs a native Factory development process with an OpenTelemetry
+Collector and Jaeger on loopback. Run the commands from `ProserFactory/`.
+For Factory in the [root Compose stack](../../docs/COMPOSE.md), supply the
+telemetry settings in a private Compose override for the API and worker and
+use a collector endpoint reachable from those containers.
 
 ## Env variables
 
@@ -20,8 +24,11 @@ Optional proxies:
 
 ## Start local Collector + Jaeger
 
-- docker compose -f docker-compose.observability.yml up -d
-- Open Jaeger UI: http://localhost:16686
+```bash
+docker compose -f docker-compose.observability.yml up -d
+```
+
+Open [Jaeger](http://localhost:16686).
 
 ## Run backend against the collector
 

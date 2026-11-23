@@ -56,48 +56,10 @@ formats selections in accessible editing mode. See
 
 ## Getting started
 
-### Prerequisites
-
-- **Node.js** 24.22.1 (Node 24 LTS)
-- **pnpm** 12.x (`corepack enable && corepack prepare pnpm@12.16.1 --activate`)
-- A reachable ProserFactory deployment (`FACTORY_URL`; production defaults to `http://127.0.0.1:3001`)
-
-### Quick start
-
-```bash
-# 1. Clone and install
-git clone https://github.com/HiveMagnus/proser.git
-cd proser
-corepack pnpm --dir ProserAuthor install --frozen-lockfile
-cd ProserAuthor
-
-# 2. Copy environment files
-cp .env.example .env
-
-# 3. Configure the ProserFactory origin for the web proxy
-export FACTORY_URL=http://127.0.0.1:3001
-
-# 4. Start the web shell
-pnpm --filter @cheftaco/proser-web dev
-```
-
-The web UI runs on `http://localhost:3000` and proxies authoring traffic to `FACTORY_URL`.
-In the root Compose stack, the proxy reaches Factory on the private Compose network.
-
-Phone-class user agents automatically enter the mobile shell under `/m` unless the user has chosen the persistent desktop override.
-
-### Environment variables
-
-See [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md) for the full reference. At minimum you need:
-
-| Variable                    | Default                 | Description                                                                             |
-| --------------------------- | ----------------------- | --------------------------------------------------------------------------------------- |
-| `FACTORY_URL`               | `http://127.0.0.1:3001` | ProserFactory base URL used by the Next.js `/api/*` proxy                               |
-| `NEXTAUTH_SECRET`           | —                       | Protects NextAuth sessions                                                              |
-| `FACTORY_AUTH_SECRET`       | —                       | Dedicated secret for short-lived JWTs accepted by ProserFactory                         |
-| `NEXTAUTH_URL` / `AUTH_URL` | `http://localhost:3000` | External URL for auth callbacks. Set this to the configured HTTPS origin in production. |
-
----
+Install the complete application with the [root quick start](../README.md#quick-start).
+For web development, use [the development guide](docs/DEVELOPMENT.md) to start
+against a reachable Factory. It covers Node `24.22.1`, pnpm `12.16.1`, workspace
+builds, `apps/web/.env.local`, and sign-in configuration.
 
 ## Development
 
@@ -154,9 +116,11 @@ pnpm --filter @cheftaco/proser-web test   # Web tests only
 # Playwright E2E against a live deployment
 cd apps/web && PLAYWRIGHT_BASE_URL=https://proser.example.com pnpm exec playwright test --project=smoke --project=factory-proxy
 
-# Authenticated mobile projects
+# Authenticated mobile projects (use a disposable login)
 cd apps/web && pnpm exec playwright test --project=mobile-chrome --project=mobile-safari
 ```
+
+Set the test credentials as described in [Playwright E2E](docs/DEVELOPMENT.md#playwright-e2e).
 
 Author and its browser regression fixtures both pin
 `@hivemagnus/canvas-word-engine` 1.2.0.
@@ -183,23 +147,9 @@ terminal receipt under `output/playwright/canvas-native/` (override with
 
 ## Deployment
 
-### Docker Compose
-
-Use the [root Compose quick start](../README.md#quick-start) for a complete
-installation. This component's Compose file starts only Author and requires
-an explicit `FACTORY_URL` for an existing Factory service.
-
-The optional Qdrant/Valkey development stack under `infra/docker/` publishes
-its unauthenticated data ports on `127.0.0.1` only. Keep those bindings on
-loopback unless authentication and an explicit network policy are added.
-
-See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for Dockerfile details, systemd services, and production configuration.
-
-### Systemd (bare metal)
-
-`deploy/proser-v2-web.service` supports legacy native installations. The production web shell runs as the `author` Compose service.
-
----
+Use the [root Compose stack](../docs/COMPOSE.md) for a new installation. The
+[Author deployment guide](docs/DEPLOYMENT.md) describes HTTPS, readiness, and
+existing split or native installations.
 
 ## Contributing
 

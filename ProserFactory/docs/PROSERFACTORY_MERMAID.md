@@ -20,6 +20,11 @@ flowchart LR
   Review --> Findings[Per-model findings]
   Findings --> Improve[Improve Quality]
   Guided[Guided Improve] --> Revision
+  Optimize[Editorial Optimize] --> Revision
+  Campaign[Revision Campaign Analysis] --> ReviewArtifacts[Revision campaign analysis artifacts]
 ```
 
-All four workflow types share the queue, tasks, events, heartbeat, retries, checkpoints, revision ancestry, and audit trail. Full Book is the only parent workflow and invokes its editorial workflows as visible children.
+Workflow types share queueing, task execution, events, heartbeat, retries,
+and revision ancestry. Full Book invokes its editorial workflows as visible
+children. Workflow-specific checkpoints and mutation rules are covered in
+the [workflow guide](WORKFLOW_V1.md).

@@ -4,56 +4,20 @@ Express 5 API server + BullMQ workers. Prisma/PostgreSQL for persistence, Redis 
 
 The Factory now also backs ProserAuthor's phone-first mobile shell, including command-driven prose revision for scene-wide or paragraph-scoped edits.
 
-## Quick Start
+## Setup and operations
 
-```bash
-npm install
-npm run db:generate          # Generate Prisma client
-POSTGRES_PASSWORD=... docker compose -f docker-compose.postgres.yml up -d --wait
-npm run db:migrate           # Run PostgreSQL migrations
-npm run dev                  # tsx watch on port 3001 (HTTPS when TLS_ENABLED=true)
-```
+Use the [root Compose guide](../docs/COMPOSE.md) for a complete installation.
+For source work, use Node `24.22.1`, run `npm ci` and `npm run db:generate`,
+and follow [native development](README.md#native-development) for PostgreSQL,
+Redis, and environment setup. `npm run dev` starts the API. Start the worker
+separately when exercising durable workflows.
 
-For native HTTPS development, generate certificates as follows.
-
-```bash
-bash ../ProserAuthor/scripts/generate-certs.sh ../ProserAuthor/certs
-```
-
-Workers (requires Redis + `USE_BULLMQ=true`):
-
-```bash
-npx tsx watch src/workers/index.ts  # Workflow and live-prose-judge workers
-```
-
-Production uses the [root Compose stack](../docs/COMPOSE.md), with Factory
-and its worker sharing the pinned application image. Verify the current
-database schema, durable Redis state, and exact installed image before resuming
-traffic. The steps below describe the separate native release tooling.
-
-Native deployment must run the Redis persistence preflight before stopping either service. A successful `PING` is insufficient: the preflight verifies an expiring write/read, forces a background snapshot, requires a healthy persistence result with no consecutive failures, then verifies writes again.
-`bash scripts/deploy-to-proser.sh --dry-run` runs typecheck, smoke tests, and
-build, then reads the installed revision and service state without changing
-production. The native migration deployment compares the candidate with the
-installed Git revision. It accepts only unchanged Prisma authority or a new
-additive migration with immutable earlier SQL. It stops the API and worker
-before replacing release bytes, takes a pre-migration PostgreSQL dump, applies
-the candidate migrations to a disposable restored database, and proves a
-second restore before touching the live schema. A failure after byte
-replacement leaves both services stopped with an owner-only release record
-under `~/.local/state/proser-factory-migrations/`. Reconcile writes, exact
-code, and Prisma state before reopening traffic or restoring data. A candidate
-may accept writes between restart and its final probe, so the pre-migration
-dump is never an automatic live rollback.
-For a Council reviewed code-only patch with unchanged Factory package, Prisma
-schema/migrations, and service units, use
-`node scripts/council-code-factory-release.mjs dry-run|deploy|rollback
---release-id ID --revision FULL_SHA --record-dir ABS` from the Proser root.
-This path requires zero pending or unresolved Prisma migrations, stages an
-exact built `dist` archive, takes a validated PostgreSQL dump before code
-activation, and rolls back only code while retaining the database. It does
-not replace the native migration deployment above; a schema-changing Council
-patch uses the separate reviewed native path and candidate-specific proof.
+Verify the database schema, durable Redis state, installed revision, and
+readiness before reopening traffic. The [native deployment guide](deploy/README.md)
+and [reviewed native release runbook](docs/CANVAS_REVIEWED_NATIVE_RELEASE.md)
+cover the Redis persistence preflight, additive migration and restore rehearsal,
+code-only rollback, and private release records. Reconcile writes made after
+cutover before restoring any database snapshot.
 
 ## Test Commands
 
@@ -92,10 +56,6 @@ npm run build                # owned TypeScript compiler pipeline → dist/
 - `scripts/build.mjs` uses the installed TypeScript compiler to resolve `@/` module specifiers during JavaScript/declaration emission. It preserves prose strings and emits source maps through the compiler. `npm run test:build` verifies static/dynamic imports, declarations and failure without emission.
 - Node.js builtins that collide with `src/` directory names (e.g. `events`) must use the `node:` protocol prefix (`import … from 'node:events'`) to make the runtime boundary explicit.
 
-## Companion Systems
-
-ProserFactory is standalone. It may be used directly through its HTTP API or the bundled CLI, and it does not require a companion ProserTrainer service at runtime.
-
 ## Prisma Driver Adapter
 
 Prisma v7 uses the **client** engine type with `@prisma/adapter-pg`
@@ -105,47 +65,14 @@ per-process pool.
 
 ## Code Conventions
 
-### Nova provider-status grant boundary
+### Nova grants and fencing
 
-The Ardent Nova provider-status registration route requires the explicit
-`grant:register` scope on the configured `nova-creative` service principal.
-Never authorize registration by borrowing `content:read` or a GET route's
-permission. Accept only a short-lived, Ed25519-signed v2 grant bound to the
-exact request and caller, with `capabilities.read`, empty resources and action
-classes, and no mutation authority. Keep the live registry and retained audit
-records in owner-only paths; archive expired live entries before pruning and
-preserve active or revoked authority. No standing direct-owner grant or model
-text may mint a request grant.
-
-The separate `/api/nova-grants/books-read` route may register only one
-short-lived signed `books.read` action for one exact numeric `book:{id}`
-resource. Keep its `grant:register` principal check, private registry and
-audit rules identical to the provider route. It grants no book mutation or
-artifact delivery claim. That book-level read covers its metadata and export
-manifests without a per-manifest grant; validate the requested artifact ID and
-returned digest, and require Ardent's separate `create_artifact` action before
-fetching bytes.
-
-The separate `/api/nova-grants/generation-read` route may register only one
-short-lived signed `generation.read` action for one exact generation operation
-UUID. It permits only that operation's status GET, never its artifact endpoint,
-operation listing, creation, cancellation, or a book read. Ardent must retain
-an owner-issued task-to-operation receipt before trying this staged read.
-
-The separate `/api/nova-grants/workflow-publish` route may register one
-short-lived signed grant for one exact workflow UUID with
-`workflows.publish`, `workflows.read`, and `operations.read`, under the
-`external_publish` shared-resource class. Require a `content:publish`
-principal and the current `provider:proser:{bookId}` fence for finalization.
-Constrain the grant to that workflow's empty-body finalize request, status,
-publication metadata, and exact operation recovery. A 202 finalize response
-means checkpoint approval and dispatch; only the owner's later
-`release_approved` workflow and publication receipt proves completion.
-Unknown effects remain unknown until exact operation recovery proves them.
-For an asynchronous approval that outlives its five-minute publish grant,
-`/api/nova-grants/workflow-read` may register a new task-bound, exact-workflow
-`workflows.read` grant with no mutation class. It permits only workflow status
-and publication metadata GETs, never another finalize or artifact-byte fetch.
+Follow [Nova provider grants](docs/NOVA_PROVIDER_GRANTS.md) and
+[release admission fencing](docs/RELEASE_ADMISSION_FENCE.md). Bind read grants
+and mutations to the exact owned resource and operation. Preserve the
+distinction between status access, workflow finalization, and artifact bytes.
+Recover unknown outcomes by operation ID and require terminal evidence before
+reporting publication complete.
 
 - **TypeScript strict mode** — no `any` unless unavoidable.
 - **`@/*` path alias** maps to `src/*`. Use it for all imports.
@@ -244,13 +171,3 @@ submission status and diagnostic retention are supplemented in
 `../ProserAuthor/docs/CANVAS_MAINTENANCE.md`; update packaged provenance and the
 ledger together when releasing a new fork. Current deployment summaries are in
 `../CANVAS_RELEASE_RECORD.md`. Operators retain exact production evidence privately.
-
-## Revision campaign acceptance decision
-
-The author selected a practical release gate for revision campaigns: automated
-browser, keyboard, accessibility and exact recovery checks are required. Run
-available actual screen-reader checks. Unavailable physical-device and actual
-screen-reader certification remains explicitly incomplete and is nonblocking for
-development and release. Preserve the earlier candidate-specific evidence and
-its limits. This current direction supersedes earlier R2 prerequisite wording;
-R6 performance certification remains deferred.

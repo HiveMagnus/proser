@@ -9,9 +9,9 @@ range and publishes the selected/omitted suites and reason in its job summary.
 The six existing job names remain unchanged. `CI acceptance` requires successful
 classification and every selected suite to succeed. Failed, cancelled, missing
 or unexpectedly skipped selected jobs fail acceptance. Intentionally unselected
-jobs report skipped; they do not conceal a failed selected job. Require
-`CI acceptance` alongside existing checks when configuring branch protection;
-this change does not modify repository settings.
+jobs report skipped. Use `CI acceptance` as the aggregate verification check
+when configuring branch protection. The public repository requires the
+separate `Gitleaks` check for changes to main.
 
 ## Events and affected suites
 
@@ -60,19 +60,13 @@ Only regular, non-executable Markdown at the repository/component roots or under
 pinned Prettier, table checks, Factory frozen installation, Prisma generation and
 generated API validation. Deleted documents have no content to format.
 It starts no database, browser, application build or document-tools container.
-MDX, symlinks, executable Markdown, source/vendored/skill Markdown and mixed
+MDX, symlinks, executable Markdown, native runbooks under component
+`deploy/` directories, source/vendored/skill Markdown and mixed
 code/documentation changes retain full validation.
 
 ## Release tags and exact validation reuse
 
-GitHub refs and releases were inspected on October 31, 2026. The four
-`canvas-2026.10.06*` refs are **tags**, not branches. The `.2` and `.3` releases
-have six assets each; they are historical release checkpoints, not development
-branches. The sole checked-in workflow is `verify.yml`; there is no separate
-Actions packaging workflow to remove or replace. Existing release assets,
-packaging procedures and acceptance steps are unchanged.
-
-Tag pushes remain enabled. A small, bounded lookup can reuse a **completed,
+For tag pushes, a small, bounded lookup can reuse a **completed,
 successful main push** at the exact `GITHUB_SHA` in this repository and workflow
 path. Exact commit identity binds the workflow, Node/package-manager pins,
 locks, fixtures and tracked configuration. Push inputs are identical; manual
@@ -80,8 +74,8 @@ performance runs and PR merge builds are excluded. All six original job names,
 `Changes and documentation`, and `CI acceptance` must each occur exactly once
 and be completed/successful in the latest attempt. This also excludes historical
 workflow versions without the new gate and documentation/partial runs.
-The reused URL is retained in the summary. Tag-specific packaging is not
-substituted by main validation; no such step exists in this workflow.
+The reused URL is retained in the summary. The container release workflow
+still runs its own image checks before publishing.
 
 Only the latest exact-commit main push is inspected, with bounded API timeouts;
 a newer failed/cancelled run cannot be hidden behind an older success. Pending,
@@ -90,11 +84,27 @@ falls back to all six suites. There is no wait, cross-run lock, polling or
 coordination service. The workflow token gains only Actions read access for
 this lookup. Superseded-run cancellation is unchanged.
 
-Push/PR duplication was not observed in the October sample. Both triggers stay:
 PR validation checks the merge context, while pushes protect branches without
-PRs. Cross-branch reuse is deferred; branch-specific comparisons need not select
-equivalent coverage. Only release-tag duplication has an established safe reuse
-case here.
+PRs. Validation reuse is limited to the release-tag case above.
+
+## Container releases
+
+[Publish Proser image](../.github/workflows/publish-image.yml) handles
+`vMAJOR.MINOR.PATCH` tags in `HiveMagnus/proser`. The tagged commit must
+already be on main. The workflow waits for `Verify Proser` and `Gitleaks`
+to pass on that exact tag and commit.
+
+It builds the `linux/amd64` image, checks image layers and scans first-party
+application files for secrets, then starts a fresh Compose stack. The smoke
+test covers local sign-in, saving and reopening a structured draft, and direct
+authenticated Factory API access. The workflow publishes
+`ghcr.io/hivemagnus/proser:MAJOR.MINOR.PATCH` and attests the image digest.
+An existing version tag cannot be overwritten by the workflow.
+
+Verify anonymous pulls and the attestation before advertising a release.
+GHCR package visibility is configured separately from repository visibility.
+The GitHub release notes record the version and digest that installers should
+use. [Proser releases](https://github.com/HiveMagnus/proser/releases)
 
 ## Caches and builds
 
@@ -141,9 +151,12 @@ for the layer cache mechanism.
 renames/deletions, force/multi-commit pushes, PR merge bases, new branches,
 unavailable history, manual full selection, exact evidence reuse and fail-closed
 acceptance. Root tests include this suite. Run
-`actionlint .github/workflows/verify.yml` and the root checks from `AGENTS.md`.
-Database-backed tests require isolated PostgreSQL55441/Redis56441 and a pinned
-publication-font manifest. Keep synthetic receipts/history after acceptance.
+`actionlint` from the repository root for workflow edits. See the
+[root checks](../AGENTS.md#commands) and the
+[isolated Factory test setup](../ProserFactory/README.md#testing) for database
+ports and the publication-font manifest.
+
+## Historical CI measurements
 
 Local verification on October 31, 2026 (Node 24.22.1):
 
@@ -162,15 +175,9 @@ Local verification on October 31, 2026 (Node 24.22.1):
 | Dependency audits                          | Factory failed: 15 vulnerabilities (7 moderate, 8 high); Author failed: 1 high (`zod`); dependency files unchanged                                  |
 
 The first WebKit Quick Draft run completed its two functional checks but failed
-on `/localhost:3320/api/auth/session due to access control checks.` Its receipt
-is retained under `/tmp/proser-ci-efficiency-webkit-quick/`. One isolated rerun
-with a fresh database and unchanged assertions passed; its receipt is under
-`/tmp/proser-ci-efficiency-webkit-quick-retry/`. This is disclosed local
-intermittency, not a clean first-pass browser result. Chromium/workspace receipts
-and document-tool proofs remain under `/tmp/proser-ci-efficiency-*`. Initial
-local wrapper attempts needed an explicit fixture `DATABASE_URL` and a temporary
-pnpm shim on PATH; corrected invocations passed. No application fix or assertion
-suppression was made.
+on a browser access-control error for the session endpoint. An isolated rerun
+with a fresh database and the same assertions passed. The local wrapper needed
+an explicit fixture `DATABASE_URL` and pnpm on PATH.
 
 Local Docker Buildx 0.38.1 history measured a **62s cold build**, **4.9s same-builder
 warm build**, and **14.0s on a separate clean builder importing the exported local
@@ -180,12 +187,6 @@ used a missing cache path and still built/loaded successfully. Export took about
 step took 2.5s. These measurements use local disk cache transport and an existing
 local Docker daemon; they do not measure GitHub cache upload/download or hosted
 runner startup. No dependency warm/cold speedup is inferred from install success.
-
-No workflow was dispatched, pushed, published or deployed for benchmarking.
-The GitHub cache backend needs hosted runtime credentials, so its actual
-transport/performance and this implementation's hosted acceptance remain
-unverified. Audit failures remain visible; addressing dependency advisories is
-outside this CI-only change.
 
 ## Secret scanning
 

@@ -12,7 +12,7 @@ certification remains deferred. Device emulation is not physical-phone acceptanc
 
 ## Entry and authenticated state
 
-`apps/web/src/middleware.ts` and `lib/mobile-routing.ts` redirect phone-class user
+`apps/web/src/proxy.ts` and `apps/web/src/lib/mobile-routing.ts` redirect phone-class user
 agents: `/` to `/m`, `/manuscript` to `/m/studio`, `/publish` to `/m/read`.
 Tablets are not automatically treated as phones. The `proser-view=desktop` cookie
 preserves the desktop override; the shell's Desktop control remains available.
