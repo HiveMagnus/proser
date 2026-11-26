@@ -83,6 +83,18 @@ scene. Check the chapter list and the conversion notes in the preview, then tick
 the confirmation and choose **Commit reviewed import**. The original file is
 kept with the book.
 
+## Move a book to another installation
+
+Go to **Publish**, find **Book archive** and choose **Download book archive**.
+The archive holds the whole book: every scene with its formatting, open
+comments and pending changes, the codex, notes, plot threads, goals, layout and
+images. On the other installation, choose the archive under **Import a book
+archive as a new book**, then **Import as new book**. Proser checks the archive
+before it adds anything and never changes an existing book. If the import is
+interrupted, choose **Retry import**; you won't get a second copy. The archive
+holds the current version only, not earlier revisions. Accepted and rejected
+changes are applied to the text, and resolved comments are left out.
+
 ## Export or publish
 
 **Publish** turns the saved book into a file: Word (DOCX), PDF, EPUB, HTML,

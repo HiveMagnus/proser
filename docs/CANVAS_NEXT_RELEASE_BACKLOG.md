@@ -125,9 +125,10 @@ Checked upstream GitHub and npm on November 21, 2026.
   Publication of the merged behavior in that upstream package remains open.
 - Headless Word exchange [PR 46](https://github.com/Hufe921/canvas-editor-plugin/pull/46)
   closed without merging on November 18. Proser uses the shared
-  `@hivemagnus/canvas-word-engine` 1.2.0 and `@hivemagnus/canvas-word-codec`
-  1.1.0 distributions published from `ChefTaco/canvas-word` commit
-  `8116514eb8d5b536ca639f30d9f0101f1394e251`.
+  `@hivemagnus/canvas-word-engine` 1.2.2 (published from `ChefTaco/canvas-word`
+  commit `47a7b3dcfa79d38e489e171ee36f359ede9c2d8d`) and
+  `@hivemagnus/canvas-word-codec` 1.1.0 (commit
+  `8116514eb8d5b536ca639f30d9f0101f1394e251`).
 
 ### Earlier maintenance releases
 

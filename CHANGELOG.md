@@ -6,6 +6,10 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 
 ## Unreleased
 
+Nothing yet.
+
+## v1.1.0 (2026-11-26)
+
 ### Sign-in
 
 - Proser can sign writers in through Oathweave with OpenID Connect
@@ -31,6 +35,12 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 
 ### Security
 
+- The manuscript editor uses `@hivemagnus/canvas-word-engine` 1.2.2. HTML
+  pasted into the editor is sanitized and never parsed again in the live
+  document, so markup that changes shape when reparsed can no longer run
+  script in the Proser page. Upgrade note: pasted inline SVG and MathML, and
+  the content of `template`, `xmp`, `noembed`, `noframes` and `plaintext`
+  elements, are no longer imported.
 - Author refuses `POST`, `PUT`, `PATCH` and `DELETE` requests to `/api/*` whose
   `Origin` is not the Proser origin (`AUTH_URL`, `NEXTAUTH_URL` or the host the
   request was sent to), or whose `Sec-Fetch-Site` reports another site. A page
@@ -134,6 +144,18 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 
 ### New features
 
+- **Portable book archive.** Publish has a **Book archive** section: download the
+  whole book as one versioned ZIP (`proser-book-archive` v1: manuscript with
+  formatting, open comments and pending changes, codex and scene links, notes,
+  plot threads, goal, AI switch, layout, styles, front and back matter, and
+  images, with a SHA-256 for every file), and import an archive from another
+  install as a new book (`GET /api/books/:bookId/archive`,
+  `POST /api/books/archive-imports`). Import checks every digest before it
+  writes, never changes an existing book, keeps the AI switch, and a retry
+  returns the same book. It carries the current version only: earlier revisions
+  are not included, resolved tracked changes are applied to the text, resolved
+  comments are dropped, and comments and pending changes become the importing
+  writer's.
 - **Writing statistics and goals.** The Analytics page (back in the sidebar)
   shows words in the book, words written per day over 7, 30 and 90 days, the
   best day and the writing streak, from the saved book revisions in the
@@ -191,6 +213,9 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 
 ### Upgrade notes
 
+- Book archive imports send up to 128 MiB in one request. A reverse proxy in
+  front of Proser must allow request bodies that large (for nginx,
+  `client_max_body_size 128m;`) for imports of large illustrated books.
 - If writers open Proser at an address other than `PROSER_ORIGIN`, writes from
   that address are still accepted when the browser's `Origin` matches the
   `Host` the request reached. A reverse proxy that rewrites `Host` must pass

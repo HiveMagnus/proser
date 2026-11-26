@@ -245,6 +245,8 @@ Book history and resolved profiles are under `/books/:bookId/editorial-*`.
 | `GET`, `POST`, `PUT`, `DELETE` | `/books/:bookId/.../scenes...`                         | List/create/update/delete/reorder/regenerate scenes                                               |
 | `GET`, `POST`, `PUT`, `DELETE` | `/books/:bookId/notes...`                              | Manage notes                                                                                      |
 | `GET`                          | `/books/:bookId/export?format=markdown`                | Immediate `markdown`, `html`, or `rtf` export                                                     |
+| `GET`                          | `/books/:bookId/archive`                               | Download the whole book as a portable archive                                                     |
+| `POST`                         | `/books/archive-imports?operationId=:uuid`             | Import a book archive (`application/zip`, up to 128 MiB) as a new book                            |
 | `POST`                         | `/books/:bookId/export-artifacts`                      | Create content-addressed Markdown artifact metadata and table of contents                         |
 | `GET`                          | `/books/:bookId/export-artifacts/:artifactId`          | Artifact metadata                                                                                 |
 | `GET`                          | `/books/:bookId/export-artifacts/:artifactId/read`     | Bounded `book`, `chapter`, or `scene` read                                                        |
@@ -273,6 +275,19 @@ operation; every other provider dispatch is checked at the provider gate.
 Queued workflows for the book pause, generation operations fail with
 `BOOK_AI_DISABLED`, and retrieval skips embeddings and falls back to keyword
 search.
+
+A book archive (`proser-book-archive`, format version 1) is a ZIP holding
+`proser-archive.json` (format, version, source revision and a SHA-256 and size
+for every other file), `book.json` (metadata, acts, chapters and scenes, codex
+and its scene links, notes, plot threads, writing goal, AI switch, layout with
+styles and front/back matter, and the image list), one structured document per
+scene under `scenes/`, and image bytes under `images/`. It is the book's current
+head revision; earlier revisions are not included. Both routes need document
+authority. Import verifies every digest before it writes anything, creates a new
+book owned by the caller, and keeps the AI switch. Retrying with the same
+`operationId` returns the same receipt. Resolved tracked changes are folded into
+the text, pending changes and open comments become review items of the importing
+writer, and resolved comments are dropped; the receipt's `losses` counts them.
 
 Export artifacts are revision-bound. A stale artifact is removed and must be recreated. `read` accepts stable chapter/scene IDs or unambiguous numbers with `offset` and `maxChars`.
 

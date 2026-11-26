@@ -28,6 +28,8 @@ vi.mock('@/lib/publication-api', () => ({
   commitDocx: vi.fn(),
   previewTextManuscript: vi.fn(),
   commitTextManuscript: vi.fn(),
+  bookArchiveUrl: (bookId: string) => `/api/books/${bookId}/archive`,
+  importBookArchive: vi.fn(),
 }));
 describe('Factory-driven publication workspace', () => {
   beforeEach(() => {

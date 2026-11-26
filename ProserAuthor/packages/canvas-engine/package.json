@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@hivemagnus/canvas-word-engine": "1.2.0"
+    "@hivemagnus/canvas-word-engine": "1.2.2"
   },
   "devDependencies": {
     "typescript": "^6.0.3",

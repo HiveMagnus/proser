@@ -20,7 +20,7 @@ a newer release. The general procedure (back up, switch the checkout and
 5. Check `docker compose ps` (Author, Factory and the worker are `healthy`),
    both readiness URLs, and the version on the Settings page.
 
-## Unreleased (next release after v1.0.7)
+## v1.1.0
 
 - **Compose file:** the `worker` service has a healthcheck that runs a command
   shipped in this release's image. Use the release's `compose.yml` with its

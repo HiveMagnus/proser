@@ -94,6 +94,32 @@ describe('Factory API proxy', () => {
     expect(response.headers.get('content-disposition')).toContain('Owned_book.pdf');
     expect((await response.arrayBuffer()).byteLength).toBe(bytes.byteLength);
   });
+  it('streams a book archive beyond the generic ceiling with its digest and Factory filename', async () => {
+    authMock.mockResolvedValue({ user: { id: '42', username: 'author', provider: 'iam' } });
+    const bytes = new Uint8Array(9 * 1024 * 1024).fill(80);
+    const digest = createHash('sha256').update(bytes).digest('hex');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(bytes, {
+          headers: {
+            'content-length': String(bytes.byteLength),
+            'content-type': 'application/zip',
+            'content-disposition': 'attachment; filename="book-1-archive.proser.zip"',
+            'x-content-sha256': digest,
+          },
+        }),
+      ),
+    );
+    const { GET } = await import('@/app/api/[...path]/route');
+    const { NextRequest } = await import('next/server');
+    const response = await GET(new NextRequest('https://author.example/api/books/1/archive'));
+    expect(response.status).toBe(200);
+    expect(response.headers.get('cache-control')).toBe('private, no-store');
+    expect(response.headers.get('x-content-sha256')).toBe(digest);
+    expect(response.headers.get('content-disposition')).toContain('book-1-archive.proser.zip');
+    expect((await response.arrayBuffer()).byteLength).toBe(bytes.byteLength);
+  });
   it('fails completion when retained artifact bytes do not match the declared digest', async () => {
     authMock.mockResolvedValue({ user: { id: '42', username: 'author', provider: 'iam' } });
     vi.stubGlobal(
