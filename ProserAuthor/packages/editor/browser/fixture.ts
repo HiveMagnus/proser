@@ -1276,9 +1276,20 @@ async function run() {
     }
     assert(changedRequestBlocked, 'Passage recovery replayed unknown provider operation');
     await deleteDocumentPassageDraft(journalUser, '1', '2', newest.version);
+    const expired = Date.now() - 31 * 24 * 60 * 60 * 1000;
+    await writeDocumentPassageDraft({ ...passageIntent, updatedAt: expired });
+    const unconfirmed = await readDocumentPassageDraft(journalUser, '1', '2');
+    assert(
+      Boolean(unconfirmed && (unconfirmed.pending || unconfirmed.prepared)),
+      'Passage retention dropped an operation Factory never confirmed',
+    );
+    await deleteDocumentPassageDraft(journalUser, '1', '2', unconfirmed!.version);
     await writeDocumentPassageDraft({
       ...passageIntent,
-      updatedAt: Date.now() - 31 * 24 * 60 * 60 * 1000,
+      version: crypto.randomUUID(),
+      pending: undefined,
+      prepared: undefined,
+      updatedAt: expired,
     });
     assert(
       !(await readDocumentPassageDraft(journalUser, '1', '2')),
