@@ -280,7 +280,11 @@ describe('Oathweave OIDC sign-in through Auth.js', () => {
   }
 
   const iamRequests = () =>
-    vi.mocked(fetch).mock.calls.filter(([input]) => String(input).startsWith(IAM));
+    vi
+      .mocked(fetch)
+      .mock.calls.filter(
+        ([input]) => new URL(input instanceof Request ? input.url : String(input)).origin === IAM,
+      );
 
   it('never posts a password to Oathweave on an Oathweave installation', async () => {
     const { handlers, signInMethods } = await loadAuth({ ...baseEnvironment, IAM_CORE_URL: IAM });
