@@ -89,10 +89,33 @@ route if agents need direct access to Factory from another host.
 Set `INFERENCE_HOST`, `INFERENCE_API_KEY` and `INFERENCE_MODEL` for a reachable
 OpenAI-compatible text backend. Set `WEBUI_FORGE_URL` for image generation.
 An address on the Docker host must be reachable from the container. Loopback
-inside the Factory container addresses Factory's own container. Proser sends
-selected manuscript context or image prompts to configured providers when
-requested. Diagnostic content logging is disabled in the Compose environment.
-Keep provider credentials and any diagnostic output private.
+inside the Factory container addresses Factory's own container, so use
+`host.docker.internal` (mapped to the Docker host by `compose.yml`) or a LAN
+address instead. Proser sends selected manuscript context or image prompts to
+configured providers when requested. Diagnostic content logging is disabled in
+the Compose environment. Keep provider credentials and any diagnostic output
+private.
+
+`INFERENCE_API_KEY` is optional. Leave it empty for a keyless Ollama or
+llama.cpp server on the Docker host or a private network; Factory starts and
+logs a warning. Set it when the backend expects a bearer key, such as a hosted
+API or an authenticated gateway. Set `INFERENCE_REQUIRE_API_KEY=true` to make a
+missing key for a non-loopback backend a startup error; that mode also requires
+a key of at least 32 characters. The models must listen on an address the
+container can reach (for Ollama, `OLLAMA_HOST=0.0.0.0`).
+
+```bash
+# Ollama on the Docker host, no key
+INFERENCE_BACKEND=ollama
+INFERENCE_HOST=http://host.docker.internal:11434
+INFERENCE_MODEL=qwen3:14b
+
+# llama.cpp server on another machine, started with --api-key
+INFERENCE_BACKEND=llamacpp
+INFERENCE_HOST=http://192.168.1.20:8080
+INFERENCE_API_KEY=<the server's key>
+INFERENCE_MODEL=qwen3.6-35b
+```
 
 ## Check and stop the installation
 

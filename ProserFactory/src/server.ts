@@ -15,7 +15,7 @@ import logger from './lib/logger';
 import { errorHandler } from './lib/errors';
 import redis from './lib/redis';
 import { databaseService } from './lib/database';
-import { CONFIG } from './core/config';
+import { CONFIG, inferenceKeyWarning } from './core/config';
 import { isBullmqEnabled } from './queues/featureFlag';
 import { getWorkflowQueue } from './queues/workflowQueue';
 import { shutdownWorkflowQueue } from './queues/workflowQueue';
@@ -176,6 +176,8 @@ let activeServer: http.Server | https.Server | null = null;
 export async function startServer(port: number | string = process.env.PORT || 3001, app = createApp()) {
   validateProductionMetricsConfig();
   hermesAgentCredentials(); // Refuse to start on a malformed per-agent credential set.
+  const inferenceWarning = inferenceKeyWarning(CONFIG);
+  if (inferenceWarning) logger.warn(inferenceWarning);
   await databaseService.connect();
   logger.info('Database connection established');
   try { await redis.ping(); logger.info('Redis connection verified'); } catch { logger.warn('Redis not available, continuing without caching'); }

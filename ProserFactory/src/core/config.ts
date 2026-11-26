@@ -23,12 +23,34 @@ function isLoopbackUrl(value: string): boolean {
   }
 }
 
+const truthy = (value: unknown): boolean => /^(?:1|true|yes)$/i.test(String(value ?? '').trim());
+
+/**
+ * A keyless inference backend on the Docker host or a private network is a
+ * supported setup (Ollama and llama.cpp run without a key by default), so a
+ * missing key never stops Factory. Operators who want startup to enforce a
+ * bearer credential set INFERENCE_REQUIRE_API_KEY=true.
+ */
+export function inferenceKeyWarning(config: {
+  INFERENCE_HOST?: string;
+  OLLAMA_BASE_URL: string;
+  VLLM_BASE_URL: string;
+  INFERENCE_API_KEY?: string;
+}): string | null {
+  const inferenceUrl = config.INFERENCE_HOST || config.OLLAMA_BASE_URL || config.VLLM_BASE_URL;
+  if (isLoopbackUrl(inferenceUrl) || config.INFERENCE_API_KEY) return null;
+  return 'INFERENCE_API_KEY is not set for a non-loopback inference backend; requests are sent without a bearer credential. Set INFERENCE_REQUIRE_API_KEY=true to make this a startup error.';
+}
+
 const Schema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   // Preferred inference endpoint/model (llama.cpp on inference-host). Legacy OLLAMA_*/VLLM_* vars remain supported.
   INFERENCE_BACKEND: z.enum(['ollama', 'llamacpp', 'vllm']).default('llamacpp'),
   INFERENCE_HOST: z.string().url().optional(),
-  INFERENCE_API_KEY: z.preprocess((value) => value === '' ? undefined : value, z.string().min(32).optional()),
+  // Provider keys are accepted as issued. INFERENCE_REQUIRE_API_KEY additionally
+  // enforces a 32-character minimum for self-hosted keyed servers.
+  INFERENCE_API_KEY: z.preprocess((value) => typeof value === 'string' && value.trim() === '' ? undefined : value, z.string().min(1).optional()),
+  INFERENCE_REQUIRE_API_KEY: z.preprocess(truthy, z.boolean()).default(false),
   OLLAMA_BASE_URL: z.string().url().default('http://127.0.0.1:8000'),
   OLLAMA_HOST: z.string().url().optional(),
   OLLAMA_MODEL: z.string().min(1).default('qwen3.6-35b'),
@@ -83,6 +105,7 @@ const Schema = z.object({
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: 'Replace the example credential with an independently generated secret' });
     }
   }
+  if (!config.INFERENCE_REQUIRE_API_KEY) return;
   const inferenceUrl = config.INFERENCE_HOST || config.OLLAMA_BASE_URL || config.VLLM_BASE_URL;
   if (!isLoopbackUrl(inferenceUrl) && !config.INFERENCE_API_KEY) {
     ctx.addIssue({
@@ -90,9 +113,17 @@ const Schema = z.object({
       path: ['INFERENCE_API_KEY'],
       message: 'INFERENCE_API_KEY is required for a non-loopback production inference backend',
     });
+  } else if (config.INFERENCE_API_KEY && config.INFERENCE_API_KEY.length < 32) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['INFERENCE_API_KEY'],
+      message: 'INFERENCE_API_KEY must contain at least 32 characters when INFERENCE_REQUIRE_API_KEY=true',
+    });
   }
 });
 
 export type AppConfig = z.infer<typeof Schema>;
 
 export const CONFIG: AppConfig = Schema.parse(process.env);
+
+export const configSchema = Schema;
