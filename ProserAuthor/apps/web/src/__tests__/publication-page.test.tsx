@@ -11,6 +11,8 @@ import {
   getPublication,
   previewDocx,
   commitDocx,
+  previewTextManuscript,
+  commitTextManuscript,
 } from '@/lib/publication-api';
 vi.mock('@/contexts/workspace-context', () => ({ useWorkspace: vi.fn() }));
 vi.mock('next-auth/react', () => ({ useSession: vi.fn() }));
@@ -24,6 +26,8 @@ vi.mock('@/lib/publication-api', () => ({
   cancelPublication: vi.fn(),
   previewDocx: vi.fn(),
   commitDocx: vi.fn(),
+  previewTextManuscript: vi.fn(),
+  commitTextManuscript: vi.fn(),
 }));
 describe('Factory-driven publication workspace', () => {
   beforeEach(() => {
@@ -246,6 +250,79 @@ describe('Factory-driven publication workspace', () => {
         expect.any(AbortSignal),
       ),
     );
+  });
+  it('previews a Markdown manuscript, shows its chapters and changes, and commits only with consent', async () => {
+    vi.mocked(previewTextManuscript).mockResolvedValue({
+      id: 'text-preview',
+      originalId: 'text-original',
+      sourceBookRevisionId: 'saved-revision',
+      reportHash: 'text-report',
+      report: {
+        schemaVersion: 1,
+        codec: 'proser-plain-manuscript',
+        codecVersion: '1.0.0',
+        format: 'markdown',
+        originalId: 'text-original',
+        originalSha256: 'hash',
+        sourceBookRevisionId: 'saved-revision',
+        strategy: 'append-new-identities',
+        convertedSha256: 'hash',
+        title: 'Novel',
+        byline: null,
+        actCount: 1,
+        chapterCount: 2,
+        sceneCount: 3,
+        wordCount: 1200,
+        codexCount: 0,
+        encoding: 'utf-8',
+        paragraphMode: 'blank-line',
+        fileNames: [],
+        losses: [
+          { code: 'SCENE_BREAK_MARKERS', message: 'Scene-break lines are not kept.', count: 1 },
+        ],
+      },
+      mapping: {
+        acts: [
+          {
+            title: 'Imported Manuscript',
+            chapters: [
+              { title: 'Chapter One', scenes: [{}, {}] },
+              { title: 'Chapter Two', scenes: [{}] },
+            ],
+          },
+        ],
+      },
+    });
+    vi.mocked(commitTextManuscript).mockResolvedValue({});
+    render(<PublishPage />);
+    await screen.findByRole('button', { name: 'Create export' });
+    const file = new File(['## Chapter One'], 'novel.md');
+    fireEvent.change(screen.getByLabelText('Choose .md or .txt file'), {
+      target: { files: [file] },
+    });
+    await screen.findByText('Scene-break lines are not kept. (1)');
+    expect(previewTextManuscript).toHaveBeenCalledWith(
+      '42',
+      file,
+      'saved-revision',
+      expect.any(AbortSignal),
+    );
+    expect(screen.getByText('Chapter One (2 scenes)')).toBeInTheDocument();
+    expect(screen.getByText('Chapter Two')).toBeInTheDocument();
+    const commit = screen.getByRole('button', { name: 'Commit reviewed import' });
+    expect(commit).toBeDisabled();
+    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(commit);
+    await waitFor(() =>
+      expect(commitTextManuscript).toHaveBeenCalledWith(
+        '42',
+        expect.objectContaining({ id: 'text-preview', reportHash: 'text-report' }),
+        { structure: 'structure', canon: 'canon' },
+        expect.any(String),
+        expect.any(AbortSignal),
+      ),
+    );
+    expect(await screen.findByRole('button', { name: 'Import committed' })).toBeDisabled();
   });
   it('clears publication and preview state on authenticated account changes', async () => {
     const view = render(<PublishPage />);

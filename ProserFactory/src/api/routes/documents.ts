@@ -13,7 +13,7 @@ import {registerDocumentPassageRoutes} from './documentPassages';
 import { Router, raw } from 'express';
 import { z } from 'zod';
 import { respondSuccess } from '@/api/utils/response';
-import { zBody, zParams } from '@/api/middleware/zodValidation';
+import { zBody, zParams, zQuery } from '@/api/middleware/zodValidation';
 import { ownedBookBudget } from '@/api/middleware/ownedBookBudget';
 import { documentAuthorityEnabled, documentService, DocumentError, type DocumentCommit } from '@/documents/service';
 import { documentBookParams as params, documentCommitSchema as commitSchema, documentLayoutCommitSchema, documentQuickDraftSchema, requireDocumentPreconditions } from '@/api/schemas/documents';
@@ -26,7 +26,17 @@ import { databaseService } from '@/lib/database';
 import { createDocumentQuickDraft } from '@/documents/quickDraft';
 import { readDocumentTraceReview, revalidateBoundCompare, readTraceAnalysis, cancelTraceAnalysis } from '@/documents/traceAnalysis';
 import { documentCompareRevalidateSchema } from '@/documents/traceValidation';
-import { preserveImportOriginal, prepareLegacyBundleImport, readImportPreview, readImportOriginal, commitLegacyBundleImport, listImportOriginals, deleteImportOriginal } from '@/documents/imports';
+import { preserveImportOriginal, prepareLegacyBundleImport, readImportPreview, readImportOriginal, commitLegacyBundleImport, listImportOriginals, deleteImportOriginal, textImportFormats } from '@/documents/imports';
+
+/** Which text format an uploaded original is. Bundles stay the default. */
+export const importOriginalUploadQuery = z.object({ format: z.enum(textImportFormats).default('legacy-markdown-bundle-v1') }).strict();
+/** Originals download with their own type, never rendered inline. */
+function originalDownloadType(format: string) {
+  if (format === 'docx') return { contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', extension: 'docx' };
+  if (format === 'markdown') return { contentType: 'text/markdown', extension: 'md' };
+  if (format === 'plain-text') return { contentType: 'text/plain', extension: 'txt' };
+  return { contentType: 'application/json', extension: 'json' };
+}
 import { importCommitSchema, importPreviewSchema, requireImportCommitPreconditions } from '@/documents/importValidation';
 import { workflowEffectPage, cancelWorkflowEffect, listWorkflowEffects } from '@/documents/workflowEffects';
 function requireComparePreconditions(req: { body?: Record<string, unknown> }, _res: unknown, next: () => void) {
@@ -88,8 +98,8 @@ export function registerDocumentRoutes(router: Router) {
   });
   const originalParams = params.extend({ originalId: z.string().uuid() });
   const previewParams = params.extend({ previewId: z.string().uuid() });
-  router.post('/:bookId/import-originals/:originalId', zParams(originalParams), ownedBookBudget({ source: 'params', required: true }), redisRateLimit({ key: (req) => `import-original:${req.user?.id}`, limit: 30, windowSec: 3600 }), (req, _res, next) => { if (!req.is('application/octet-stream')) throw new DocumentError('DOCUMENT_IMPORT_MEDIA_TYPE_INVALID', 'Upload original bytes as application/octet-stream.', 415); next(); }, (req, res, next) => { raw({ type: 'application/octet-stream', limit: '32mb' })(req, res, (error: unknown) => { if (error && typeof error === 'object' && 'type' in error && error.type === 'entity.too.large') next(new DocumentError('DOCUMENT_IMPORT_TOO_LARGE', 'Original exceeds 32 MiB.', 413)); else next(error); }); }, async (req, res) => {
-    respondSuccess(res, await preserveImportOriginal(req.user!.id, Number(req.params.bookId), String(req.params.originalId), 'legacy-markdown-bundle-v1', req.body), 201);
+  router.post('/:bookId/import-originals/:originalId', zParams(originalParams), zQuery(importOriginalUploadQuery), ownedBookBudget({ source: 'params', required: true }), redisRateLimit({ key: (req) => `import-original:${req.user?.id}`, limit: 30, windowSec: 3600 }), (req, _res, next) => { if (!req.is('application/octet-stream')) throw new DocumentError('DOCUMENT_IMPORT_MEDIA_TYPE_INVALID', 'Upload original bytes as application/octet-stream.', 415); next(); }, (req, res, next) => { raw({ type: 'application/octet-stream', limit: '32mb' })(req, res, (error: unknown) => { if (error && typeof error === 'object' && 'type' in error && error.type === 'entity.too.large') next(new DocumentError('DOCUMENT_IMPORT_TOO_LARGE', 'Original exceeds 32 MiB.', 413)); else next(error); }); }, async (req, res) => {
+    respondSuccess(res, await preserveImportOriginal(req.user!.id, Number(req.params.bookId), String(req.params.originalId), (req.query as unknown as z.infer<typeof importOriginalUploadQuery>).format, req.body), 201);
   });
   router.get('/:bookId/import-originals', zParams(params), async (req, res) => {
     res.setHeader('Cache-Control', 'private, no-store');
@@ -102,7 +112,7 @@ export function registerDocumentRoutes(router: Router) {
   });
   router.get('/:bookId/import-originals/:originalId/content', zParams(originalParams), async (req, res) => {
     const original = await readImportOriginal(req.user!.id, Number(req.params.bookId), String(req.params.originalId));
-    res.setHeader('Cache-Control', 'private, no-store'); res.setHeader('Content-Type', original.format === 'docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'application/json'); res.setHeader('Content-Disposition', `attachment; filename="original-${original.id}.${original.format === 'docx' ? 'docx' : 'json'}"`); res.setHeader('Content-Length', original.byteLength); res.setHeader('X-Content-Sha256', original.sha256); res.send(Buffer.from(original.bytes));
+    res.setHeader('Cache-Control', 'private, no-store'); const download = originalDownloadType(original.format); res.setHeader('Content-Type', download.contentType); res.setHeader('Content-Disposition', `attachment; filename="original-${original.id}.${download.extension}"`); res.setHeader('Content-Length', original.byteLength); res.setHeader('X-Content-Sha256', original.sha256); res.send(Buffer.from(original.bytes));
   });
   router.post('/:bookId/import-previews', zParams(params), (req, _res, next) => { requireDocumentPreconditions(req.body, false); next(); }, zBody(importPreviewSchema), async (req, res) => {
     respondSuccess(res, await prepareLegacyBundleImport(req.user!.id, Number(req.params.bookId), req.body));

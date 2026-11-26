@@ -37,6 +37,34 @@ describe('Factory API proxy', () => {
     expect(response.headers.get('x-content-sha256')).toBe(digest);
     expect((await response.arrayBuffer()).byteLength).toBe(bytes.byteLength);
   });
+  it('downloads a Markdown original with its own extension', async () => {
+    authMock.mockResolvedValue({ user: { id: '42', username: 'author', provider: 'iam' } });
+    const bytes = new TextEncoder().encode('# Novel\r\n');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(bytes, {
+          headers: {
+            'content-length': String(bytes.byteLength),
+            'content-type': 'text/markdown',
+            'x-content-sha256': createHash('sha256').update(bytes).digest('hex'),
+          },
+        }),
+      ),
+    );
+    const { GET } = await import('@/app/api/[...path]/route');
+    const { NextRequest } = await import('next/server');
+    const response = await GET(
+      new NextRequest(
+        'https://author.example/api/books/1/import-originals/00000000-0000-4000-8000-000000000001/content',
+      ),
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-disposition')).toContain(
+      'filename="00000000-0000-4000-8000-000000000001.md"',
+    );
+    expect(Buffer.from(await response.arrayBuffer()).toString()).toBe('# Novel\r\n');
+  });
   it('streams revision-bound PDF artifacts with exact SHA and safe Factory filenames beyond the generic ceiling', async () => {
     authMock.mockResolvedValue({ user: { id: '42', username: 'author', provider: 'iam' } });
     const bytes = new Uint8Array(9 * 1024 * 1024).fill(65);

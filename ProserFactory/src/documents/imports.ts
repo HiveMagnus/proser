@@ -4,10 +4,11 @@ import { z } from 'zod';
 import { databaseService } from '@/lib/database';
 import { decodeLegacyBundle } from '@/lib/importers/legacyBundle';
 import { documentFromLegacyMarkdown } from '@/lib/importers/legacyMarkdown';
+import { parsePlainManuscript, plainManuscriptFormats, type PlainManuscriptFormat } from '@/lib/importers/plainManuscript';
 import { currentDocumentMutationContext } from '@/services/documentMutationContext';
 import { documentService } from './service';
 import { DocumentError } from './errors';
-import { canonicalDocument, projectDocument, type ProserDocument } from './model';
+import { canonicalDocument, documentFromText, projectDocument, type ProserDocument } from './model';
 import { validateDocument } from './validation';
 import { appendHierarchy, outlineTreeSchema, type OutlineTree } from './structureCommands';
 import { importCommitSchema, importPreviewSchema, requireImportCommitPreconditions } from './importValidation';
@@ -24,7 +25,9 @@ async function owned(userId: number, bookId: number) {
 /** Preserve exact bytes before invoking any converter, including on malformed
  * input. Originals never change. An unused one can be deleted with
  * deleteImportOriginal; a committed import's original is kept as evidence. */
-export async function preserveImportOriginal(userId: number, bookId: number, id: string, format: 'legacy-markdown-bundle-v1' | 'docx', bytes: Uint8Array) {
+export type ImportOriginalFormat = 'legacy-markdown-bundle-v1' | 'docx' | PlainManuscriptFormat;
+export const textImportFormats = ['legacy-markdown-bundle-v1', ...plainManuscriptFormats] as const;
+export async function preserveImportOriginal(userId: number, bookId: number, id: string, format: ImportOriginalFormat, bytes: Uint8Array) {
   z.string().uuid().parse(id); await owned(userId, bookId);
   if (!(bytes instanceof Uint8Array) || !bytes.byteLength || bytes.byteLength > 32 * 1024 * 1024) throw new DocumentError('DOCUMENT_IMPORT_TOO_LARGE', 'Original uploads must contain 1 byte to 32 MiB.', 413);
   const sha256 = byteDigest(bytes);
@@ -97,15 +100,27 @@ export async function prepareLegacyBundleImport(userId: number, bookId: number, 
   const head = await documentService.manifest(userId, bookId);
   if (head.revisionId !== input.expectedRevisionId) throw new DocumentError('DOCUMENT_SOURCE_STALE', 'Book changed before import preview.', 412, { currentRevisionId: head.revisionId });
   const book = await db().book.findUniqueOrThrow({ where: { id: bookId }, select: { title: true } });
-  let parsed: ReturnType<typeof decodeLegacyBundle>;
-  try { parsed = decodeLegacyBundle(original.bytes, book.title ?? 'Imported manuscript'); }
-  catch (error) { if (error instanceof DocumentError) throw error; throw new DocumentError('DOCUMENT_IMPORT_INVALID', 'Original bundle encoding, JSON or metadata is invalid. The original remains preserved.', 422, { originalId: original.id }); }
+  const format = original.format as ImportOriginalFormat;
+  if (!(textImportFormats as readonly string[]).includes(format)) throw new DocumentError('DOCUMENT_IMPORT_INVALID', 'This original uses another import format. Use its own preview route.', 422, { originalId: original.id, format });
+  const plain = format === 'markdown' || format === 'plain-text';
+  let parsed: Pick<ReturnType<typeof decodeLegacyBundle>, 'manuscript' | 'codex' | 'sourceFileNames' | 'unconvertedFiles'>;
+  let plainDetails: ReturnType<typeof parsePlainManuscript> | null = null;
+  try {
+    if (plain) { plainDetails = parsePlainManuscript(original.bytes, format, book.title ?? 'Imported manuscript'); parsed = { manuscript: plainDetails, codex: [], sourceFileNames: [], unconvertedFiles: [] }; }
+    else parsed = decodeLegacyBundle(original.bytes, book.title ?? 'Imported manuscript');
+  }
+  catch (error) { if (error instanceof DocumentError) throw error; throw new DocumentError('DOCUMENT_IMPORT_INVALID', plain ? 'The manuscript text could not be read. The original remains preserved.' : 'Original bundle encoding, JSON or metadata is invalid. The original remains preserved.', 422, { originalId: original.id }); }
   const tree = outlineTreeSchema.parse({ acts: parsed.manuscript.acts.map((act) => ({ title: act.title, chapters: act.chapters.map((chapter) => ({ title: chapter.title, summary: chapter.summary, scenes: chapter.scenes.map((scene) => ({ summary: scene.summary, outline: scene.outline })) })) })) });
-  const documents = parsed.manuscript.acts.flatMap((act) => act.chapters.flatMap((chapter) => chapter.scenes.map((scene) => validateDocument(documentFromLegacyMarkdown(scene.prose, randomUUID)))));
+  // Plain text has no markup, so asterisks and underscores stay as typed.
+  const convert = format === 'plain-text' ? (prose: string) => documentFromText(prose, randomUUID) : (prose: string) => documentFromLegacyMarkdown(prose, randomUUID);
+  const documents = parsed.manuscript.acts.flatMap((act) => act.chapters.flatMap((chapter) => chapter.scenes.map((scene) => validateDocument(convert(scene.prose)))));
   if (!documents.length) throw new DocumentError('DOCUMENT_IMPORT_EMPTY', 'The conversion contains no scenes.', 422);
   if (Buffer.byteLength(canonicalDocument({ tree, documents, codex: parsed.codex })) > 256 * 1024 * 1024) throw new DocumentError('DOCUMENT_IMPORT_TOO_LARGE', 'Converted content exceeds 256 MiB.', 413);
   const conversion: Conversion = { tree, documents, codex: parsed.codex };
-  const report = { schemaVersion: 1, codec: 'proser-legacy-markdown-bundle', codecVersion: '1.1.0', originalId: original.id, originalSha256: original.sha256, sourceBookRevisionId: head.revisionId, strategy: 'append-new-identities', convertedSha256: digest(conversion), title: parsed.manuscript.title, byline: parsed.manuscript.byline, actCount: tree.acts.length, chapterCount: tree.acts.reduce((total, act) => total + act.chapters.length, 0), sceneCount: documents.length, wordCount: documents.reduce((total, document) => total + projectDocument(document).wordCount, 0), codexCount: parsed.codex.length, fileNames: parsed.sourceFileNames, losses: [{ code: 'LEGACY_HEADING_WHITESPACE_MAPPING', message: 'Heading/chapter/scene mapping consumes manuscript headings and trims boundary whitespace; carriage returns and Markdown line breaks are normalized only in converted content. Originals remain exact.' }, { code: 'MARKDOWN_INLINE_STYLE_SUBSET', message: 'Manuscript emphasis, strong emphasis, strikethrough and code spans become native text styles. Links, HTML, image references and tables stay as text. No external resources are fetched.' }, { code: 'CODEX_FRONTMATTER_SUBSET', message: 'Only scalar frontmatter name/type fields guide codex conversion. Raw frontmatter and metadata originals are retained.' }, ...(parsed.unconvertedFiles.length ? [{ code: 'UNCONVERTED_SOURCE_FILES', message: 'These originals are retained without conversion.', fileNames: parsed.unconvertedFiles }] : [])] };
+  const counts = { actCount: tree.acts.length, chapterCount: tree.acts.reduce((total, act) => total + act.chapters.length, 0), sceneCount: documents.length, wordCount: documents.reduce((total, document) => total + projectDocument(document).wordCount, 0) };
+  const report = plainDetails
+    ? { schemaVersion: 1, codec: 'proser-plain-manuscript', codecVersion: '1.0.0', format, originalId: original.id, originalSha256: original.sha256, sourceBookRevisionId: head.revisionId, strategy: 'append-new-identities', convertedSha256: digest(conversion), title: plainDetails.title, byline: plainDetails.byline, ...counts, codexCount: 0, encoding: plainDetails.encoding, paragraphMode: plainDetails.paragraphMode, fileNames: [], losses: plainManuscriptLosses(format as PlainManuscriptFormat, plainDetails) }
+    : { schemaVersion: 1, codec: 'proser-legacy-markdown-bundle', codecVersion: '1.1.0', originalId: original.id, originalSha256: original.sha256, sourceBookRevisionId: head.revisionId, strategy: 'append-new-identities', convertedSha256: digest(conversion), title: parsed.manuscript.title, byline: parsed.manuscript.byline, ...counts, codexCount: parsed.codex.length, fileNames: parsed.sourceFileNames, losses: [{ code: 'LEGACY_HEADING_WHITESPACE_MAPPING', message: 'Heading/chapter/scene mapping consumes manuscript headings and trims boundary whitespace; carriage returns and Markdown line breaks are normalized only in converted content. Originals remain exact.' }, { code: 'MARKDOWN_INLINE_STYLE_SUBSET', message: 'Manuscript emphasis, strong emphasis, strikethrough and code spans become native text styles. Links, HTML, image references and tables stay as text. No external resources are fetched.' }, { code: 'CODEX_FRONTMATTER_SUBSET', message: 'Only scalar frontmatter name/type fields guide codex conversion. Raw frontmatter and metadata originals are retained.' }, ...(parsed.unconvertedFiles.length ? [{ code: 'UNCONVERTED_SOURCE_FILES', message: 'These originals are retained without conversion.', fileNames: parsed.unconvertedFiles }] : [])] };
   const reportHash = digest(report);
   if (Buffer.byteLength(canonicalDocument({ report, mapping: tree })) > 8 * 1024 * 1024) throw new DocumentError('DOCUMENT_IMPORT_REPORT_TOO_LARGE', 'The complete report and mapping exceed the supported preview size. Originals remain preserved.', 413);
   await documentService.sideRecord(userId, bookId, async (tx) => {
@@ -116,6 +131,24 @@ export async function prepareLegacyBundleImport(userId: number, bookId: number, 
     await tx.documentImportPreview.create({ data: { id: input.operationId, originalId: original.id, bookId, userId, sourceBookRevision: head.revisionId, requestHash, conversion: json(conversion), report: json(report), reportHash } });
   });
   return readImportPreview(userId, bookId, input.operationId);
+}
+/** What a Markdown or plain-text conversion changes, so the writer can consent
+ * to the exact mapping. The original file is always kept byte for byte. */
+function plainManuscriptLosses(format: PlainManuscriptFormat, details: ReturnType<typeof parsePlainManuscript>) {
+  const losses: Array<{ code: string; message: string; count?: number }> = [
+    format === 'markdown'
+      ? { code: 'PLAIN_HEADING_MAPPING', message: 'Each chapter-level heading starts a new chapter and becomes its title; a lone first top-level heading is the book title, and "Part" headings above chapters start new parts. Text before the first chapter becomes an "Opening" chapter. Underlined (setext) headings are not detected.' }
+      : { code: 'PLAIN_HEADING_MAPPING', message: 'Lines such as "Chapter 1", "Chapter Two: The Storm", "Prologue" or "Epilogue" on their own start chapters, and "Part One" lines start parts. Text before the first chapter becomes an "Opening" chapter.' },
+    { code: 'PARAGRAPH_WHITESPACE_NORMALIZED', message: details.paragraphMode === 'line' ? 'This file has one paragraph per line, so each line becomes a paragraph. Indentation and blank lines are not kept.' : format === 'markdown' ? 'Blank lines separate paragraphs. Other line breaks inside a paragraph become spaces, except Markdown hard breaks. Indentation is not kept.' : 'Blank lines separate paragraphs. Line breaks inside a paragraph become spaces, and indentation is not kept.' },
+    format === 'markdown'
+      ? { code: 'MARKDOWN_INLINE_STYLE_SUBSET', message: 'Emphasis, strong emphasis, strikethrough and code spans become native text styles. Links, HTML, image references, lists, block quotes, code blocks and tables stay as text. No external resources are fetched.' }
+      : { code: 'PLAIN_TEXT_NO_STYLES', message: 'Plain text has no formatting, so asterisks and underscores stay as typed.' },
+  ];
+  if (details.sceneBreakCount) losses.push({ code: 'SCENE_BREAK_MARKERS', message: 'Scene-break lines (such as ***, * * * or #) split chapters into scenes and are not kept as text.', count: details.sceneBreakCount });
+  if (details.demotedHeadingCount) losses.push({ code: 'SUBHEADINGS_AS_PARAGRAPHS', message: 'Headings below chapter level become ordinary paragraphs.', count: details.demotedHeadingCount });
+  if (details.frontmatterRemoved) losses.push({ code: 'FRONTMATTER_NOT_CONVERTED', message: 'The YAML front matter block is not converted. Only its title is shown in this report.' });
+  if (details.encoding === 'windows-1252') losses.push({ code: 'LEGACY_TEXT_ENCODING', message: 'This file is not UTF-8, so it was read as Windows-1252 (Western European). Check accented letters and quotation marks in the preview.' });
+  return losses;
 }
 export async function readImportPreview(userId: number, bookId: number, id: string) {
   await owned(userId, bookId);

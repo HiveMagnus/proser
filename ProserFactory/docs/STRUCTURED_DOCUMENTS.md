@@ -62,7 +62,8 @@ Factory exposes original upload/download, preview and commit endpoints under
 `/api/books/:bookId/import-originals` and `/import-previews`. Original uploads use
 `application/octet-stream` and a UUID path, with a 32 MiB limit; binary download
 checks size and checksum and remains authenticated through Author's relative
-proxy. These endpoints support the explicit legacy bundle and bounded DOCX conversion.
+proxy. These endpoints support the explicit legacy bundle, single Markdown or
+plain-text manuscripts (`?format=markdown|plain-text` on upload) and bounded DOCX conversion.
 DOCX previews retain namespaced paragraph/character style definitions and display
 labels, complete supported bodies and owned header/footer documents. Import graph
 attestation compares them with the retained conversion and preserves existing

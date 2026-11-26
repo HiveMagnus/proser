@@ -523,6 +523,10 @@ mapping/report at `/import-previews/:previewId` and owned original bytes at
 revisions, an operation UUID and consent to the exact report hash. It appends
 new identities and preserves existing manuscript/review history. Previews support
 the documented legacy Markdown bundle and bounded rich-text DOCX conversion.
+Add `?format=markdown` or `?format=plain-text` to the original upload for a
+single Markdown or plain-text manuscript; the same preview and commit endpoints
+then map its chapter headings, part headings and scene-break lines, and the
+report (`codec: proser-plain-manuscript`) lists what the conversion changes.
 
 `GET /api/books/:bookId/import-originals` lists the book's originals with their
 preview count, whether a committed import came from each one, and storage use

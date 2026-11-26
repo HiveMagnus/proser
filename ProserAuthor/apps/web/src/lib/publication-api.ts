@@ -4,6 +4,9 @@ import type {
   DocumentPublicationJob,
   DocumentDocxImportPreview,
   DocumentDocxImportCommitRequest,
+  DocumentTextImportFormat,
+  DocumentTextImportPreview,
+  DocumentTextImportCommitRequest,
 } from '@hivemagnus/proser-contracts';
 async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
   const timeout = AbortSignal.timeout(30_000);
@@ -119,5 +122,53 @@ export const commitDocx = (
       expectedScopes,
       consentReportHash: preview.reportHash,
     }),
+    signal,
+  });
+/** The text format a manuscript file is imported as, by its extension. */
+export function textImportFormat(file: File): DocumentTextImportFormat | null {
+  const name = file.name.toLowerCase();
+  if (/\.(md|markdown|mdown|mkd)$/.test(name)) return 'markdown';
+  if (/\.(txt|text)$/.test(name)) return 'plain-text';
+  return null;
+}
+export async function previewTextManuscript(
+  bookId: string,
+  file: File,
+  revisionId: string,
+  signal?: AbortSignal,
+) {
+  const format = textImportFormat(file);
+  if (!format) throw new Error('Choose a Markdown (.md) or plain-text (.txt) file.');
+  if (!file.size || file.size > 32 * 1024 * 1024)
+    throw new Error('Manuscript files must contain 1 byte to 32 MiB.');
+  const originalId = crypto.randomUUID();
+  await request(`${base(bookId)}/import-originals/${originalId}?format=${format}`, {
+    method: 'POST',
+    body: file,
+    headers: { 'Content-Type': 'application/octet-stream' },
+    signal,
+  });
+  const operationId = crypto.randomUUID();
+  return request<DocumentTextImportPreview>(`${base(bookId)}/import-previews`, {
+    method: 'POST',
+    body: JSON.stringify({ operationId, originalId, expectedRevisionId: revisionId }),
+    signal,
+  });
+}
+export const commitTextManuscript = (
+  bookId: string,
+  preview: DocumentTextImportPreview,
+  expectedScopes: DocumentTextImportCommitRequest['expectedScopes'],
+  operationId: string,
+  signal?: AbortSignal,
+) =>
+  request(`${base(bookId)}/import-previews/${preview.id}/commit`, {
+    method: 'POST',
+    body: JSON.stringify({
+      operationId,
+      expectedRevisionId: preview.sourceBookRevisionId,
+      expectedScopes,
+      consentReportHash: preview.reportHash,
+    } satisfies DocumentTextImportCommitRequest),
     signal,
   });

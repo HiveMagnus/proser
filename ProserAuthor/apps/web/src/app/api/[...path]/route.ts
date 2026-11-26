@@ -26,6 +26,12 @@ const PUBLICATION_MEDIA_TYPES = new Set([
   'text/plain',
 ]);
 
+const ORIGINAL_EXTENSIONS: Record<string, string> = {
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'text/markdown': 'md',
+  'text/plain': 'txt',
+};
+
 const REQUEST_HEADERS_TO_STRIP = new Set([
   'x-proser-expected-user',
   // Identity, internal and network-origin headers that Factory may interpret.
@@ -284,7 +290,7 @@ function safePublicationHeaders(pathname: string, upstream: Response, responseLi
   const encodedFilename =
     artifactFilename ??
     (original
-      ? `${original[1]}.${mediaType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? 'docx' : 'json'}`
+      ? `${original[1]}.${ORIGINAL_EXTENSIONS[mediaType] ?? 'json'}`
       : (pathname.split('/').at(-1) ?? ''));
   let filename: string;
   try {

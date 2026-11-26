@@ -158,6 +158,41 @@ describe('original-preserving append imports', () => {
     const inactive = await auth(request(app).get(`/api/books/${bookId}/import-previews/${previewId}`)); expect(inactive.status).toBe(503);
     process.env.DOCUMENT_AUTHORITY_ENABLED = 'true';
   });
+  test('Markdown and plain-text files are preserved exactly, previewed with their own report and appended on consent', async () => {
+    const markdown = Buffer.from('# Novel\r\n\r\n## Chapter 1\r\n\r\nA **bold** start.\r\n\r\n***\r\n\r\nNext scene.\r\n\r\n## Chapter 2\r\n\r\nThe end.\r\n');
+    const markdownId = randomUUID();
+    const upload = await auth(request(app).post(`/api/books/${bookId}/import-originals/${markdownId}?format=markdown`).set('Content-Type','application/octet-stream').send(markdown));
+    expect(upload.status).toBe(201);
+    const download = await auth(request(app).get(`/api/books/${bookId}/import-originals/${markdownId}/content`));
+    expect(download.headers['content-type']).toMatch(/^text\/markdown/); expect(download.headers['content-disposition']).toContain(`original-${markdownId}.md`);
+    expect(download.text).toBe(markdown.toString()); expect(download.headers['x-content-sha256']).toBe(upload.body.data.sha256);
+    const head = await documentService.manifest(userId, bookId);
+    const previewed = await auth(request(app).post(`/api/books/${bookId}/import-previews`).send({ operationId: randomUUID(), originalId: markdownId, expectedRevisionId: head.revisionId }));
+    expect(previewed.status).toBe(200);
+    expect(previewed.body.data.report).toMatchObject({ codec: 'proser-plain-manuscript', format: 'markdown', title: 'Novel', chapterCount: 2, sceneCount: 3, codexCount: 0, encoding: 'utf-8' });
+    expect(previewed.body.data.report.losses.map((loss: { code: string }) => loss.code)).toEqual(['PLAIN_HEADING_MAPPING', 'PARAGRAPH_WHITESPACE_NORMALIZED', 'MARKDOWN_INLINE_STYLE_SUBSET', 'SCENE_BREAK_MARKERS']);
+    expect(previewed.body.data.mapping.acts[0].chapters.map((chapter: { title: string }) => chapter.title)).toEqual(['Chapter 1', 'Chapter 2']);
+    expect(await db().scene.count({ where: { chapter: { act: { bookId } } } })).toBe(1);
+    const committed = await auth(request(app).post(`/api/books/${bookId}/import-previews/${previewed.body.data.id}/commit`).send(await conditions(previewed.body.data.reportHash)));
+    expect(committed.status).toBe(200);
+    const first = committed.body.data.result.hierarchy.acts[0].chapters[0].sceneIds[0];
+    const imported = await documentService.read(userId, bookId, first);
+    expect(imported.projection.text).toBe('A bold start.');
+    expect(imported.document.blocks[0]).toMatchObject({ runs: [{ text: 'A ' }, { text: 'bold', style: { bold: true } }, { text: ' start.' }] });
+    expect((await listImportOriginals(userId, bookId)).originals.find((row) => row.id === markdownId)).toMatchObject({ format: 'markdown', committed: true });
+
+    // Plain text keeps asterisks literally; a DOCX or unknown format cannot use this route.
+    const text = await preserveImportOriginal(userId, bookId, randomUUID(), 'plain-text', Buffer.from('Chapter 1\n\nA *literal* line.\n'));
+    const source = await documentService.manifest(userId, bookId);
+    const plain = await prepareLegacyBundleImport(userId, bookId, { operationId: randomUUID(), originalId: text.id, expectedRevisionId: source.revisionId });
+    expect(plain.report).toMatchObject({ format: 'plain-text', chapterCount: 1 });
+    const plainCommit = await commitLegacyBundleImport(userId, bookId, plain.id, await conditions(plain.reportHash));
+    expect((await documentService.read(userId, bookId, plainCommit.result.hierarchy.acts[0].chapters[0].sceneIds[0])).projection.text).toBe('A *literal* line.');
+    const docx = await preserveImportOriginal(userId, bookId, randomUUID(), 'docx', Buffer.from('PK not a manuscript'));
+    const latest = await documentService.manifest(userId, bookId);
+    await expect(prepareLegacyBundleImport(userId, bookId, { operationId: randomUUID(), originalId: docx.id, expectedRevisionId: latest.revisionId })).rejects.toMatchObject({ code: 'DOCUMENT_IMPORT_INVALID', status: 422 });
+    expect((await auth(request(app).post(`/api/books/${bookId}/import-originals/${randomUUID()}?format=rtf`).set('Content-Type','application/octet-stream').send(Buffer.from('x')))).status).toBe(422);
+  });
   test('legacy projection methods refuse activation bypass; backfill verifies existing projection counts', async () => {
     await expect(documentService.legacyWriteScene(userId, bookId, sceneId, { prose: 'Bypass' })).rejects.toMatchObject({ status: 428 });
     await db().scene.update({ where: { id: sceneId }, data: { wordCount: 999 } });
