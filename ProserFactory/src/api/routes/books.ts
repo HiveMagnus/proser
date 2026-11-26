@@ -4,6 +4,8 @@ import { exportCreativePackage } from '../../services/creativeImportService';
 import { getRecommendations, getWritingStats, setWritingGoal } from '../../services/writingStatsService';
 import { respondSuccess } from '../utils/response';
 import { BooksController } from '../controllers/books';
+import { booksService } from '../../services/booksService';
+import { respondSuccess } from '../utils/response';
 import { CodexController } from '../controllers/codex';
 import { StructureController } from '../controllers/structure';
 import { ActsController } from '../controllers/acts';
@@ -40,6 +42,12 @@ registerDocumentRoutes(router);
 
 // GET /api/books - List user's books
 router.get('/', BooksController.getBooks);
+
+// GET /api/books/trash - Deleted books that can be restored
+router.get('/trash', async (req, res) => {
+  res.setHeader('Cache-Control', 'private, no-store');
+  respondSuccess(res, { books: await booksService.listDeletedBooks(req.user!.id) });
+});
 
 // POST /api/books - Create new book
 router.post('/',

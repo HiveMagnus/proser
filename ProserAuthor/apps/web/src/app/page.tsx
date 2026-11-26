@@ -50,6 +50,7 @@ import {
 import { useBooks, useCreateBook, bookKeys } from '@/hooks/queries/use-books';
 import { useRecommendations, useWritingStats } from '@/hooks/queries/use-writing-stats';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { BookTrash } from '@/components/dashboard/book-trash';
 import { AsyncBoundary } from '@/components/ui/async-boundary';
 import {
   PageTransition,
@@ -934,6 +935,8 @@ function OwnedDashboard({ userId }: { userId: string }) {
             </section>
           </FadeIn>
         )}
+
+        <BookTrash />
 
         {/* ── Edit Project Dialog ────────────── */}
         <Dialog
