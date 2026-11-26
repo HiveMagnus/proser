@@ -10,6 +10,7 @@ export type Surface =
   | 'plot'
   | 'continuity'
   | 'quality'
+  | 'analytics'
   | 'publish'
   | 'workflows'
   | 'settings';

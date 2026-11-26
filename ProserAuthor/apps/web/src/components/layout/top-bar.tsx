@@ -25,6 +25,7 @@ const routeLabels: Record<string, string> = {
   quality: 'Quality Board',
   workflows: 'Book Factory',
   editorial: 'Editorial',
+  analytics: 'Analytics',
   publish: 'Publish Center',
   settings: 'Settings',
 };

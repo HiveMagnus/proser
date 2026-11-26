@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { registerDocumentRoutes } from './documents';
 import { exportCreativePackage } from '../../services/creativeImportService';
+import { getRecommendations, getWritingStats, setWritingGoal } from '../../services/writingStatsService';
+import { respondSuccess } from '../utils/response';
 import { BooksController } from '../controllers/books';
 import { CodexController } from '../controllers/codex';
 import { StructureController } from '../controllers/structure';
@@ -22,7 +24,7 @@ import {
   bookIdActIdParams, bookIdChapterIdParams, bookIdSceneIdParams,
   sceneBody, sceneGenerationBody, batchScenesBody, reorderScenesBody,
   bookIdNoteIdParams, noteBody, exportQuery, createExportArtifactBody,
-  exportArtifactParams, readExportArtifactQuery,
+  exportArtifactParams, readExportArtifactQuery, writingStatsQuery, writingGoalBody, recommendationsQuery,
   bookIdParams, idParams, paginationQuery, compatibilityProjectionQuery,
 } from '../schemas/books';
 import { prosePreferenceBody } from '../schemas/prose';
@@ -261,6 +263,30 @@ router.delete('/:bookId/notes/:noteId',
   zParams(bookIdNoteIdParams),
   NotesController.deleteNote
 );
+
+// Writing statistics, goals and next steps
+router.get('/:bookId/writing-stats',
+  zParams(bookIdParams),
+  zQuery(writingStatsQuery),
+  async (req, res) => {
+    const query = req.query as { days?: number; tz?: string };
+    respondSuccess(res, await getWritingStats(req.user!.id, Number(req.params.bookId), { days: query.days, timeZone: query.tz }));
+  });
+
+router.put('/:bookId/writing-goal',
+  zParams(bookIdParams),
+  zBody(writingGoalBody),
+  async (req, res) => {
+    respondSuccess(res, { goal: await setWritingGoal(req.user!.id, Number(req.params.bookId), req.body) });
+  });
+
+router.get('/:bookId/recommendations',
+  zParams(bookIdParams),
+  zQuery(recommendationsQuery),
+  async (req, res) => {
+    const query = req.query as { tz?: string };
+    respondSuccess(res, { recommendations: await getRecommendations(req.user!.id, Number(req.params.bookId), { timeZone: query.tz }) });
+  });
 
 // Export
 router.get('/:bookId/export',

@@ -18,6 +18,7 @@ import {
   Pencil,
   Trash2,
   ArrowRight,
+  Flame,
   PenTool,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -47,6 +48,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useBooks, useCreateBook, bookKeys } from '@/hooks/queries/use-books';
+import { useRecommendations, useWritingStats } from '@/hooks/queries/use-writing-stats';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { AsyncBoundary } from '@/components/ui/async-boundary';
 import {
@@ -173,6 +175,8 @@ function OwnedDashboard({ userId }: { userId: string }) {
   const { data: books = [], isLoading, error } = useBooks();
   const { activeBookId, activeBookTitle, setActiveBookId, setActiveBookTitle } = useWorkspace();
   const createBookMutation = useCreateBook();
+  const { data: activeStats } = useWritingStats(activeBookId, 30);
+  const { data: recommendations } = useRecommendations(activeBookId);
   const queryClient = useQueryClient();
   const catalog = useDocumentBookCatalog(userId);
   const preparationEpoch = useRef(0);
@@ -765,10 +769,25 @@ function OwnedDashboard({ userId }: { userId: string }) {
         )}
 
         {/* ── Stats Row ──────────────────────── */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Total Words"
             value={<AnimatedNumber value={totalWords} format={(n) => n.toLocaleString()} />}
+          />
+          <StatCard
+            label="Writing Streak"
+            value={
+              <span className="flex items-center gap-1.5">
+                <Flame className="size-4 text-orange-400" aria-hidden="true" />
+                <AnimatedNumber value={activeStats?.streak.current ?? 0} />
+                <span className="text-[length:--text-sm] text-text-muted">days</span>
+              </span>
+            }
+            sublabel={
+              activeStats
+                ? `${activeStats.days.at(-1)?.written.toLocaleString() ?? 0} words today in ${activeBookTitle ?? 'the open book'}`
+                : 'Open a book to track it'
+            }
           />
           <StatCard label="Active Projects" value={<AnimatedNumber value={activeCount} />} />
           <StatCard label="Completed" value={<AnimatedNumber value={completedCount} />} />
@@ -885,6 +904,36 @@ function OwnedDashboard({ userId }: { userId: string }) {
             </div>
           </AsyncBoundary>
         </section>
+
+        {/* ── Next steps for the open book ─── */}
+        {(recommendations?.length ?? 0) > 0 && (
+          <FadeIn>
+            <section aria-labelledby="next-steps-heading">
+              <h2
+                id="next-steps-heading"
+                className="mb-4 text-[length:--text-lg] font-semibold text-text-primary"
+              >
+                Next steps for {activeBookTitle ?? 'this book'}
+              </h2>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {recommendations!.map((item) => (
+                  <Link key={item.id} href={item.href}>
+                    <Card className="h-full transition-all hover:border-accent-500/40 hover:shadow-md">
+                      <CardContent className="py-4">
+                        <p className="text-[length:--text-sm] font-medium text-text-primary">
+                          {item.title}
+                        </p>
+                        <p className="mt-1 text-[length:--text-xs] text-text-secondary">
+                          {item.detail}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          </FadeIn>
+        )}
 
         {/* ── Edit Project Dialog ────────────── */}
         <Dialog

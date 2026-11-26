@@ -10,6 +10,7 @@ const navRoutes: Record<string, string> = {
   '4': '/manuscript',
   '5': '/continuity',
   '6': '/quality',
+  '7': '/analytics',
   '8': '/publish',
 };
 

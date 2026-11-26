@@ -124,6 +124,7 @@ The rate-limit column is sourced from the same constants used by rate-limited ru
 | POST | `/api/books/{bookId}/plot-threads/{threadId}/reviews/{reviewId}/assessment` | Bearer JWT | JSON: operationId, expectedVersion, assessment, notes | No route-specific limit | Save the author assessment separately from the AI assessment |
 | POST | `/api/books/{bookId}/plot-threads/{threadId}/reviews/{reviewId}/cancel` | Bearer JWT | JSON | No route-specific limit | Cancel the original owned review without replay |
 | GET | `/api/books/{bookId}/plot-threads/operations/{operationId}` | Bearer JWT | — | No route-specific limit | Recover the exact owned thread mutation receipt |
+| GET | `/api/books/{bookId}/recommendations` | Bearer JWT | — | No route-specific limit | Next writing steps derived from the saved book, goals and Story Bible |
 | POST | `/api/books/{bookId}/reorder-acts` | Bearer JWT | JSON: documentPreconditions?, reorderedActs | No route-specific limit | Reorder acts |
 | GET | `/api/books/{bookId}/reviews` | Bearer JWT | — | No route-specific limit | Hermes-supported API operation |
 | GET | `/api/books/{bookId}/revision-campaigns` | Bearer JWT | — | No route-specific limit | List owned revision campaigns |
@@ -157,6 +158,8 @@ The rate-limit column is sourced from the same constants used by rate-limited ru
 | GET | `/api/books/{bookId}/structure` | Bearer JWT | — | No route-specific limit | Get book structure |
 | POST | `/api/books/{bookId}/structure` | Bearer JWT | JSON: documentPreconditions?, acts | No route-specific limit | Save book structure |
 | GET | `/api/books/{bookId}/workflows` | Bearer JWT | — | No route-specific limit | Hermes-supported API operation |
+| PUT | `/api/books/{bookId}/writing-goal` | Bearer JWT | JSON: targetWords, deadline, dailyWords | No route-specific limit | Set or clear the book word-count target, deadline and daily goal |
+| GET | `/api/books/{bookId}/writing-stats` | Bearer JWT | — | No route-specific limit | Daily words written, totals, streaks and goal pacing for a book |
 | DELETE | `/api/books/{id}` | Bearer JWT | — | No route-specific limit | Delete book |
 | GET | `/api/books/{id}` | Bearer JWT | — | No route-specific limit | Get revision-bound book metadata; includeProse=1 requests compatibility prose |
 | PUT | `/api/books/{id}` | Bearer JWT | JSON: documentPreconditions?, title?, genre?, targetAudience?, summary?, tagline?, storyOutline?, draftStatus?, … | No route-specific limit | Update book |
@@ -217,6 +220,7 @@ The rate-limit column is sourced from the same constants used by rate-limited ru
 | POST | `/api/metrics/ingest` | Public | JSON: events | 60/60s per IP | Ingest UI metrics |
 | GET | `/api/models` | Bearer JWT | — | No route-specific limit | Hermes-supported API operation |
 | GET | `/api/models/status` | Bearer JWT | — | No route-specific limit | Hermes-supported API operation |
+| GET | `/api/plot/archetypes` | Bearer JWT | — | No route-specific limit | List the story archetypes a book can follow |
 | GET | `/api/prompts` | Bearer JWT | — | No route-specific limit | List prompt templates |
 | GET | `/api/prompts/{key}` | Bearer JWT | — | No route-specific limit | Get prompt template by key |
 | GET | `/api/prompts/additional/{name}` | Bearer JWT | — | No route-specific limit | Get an additional internal prompt template |
