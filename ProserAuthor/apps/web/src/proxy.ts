@@ -1,6 +1,23 @@
 import { auth } from './auth';
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
+import { contentSecurityPolicy, createNonce } from './lib/content-security-policy';
 import { getMobileRoute, MOBILE_VIEW_COOKIE, shouldRedirectToMobile } from './lib/mobile-routing';
+
+/**
+ * Continue to the page with a fresh script nonce. Next.js reads the nonce from
+ * the request's Content-Security-Policy header and adds it to the scripts it
+ * renders; the same policy goes on the response.
+ */
+function nextWithContentSecurityPolicy(req: NextRequest): NextResponse {
+  const nonce = createNonce();
+  const policy = contentSecurityPolicy(nonce, process.env.NODE_ENV === 'development');
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set('x-nonce', nonce);
+  requestHeaders.set('content-security-policy', policy);
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set('content-security-policy', policy);
+  return response;
+}
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
@@ -13,7 +30,7 @@ export default auth((req) => {
     pathname.startsWith('/_next') ||
     pathname === '/favicon.ico'
   ) {
-    return NextResponse.next();
+    return pathname.startsWith('/auth') ? nextWithContentSecurityPolicy(req) : NextResponse.next();
   }
 
   // If not authenticated, redirect to sign-in
@@ -31,7 +48,7 @@ export default auth((req) => {
     return NextResponse.redirect(mobileUrl);
   }
 
-  return NextResponse.next();
+  return nextWithContentSecurityPolicy(req);
 });
 
 export const config = {

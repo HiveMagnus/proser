@@ -4,6 +4,7 @@ import request from 'supertest';
 import app from '../index';
 import { databaseService } from '../lib/database';
 import jwt from 'jsonwebtoken';
+import redis from '../lib/redis';
 
 const prefix = `jest-security-${Date.now()}`;
 const authFor = (user: { id: number; githubId: string }) => (test: request.Test) => test
@@ -120,5 +121,25 @@ describe('Workflow and private image security boundaries', () => {
   it('does not reveal another user book through image filters or workflow review listings', async () => {
     expect((await authFor(other)(request(app).get('/api/images/list').query({ bookId }))).status).toBe(404);
     expect((await authFor(other)(request(app).get(`/api/books/${bookId}/reviews`))).status).toBe(404);
+  });
+  it('guards the illustrated creative package like the book export', async () => {
+    const route = '/api/books/:bookId/creative-package';
+    expect((await request(app).get(route.replace(':bookId', String(bookId)))).status).toBe(401);
+    expect((await authFor(owner)(request(app).get(route.replace(':bookId', 'not-a-book')))).status).toBe(422);
+    expect((await authFor(other)(request(app).get(route.replace(':bookId', String(bookId))))).status).toBe(404);
+    const owned = await authFor(owner)(request(app).get(route.replace(':bookId', String(bookId))));
+    expect(owned.status).toBe(200);
+    expect(owned.headers['content-type']).toContain('application/zip');
+    // The route takes a shared capacity lease, so a spent daily budget refuses it.
+    process.env.TEST_SHARED_CAPACITY_LIMITS = '1';
+    const evaluate = jest.spyOn(redis, 'eval').mockResolvedValueOnce(-1 as never);
+    try {
+      const limited = await authFor(owner)(request(app).get(route.replace(':bookId', String(bookId))));
+      expect(limited.status).toBe(429);
+      expect(evaluate.mock.calls[0]?.[2]).toBe(`budget:book:creative-package:daily:user:${owner.id}:${new Date().toISOString().slice(0, 10)}`);
+    } finally {
+      delete process.env.TEST_SHARED_CAPACITY_LIMITS;
+      evaluate.mockRestore();
+    }
   });
 });

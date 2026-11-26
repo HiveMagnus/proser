@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import './globals.css';
 import { AppShell } from '@/components/layout/app-shell';
 
@@ -7,7 +8,10 @@ export const metadata: Metadata = {
   description: 'An AI-native fiction writing studio for producing publisher-ready manuscripts.',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Reading the request makes every page render per request, so each one gets
+  // the script nonce that the proxy puts in its Content-Security-Policy.
+  await headers();
   return (
     <html lang="en" className="dark">
       <head>

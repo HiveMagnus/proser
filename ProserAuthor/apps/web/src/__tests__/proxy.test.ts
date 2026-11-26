@@ -25,3 +25,42 @@ describe('web authentication proxy', () => {
     );
   });
 });
+
+describe('page Content Security Policy', () => {
+  const runProxy = proxy as unknown as (
+    request: NextRequest & { auth: unknown },
+    context: { params: Promise<Record<string, string>> },
+  ) => Promise<Response | void> | Response | void;
+  const visit = async (url: string, session: unknown) => {
+    const request = new NextRequest(url);
+    Object.defineProperty(request, 'auth', { value: session });
+    return runProxy(request as NextRequest & { auth: unknown }, { params: Promise.resolve({}) });
+  };
+
+  it('sends a fresh script nonce with every page and keeps scripts and connections on this origin', async () => {
+    const first = await visit('https://author.example/manuscript', { user: { id: '1' } });
+    const second = await visit('https://author.example/auth/signin', null);
+    const policies = [first, second].map(
+      (response) => response?.headers.get('content-security-policy') ?? '',
+    );
+    const nonces = policies.map((policy) => /'nonce-([A-Za-z0-9+/=]+)'/.exec(policy)?.[1]);
+    expect(nonces[0]).toBeTruthy();
+    expect(nonces[1]).toBeTruthy();
+    expect(nonces[0]).not.toBe(nonces[1]);
+    for (const policy of policies) {
+      expect(policy).toContain("script-src 'self' 'nonce-");
+      expect(policy).not.toContain("'unsafe-inline' 'strict-dynamic'");
+      expect(policy).toMatch(/connect-src 'self'(;|$)/);
+      expect(policy).toContain("frame-ancestors 'none'");
+      expect(policy).toContain("object-src 'none'");
+      expect(policy).toContain("base-uri 'self'");
+    }
+    // Next.js reads the nonce for its own scripts from the forwarded request headers.
+    expect(first?.headers.get('x-middleware-request-x-nonce')).toBe(nonces[0]);
+  });
+
+  it('leaves API responses to Factory', async () => {
+    const response = await visit('https://author.example/api/books', { user: { id: '1' } });
+    expect(response?.headers.get('content-security-policy')).toBeNull();
+  });
+});
