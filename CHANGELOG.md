@@ -78,12 +78,6 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
   workspace packages are named `@hivemagnus/proser-*`, and two stray Factory
   scripts were removed.
 
-### Install on a phone
-
-- Author publishes a web manifest and home-screen icons, so Proser can be added
-  to a phone's home screen and opens standalone on the mobile home. There is no
-  offline service worker yet.
-
 ### Writing view
 
 - **Focus mode** in the desktop Manuscript hides the sidebar, top bar and
@@ -109,6 +103,12 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 - New Factory routes: `GET /api/books/:bookId/writing-stats`,
   `PUT /api/books/:bookId/writing-goal`,
   `GET /api/books/:bookId/recommendations` and `GET /api/plot/archetypes`.
+
+### Install on a phone
+
+- Author publishes a web manifest and home-screen icons, so Proser can be added
+  to a phone's home screen and opens standalone on the mobile home. There is no
+  offline service worker yet.
 
 ### Upgrade notes
 
