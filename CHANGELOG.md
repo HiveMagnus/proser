@@ -42,6 +42,7 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 - The release workflow rehearses backup and restore and upgrades an
   installation of the previous release to the candidate image before
   publishing it.
+
 ### Changes
 
 - New [Writing with Proser](docs/WRITING_WITH_PROSER.md) guide for writers,
