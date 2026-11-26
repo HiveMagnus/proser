@@ -291,6 +291,7 @@ export interface ParsedBookArchive { manifest: BookArchiveManifest; book: BookJs
 
 /** Verify the archive completely before anything is written. */
 export async function parseBookArchive(bytes: Buffer): Promise<ParsedBookArchive> {
+  if (Array.isArray(bytes) || !(bytes instanceof Buffer)) throw new DocumentError('DOCUMENT_ARCHIVE_INVALID', 'Upload the book archive bytes.', 422);
   if (!bytes.length || bytes.length > BOOK_ARCHIVE_MAX_BYTES) throw new DocumentError('DOCUMENT_ARCHIVE_TOO_LARGE', 'Book archives must contain 1 byte to 128 MiB.', 413);
   let files: Map<string, Buffer>;
   try { files = await readZipBuffer(bytes, { maxEntries: MAX_SCENES + MAX_IMAGES + 2, maxEntryBytes: 32 * 1024 * 1024, maxTotalBytes: 2 * BOOK_ARCHIVE_MAX_BYTES }); }

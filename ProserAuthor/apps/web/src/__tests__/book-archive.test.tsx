@@ -82,6 +82,6 @@ describe('BookArchive', () => {
     await waitFor(() => expect(screen.getByRole('alert').textContent).toBe('Digest mismatch'));
     fireEvent.click(screen.getByRole('button', { name: 'Retry import' }));
     await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
-    expect(fetchMock.mock.calls[0][0]).toBe(fetchMock.mock.calls[1][0]);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(fetchMock.mock.calls[1]?.[0]);
   });
 });

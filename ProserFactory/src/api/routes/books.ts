@@ -364,9 +364,10 @@ router.post('/archive-imports',
   (req, _res, next) => { if (!req.is('application/zip')) throw new DocumentError('DOCUMENT_ARCHIVE_MEDIA_TYPE_INVALID', 'Upload the book archive as application/zip.', 415); next(); },
   (req, res, next) => { raw({ type: 'application/zip', limit: BOOK_ARCHIVE_MAX_BYTES })(req, res, (error: unknown) => { if (error && typeof error === 'object' && 'type' in error && error.type === 'entity.too.large') next(new DocumentError('DOCUMENT_ARCHIVE_TOO_LARGE', 'Book archives must be 128 MiB or smaller.', 413)); else next(error); }); },
   async (req, res) => {
-  if (!Buffer.isBuffer(req.body)) throw new DocumentError('DOCUMENT_ARCHIVE_INVALID', 'Upload the book archive bytes.', 422);
+  const body: unknown = req.body;
+  if (Array.isArray(body) || !(body instanceof Buffer)) throw new DocumentError('DOCUMENT_ARCHIVE_INVALID', 'Upload the book archive bytes.', 422);
   res.setHeader('Cache-Control', 'private, no-store');
-  respondSuccess(res, await importBookArchive(req.user!.id, req.body, String(req.query.operationId)), 201);
+  respondSuccess(res, await importBookArchive(req.user!.id, body, String(req.query.operationId)), 201);
 });
 
 router.post('/:bookId/export-artifacts',
