@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { Response } from 'express';
 
 import { InferenceTerminalError } from '@/lib/ai/terminalReason';
+import { isBookAiDisabledError } from '@/lib/ai/bookAiPolicy';
 import logger from '@/lib/logger';
 
 export type PublicStreamErrorCode =
@@ -9,6 +10,7 @@ export type PublicStreamErrorCode =
   | 'STREAM_BLOCKED'
   | 'STREAM_PROTOCOL_ERROR'
   | 'STREAM_UNAVAILABLE'
+  | 'STREAM_AI_DISABLED'
   | 'STREAM_FAILED';
 
 const publicMessages: Record<PublicStreamErrorCode, string> = {
@@ -16,6 +18,7 @@ const publicMessages: Record<PublicStreamErrorCode, string> = {
   STREAM_BLOCKED: 'Generation was blocked and requires review.',
   STREAM_PROTOCOL_ERROR: 'Generation ended with an invalid response.',
   STREAM_UNAVAILABLE: 'Generation is temporarily unavailable.',
+  STREAM_AI_DISABLED: 'AI is switched off for this book.',
   STREAM_FAILED: 'Generation could not be completed.',
 };
 
@@ -40,7 +43,9 @@ export function publicStreamError(
 ): { operationId: string; code: PublicStreamErrorCode; message: string; correlationId: string; partial: 'discard' } {
   const correlationId = randomUUID();
   let code: PublicStreamErrorCode = 'STREAM_FAILED';
-  if (error instanceof InferenceTerminalError) {
+  if (isBookAiDisabledError(error)) {
+    code = 'STREAM_AI_DISABLED';
+  } else if (error instanceof InferenceTerminalError) {
     if (error.code === 'INFERENCE_TRUNCATED') code = 'STREAM_TRUNCATED';
     else if (error.code === 'INFERENCE_BLOCKED') code = 'STREAM_BLOCKED';
     else code = 'STREAM_PROTOCOL_ERROR';

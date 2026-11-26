@@ -1,4 +1,5 @@
 import {releaseAdmissionMiddleware} from '@/operations/releaseAdmission';
+import { bookAiScopeMiddleware } from '@/lib/ai/bookAiPolicy';
 import booksRouter from './routes/books';
 import promptsRouter from './routes/prompts';
 import { Router } from 'express';
@@ -37,6 +38,8 @@ import { NovaGrantError, registerNovaBookReadGrant, registerNovaCapabilitiesGran
 
 const router = Router();
 router.use(releaseAdmissionMiddleware);
+// Scope each request to the books it names, for the per-book AI switch.
+router.use(bookAiScopeMiddleware);
 
 // API version and basic info
 router.get('/', (req, res) => {

@@ -34,6 +34,12 @@ vi.mock('@/hooks/queries/use-writing-stats', () => ({
   useRecommendations: () => ({ data: undefined }),
 }));
 vi.mock('@/components/dashboard/book-trash', () => ({ BookTrash: () => null }));
+vi.mock('@/hooks/queries/use-book-ai-policy', () => ({
+  useAiDisabledBookIds: () => ({ data: ['1'] }),
+}));
+vi.mock('@/components/dashboard/book-ai-setting', () => ({
+  BookAiSetting: ({ bookId }: { bookId: string }) => <p>AI setting for book {bookId}</p>,
+}));
 vi.mock('@/hooks/use-document-book-catalog', () => ({
   useDocumentBookCatalog: () => ({
     prepare: mocks.prepare,
@@ -115,6 +121,10 @@ beforeEach(() => {
   mocks.remove.mockResolvedValue({ status: 'completed' });
   mocks.invalidate.mockResolvedValue(undefined);
 });
+it('marks books that have AI switched off', () => {
+  render(<DashboardPage />);
+  expect(screen.getByTitle('AI is switched off for this book')).toHaveTextContent('AI off');
+});
 it('edits only the immutable dialog-open metadata and never refreshes its revision at submission', async () => {
   render(<DashboardPage />);
   expect(
@@ -123,6 +133,7 @@ it('edits only the immutable dialog-open metadata and never refreshes its revisi
   await userEvent.click(screen.getByRole('button', { name: 'Edit Details' }));
   await waitFor(() => expect(screen.getByLabelText('Title')).toHaveValue('Saved dialog source'));
   expect(screen.getByLabelText('Summary')).toHaveValue('Immutable saved summary');
+  expect(screen.getByText('AI setting for book 1')).toBeInTheDocument();
   await userEvent.clear(screen.getByLabelText('Title'));
   await userEvent.type(screen.getByLabelText('Title'), 'Explicit updated title');
   await userEvent.clear(screen.getByLabelText('Summary'));

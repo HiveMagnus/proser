@@ -1782,6 +1782,35 @@ export async function setWritingGoal(bookId: string, goal: WritingGoal, expected
   return data.goal;
 }
 
+/** The per-book AI switch. While aiDisabled is true, Factory refuses every
+ * request that would send the book to a model provider. */
+export interface BookAiPolicy {
+  bookId: number;
+  aiDisabled: boolean;
+  updatedAt: string | null;
+}
+
+export async function getBookAiPolicy(bookId: string, signal?: AbortSignal) {
+  return requestFactory<BookAiPolicy>(`/api/books/${encodeURIComponent(bookId)}/ai-policy`, {
+    signal,
+  });
+}
+
+export async function setBookAiPolicy(bookId: string, aiDisabled: boolean, expectedUserId: string) {
+  return requestFactory<BookAiPolicy>(`/api/books/${encodeURIComponent(bookId)}/ai-policy`, {
+    method: 'PUT',
+    body: JSON.stringify({ aiDisabled }),
+    headers: { 'X-Proser-Expected-User': encodeURIComponent(expectedUserId) },
+  });
+}
+
+export async function getAiDisabledBookIds(signal?: AbortSignal) {
+  const data = await requestFactory<{ aiDisabledBookIds: number[] }>('/api/books/ai-policies', {
+    signal,
+  });
+  return data.aiDisabledBookIds.map(String);
+}
+
 export async function getRecommendations(bookId: string, signal?: AbortSignal) {
   const data = await requestFactory<{ recommendations: Recommendation[] }>(
     `/api/books/${encodeURIComponent(bookId)}/recommendations?tz=${encodeURIComponent(browserTimeZone())}`,

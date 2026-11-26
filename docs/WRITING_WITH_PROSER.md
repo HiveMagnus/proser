@@ -132,6 +132,16 @@ actions report that the model is unavailable.
 Your manuscripts are only sent to the model servers your installation is
 configured to use.
 
+### Keep a book away from AI
+
+To make sure a manuscript is never sent to a model server, open **Edit
+Details** for the book on the Dashboard and turn on **Keep this book away from
+AI**. Proser then refuses every AI action for that book (writing, revision,
+review, proposals, workflows and images) before anything is sent, and a
+workflow that was already queued pauses. The book shows an **AI off** badge.
+Writing, imports, exports and statistics keep working. Turn the switch off to
+use AI with the book again; resume a paused workflow from Workflows.
+
 ## Where to go next
 
 - [Compose guide](COMPOSE.md): backups, restores and upgrades for whoever runs

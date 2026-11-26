@@ -255,6 +255,8 @@ Book history and resolved profiles are under `/books/:bookId/editorial-*`.
 | `GET`                          | `/books/:bookId/writing-stats?days=30&tz=Area/City`    | Daily words written, totals, streaks and goal pacing                                              |
 | `PUT`                          | `/books/:bookId/writing-goal`                          | Set or clear the length target, deadline and daily goal                                           |
 | `GET`                          | `/books/:bookId/recommendations?tz=Area/City`          | Next writing steps for the book                                                                   |
+| `GET`, `PUT`                   | `/books/:bookId/ai-policy`                             | Read or set the book's AI switch (`{ "aiDisabled": true }`)                                       |
+| `GET`                          | `/books/ai-policies`                                   | IDs of the caller's books with AI switched off                                                    |
 | `GET`                          | `/plot/archetypes`                                     | Story archetypes a book's `storyArchetypeKey` can name                                            |
 
 Writing statistics read the last saved book revision of each day in the
@@ -262,6 +264,15 @@ requested time zone (`tz`, default UTC; `days` 7–365, default 30). Changes in
 scenes saved by hand count as `written`; text from imports, AI generation and
 workflows is `other` and never fills a goal or streak. Installs with document
 authority off have no book revisions, so their statistics stay empty.
+
+While a book's `aiDisabled` is true, Factory refuses every model-provider
+request made for it with `409 BOOK_AI_DISABLED`: generation, revision, review,
+proposals, campaigns, plot-thread reviews, workflows, image generation and the
+Hermes and Nova service routes. Known AI routes refuse before recording any
+operation; every other provider dispatch is checked at the provider gate.
+Queued workflows for the book pause, generation operations fail with
+`BOOK_AI_DISABLED`, and retrieval skips embeddings and falls back to keyword
+search.
 
 Export artifacts are revision-bound. A stale artifact is removed and must be recreated. `read` accepts stable chapter/scene IDs or unambiguous numbers with `offset` and `maxChars`.
 

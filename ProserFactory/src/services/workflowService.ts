@@ -36,6 +36,7 @@ import { EDITORIAL_POLICY_VERSION, EDITORIAL_LIMITS } from '@/services/editorial
 import { getEditorialPass } from '@/services/editorial/passRegistry';
 import { editorialWorkflowService } from '@/services/editorial/editorialWorkflowService';
 import { assertSharedResourceOperationCurrent, bindSharedResourceExecution, sealSharedResourceOperation, sharedResourceExecutionOperation } from '@/services/sharedResourceService';
+import { assertBookAiAllowed, isBookAiDisabledError, runWithAiBookScope } from '@/lib/ai/bookAiPolicy';
 
 export type WorkflowType = 'revision_campaign_analysis' | 'full_book' | 'quality_review' | 'improve_quality' | 'guided_improve' | 'editorial_optimize';
 export type WorkflowScope = { type: 'book' | 'act' | 'chapter' | 'scene'; id?: number };
@@ -696,9 +697,10 @@ class WorkflowService {
   }
 
   async process(runId: string, executionParentRunId?: string): Promise<void> {
-    const run=await this.db.workflowRun.findUnique({where:{id:runId},select:{userId:true,status:true}});
+    const run=await this.db.workflowRun.findUnique({where:{id:runId},select:{userId:true,status:true,bookId:true}});
     if(!run||['completed','release_approved','cancelled'].includes(run.status))return;
-    return runAdmittedBackground('workflow-execution',runId,run.userId,()=>this.processAdmitted(runId,executionParentRunId));
+    // Provider requests made for this run are checked against its book's AI switch.
+    return runWithAiBookScope([run.bookId],()=>runAdmittedBackground('workflow-execution',runId,run.userId,()=>this.processAdmitted(runId,executionParentRunId)));
   }
   private async processAdmitted(runId: string, executionParentRunId?: string): Promise<void> {
     const existingState = await this.db.workflowRun.findUnique({ where: { id: runId }, select: { status: true } });
@@ -747,6 +749,7 @@ class WorkflowService {
         await this.db.workflowTask.updateMany({ where: { runId, taskKey: `${run.workflowType}:root`, leaseOwner }, data: { status: 'running', startedAt: new Date(), attemptCount: { increment: 1 }, inputRevisionId: run.sourceRevisionId, errorCode: null, errorMessage: null } });
         await this.event(runId, 'started', { workflowType: run.workflowType, phase: run.phase, leaseOwner, executionParentRunId });
         try {
+          await assertBookAiAllowed([run.bookId]);
           if (run.workflowType === 'revision_campaign_analysis') await processCampaignAnalysis(run);
           else if (run.workflowType === 'full_book') await this.processFullBook(run);
           else if (run.workflowType === 'quality_review') await this.processQualityReview(run);
@@ -759,6 +762,13 @@ class WorkflowService {
             await this.db.workflowRun.updateMany({where:{id:runId,leaseOwner,status:'running'},data:{status:'paused',failureClass:'infrastructure',failureReason:'Release admissions are closed; recover the exact retained workflow/effects before explicit resume.',finishedAt:null}});
             await this.db.workflowTask.updateMany({where:{runId,taskKey:`${run.workflowType}:root`,leaseOwner,status:'running'},data:{status:'pending',errorCode:error.code,errorMessage:'Provider dispatch was refused by the release fence; original effect IDs/deadlines remain retained.',finishedAt:null}});
             await this.event(runId,'paused',{reason:'release-admission-fence',errorCode:error.code,leaseOwner});return;
+          }
+          if (isBookAiDisabledError(error)) {
+            // The refused provider request was never sent; resume after switching AI back on.
+            await this.db.workflowRun.updateMany({ where: { id: runId, leaseOwner, status: 'running' }, data: { status: 'paused', failureClass: 'validation', failureReason: error.message, finishedAt: null } });
+            await this.db.workflowTask.updateMany({ where: { runId, taskKey: `${run.workflowType}:root`, leaseOwner, status: 'running' }, data: { status: 'pending', errorCode: error.code, errorMessage: error.message, finishedAt: null } });
+            await this.event(runId, 'paused', { reason: 'book-ai-disabled', errorCode: error.code, leaseOwner });
+            return;
           }
           const message = boundedFailureReason(error);
           const failureClass = classifyWorkflowFailure(error);

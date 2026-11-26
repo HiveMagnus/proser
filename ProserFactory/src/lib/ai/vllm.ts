@@ -1,4 +1,5 @@
 import {DocumentError} from '@/documents/errors';
+import { BOOK_AI_DISABLED } from './bookAiPolicy';
 import {admitReleaseMutation} from '@/operations/releaseAdmission';
 import Ajv, { type SchemaObject } from 'ajv';
 import addFormats from 'ajv-formats';
@@ -673,7 +674,7 @@ export class VllmService implements AIProvider {
         this.failureCount = 0;
         return raw;
       } catch (error) {
-        if(error instanceof DocumentError&&error.code.startsWith('DOCUMENT_ADMISSIONS_'))throw error;
+        if(error instanceof DocumentError&&(error.code.startsWith('DOCUMENT_ADMISSIONS_')||error.code===BOOK_AI_DISABLED))throw error;
         const msg = (error as Error).message || '';
         lastErrorMsg = msg;
         const nonRetryable = /Non-retryable/.test(msg);
@@ -758,7 +759,7 @@ export class VllmService implements AIProvider {
         }
         return await readBoundedJson<VllmChatResponse>(res);
       } catch (error) {
-        if(error instanceof DocumentError&&error.code.startsWith('DOCUMENT_ADMISSIONS_'))throw error;
+        if(error instanceof DocumentError&&(error.code.startsWith('DOCUMENT_ADMISSIONS_')||error.code===BOOK_AI_DISABLED))throw error;
         if ((error as Error).name === 'AbortError' || caller?.aborted || /Non-retryable/.test((error as Error).message)) throw error;
         lastError = error;
         if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, attempt * 500));
@@ -1050,7 +1051,7 @@ export class VllmService implements AIProvider {
       });
       this.failureCount = 0;
     } catch (error) {
-      if(error instanceof DocumentError&&error.code.startsWith('DOCUMENT_ADMISSIONS_'))throw error;
+      if(error instanceof DocumentError&&(error.code.startsWith('DOCUMENT_ADMISSIONS_')||error.code===BOOK_AI_DISABLED))throw error;
       const classification = classifyStreamError(error, opts.signal);
       if (classification.outcome) {
         recordInferenceOutcome(classification.outcome, { backend: this.backendLabel, model: this.model, stream: true });

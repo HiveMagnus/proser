@@ -8,6 +8,7 @@ import {
   generationReplayService,
 } from './generationReplayService';
 import { assertSharedResourceOperationCurrent, sharedResourceExecutionOperation } from './sharedResourceService';
+import { assertBookAiAllowed, isBookAiDisabledError } from '@/lib/ai/bookAiPolicy';
 
 let supervisorTimer: ReturnType<typeof setInterval> | null = null;
 let scheduling = false;
@@ -61,6 +62,7 @@ async function runOperation(operationId: string): Promise<void> {
       where: { id: bookId, userId: claimed.userId },
     });
     if (!book) throw new Error('Book not found');
+    await assertBookAiAllowed([bookId]);
     const delegated = await sharedResourceExecutionOperation('generation', operationId);
     if (delegated) await assertSharedResourceOperationCurrent(delegated.operationId);
     controller.signal.throwIfAborted();
@@ -152,7 +154,7 @@ async function runOperation(operationId: string): Promise<void> {
     if (!cancellationRequested && !controller.signal.aborted) {
       const code = error instanceof GenerationOutputLimitError
         ? 'GENERATION_OUTPUT_LIMIT'
-        : 'GENERATION_FAILED';
+        : isBookAiDisabledError(error) ? 'BOOK_AI_DISABLED' : 'GENERATION_FAILED';
       const payload = publicStreamError(error, { operationId, route: 'generate.prose' });
       await generationReplayService.fail(operationId, code, payload.message, payload.correlationId);
       logger.error({ error, operationId }, 'Durable generation operation failed');

@@ -7,6 +7,7 @@ import { LIVE_PROSE_JUDGE_QUEUE_NAME, type LiveProseJudgePayload } from '../queu
 import logger from '../lib/logger';
 import { submitLiveProseJudge } from '../services/liveProseJudgeService';
 import { proseTraceService } from '../services/proseTraceService';
+import { isBookAiDisabledError, runWithAiBookScope } from '../lib/ai/bookAiPolicy';
 
 async function processLiveProseJudge(job: Job<LiveProseJudgePayload>,token?:string): Promise<void> {
   if(!await releaseAdmissionsOpen()){await job.moveToDelayed(Date.now()+1000,token);throw new DelayedError();}
@@ -14,13 +15,15 @@ async function processLiveProseJudge(job: Job<LiveProseJudgePayload>,token?:stri
 }
 async function processAdmittedJudge(job: Job<LiveProseJudgePayload>): Promise<void> {
   try {
-    const result = await submitLiveProseJudge(job.data);
+    const result = await runWithAiBookScope([job.data.bookId], () => submitLiveProseJudge(job.data));
     await proseTraceService.finalizeTraceFromEvaluation(job.data.traceId, result);
   } catch (error) {
     await proseTraceService.markTraceFailed(
       job.data.traceId,
       error instanceof Error ? error.message : String(error),
     );
+    // Retrying cannot succeed while the book's AI is switched off.
+    if (isBookAiDisabledError(error)) return;
     throw error;
   }
 }

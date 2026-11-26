@@ -36,6 +36,10 @@ a newer release. The general procedure (back up, switch the checkout and
   `book_writing_goals` table. `initialize` stops with the pending migration
   name until you apply it with `migrate deploy` (step 4 above). The document
   enforcement guards are unchanged.
+- **Database migration:** `20261127000000_book_ai_policies` adds the
+  `book_ai_policies` table for the per-book AI switch. It is applied by the
+  same `migrate deploy` step. Existing books keep AI on; nothing else changes
+  until a writer switches AI off for a book.
 
 ## v1.0.6 and v1.0.7
 

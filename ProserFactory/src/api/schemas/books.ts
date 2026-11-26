@@ -215,6 +215,8 @@ export const writingGoalBody = z.object({
   dailyWords: nullableGoalInt('dailyWords', 1_000_000),
 }).strict();
 
+export const bookAiPolicyBody = z.object({ aiDisabled: z.boolean() }).strict();
+
 export const recommendationsQuery = z.object({
   tz: z.string().max(64).optional(),
 }).strict();
