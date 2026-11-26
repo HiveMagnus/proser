@@ -11,6 +11,7 @@ import type {
 } from '@hivemagnus/proser-contracts';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { Button } from '@/components/ui/button';
+import { TextManuscriptImport } from '@/components/publish/text-manuscript-import';
 import { getDocumentManifest } from '@/lib/document-api';
 import {
   getPublicationCapabilities,
@@ -154,7 +155,7 @@ function PublicationWorkspace({
     });
   }
   if (!authenticated) return <p>Sign in to access publication artifacts.</p>;
-  if (!bookId) return <p>Select a book to prepare an export or import a DOCX manuscript.</p>;
+  if (!bookId) return <p>Select a book to prepare an export or import a manuscript.</p>;
   return (
     <div className="mx-auto max-w-5xl space-y-8 pb-12">
       <header>
@@ -433,6 +434,11 @@ function PublicationWorkspace({
           </div>
         )}
       </section>
+      <TextManuscriptImport
+        bookId={bookId}
+        disabled={busy || !capabilities}
+        signal={controller.signal}
+      />
     </div>
   );
 }

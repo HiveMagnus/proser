@@ -70,6 +70,17 @@ until you tick the confirmation and choose **Commit reviewed import**. The
 original file is kept with the book, so you can download it again from the
 preview.
 
+## Import a Markdown or text manuscript
+
+Go to **Publish**, find **Import a Markdown or text manuscript** and choose a
+`.md` or `.txt` file. Proser starts a new chapter at each chapter heading: a
+Markdown heading such as `## Chapter 1`, or a line on its own such as
+`Chapter One`, `Chapter 3: The Storm`, `Prologue` or `Epilogue` in a text file.
+`Part One` headings start new parts, and a line of `***` or `* * *` starts a new
+scene. Check the chapter list and the conversion notes in the preview, then tick
+the confirmation and choose **Commit reviewed import**. The original file is
+kept with the book.
+
 ## Export or publish
 
 **Publish** turns the saved book into a file: Word (DOCX), PDF, EPUB, HTML,

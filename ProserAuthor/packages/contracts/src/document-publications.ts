@@ -93,6 +93,50 @@ export interface DocumentDocxImportPreview {
     document: ProserDocument;
   }>;
 }
+/** Markdown and plain-text manuscripts preserved byte for byte and converted
+ * through the append-import pipeline (`POST import-originals/:id?format=`). */
+export type DocumentTextImportFormat = 'markdown' | 'plain-text';
+export interface DocumentTextImportReport {
+  schemaVersion: 1;
+  codec: 'proser-plain-manuscript';
+  codecVersion: string;
+  format: DocumentTextImportFormat;
+  originalId: string;
+  originalSha256: string;
+  sourceBookRevisionId: string;
+  strategy: 'append-new-identities';
+  convertedSha256: string;
+  title: string;
+  byline: string | null;
+  actCount: number;
+  chapterCount: number;
+  sceneCount: number;
+  wordCount: number;
+  codexCount: 0;
+  encoding: 'utf-8' | 'windows-1252';
+  paragraphMode: 'blank-line' | 'line';
+  fileNames: string[];
+  losses: Array<{ code: string; message: string; count?: number }>;
+}
+export interface DocumentTextImportPreview {
+  id: string;
+  originalId: string;
+  sourceBookRevisionId: string;
+  reportHash: string;
+  report: DocumentTextImportReport;
+  mapping: {
+    acts: Array<{
+      title?: string;
+      chapters: Array<{ title?: string; summary?: string; scenes: Array<{ summary?: string }> }>;
+    }>;
+  };
+}
+export interface DocumentTextImportCommitRequest {
+  operationId: string;
+  expectedRevisionId: string;
+  expectedScopes: { structure: string; canon: string };
+  consentReportHash: string;
+}
 export interface DocumentDocxImportCommitRequest {
   operationId: string;
   expectedRevisionId: string;

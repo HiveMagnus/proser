@@ -120,6 +120,17 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
   list from Factory. Author now reads a book's archetype from Factory's
   `storyArchetypeKey`, so the Dashboard shows it. The unused demo page at
   `/plot/<id>` with sample beats is removed.
+- **Import a Markdown or text manuscript.** Publish has a new **Import a
+  Markdown or text manuscript** section for `.md` and `.txt` files. Chapter
+  headings (`## Chapter 1`, or a `Chapter One` line in a text file) start
+  chapters, `Part` headings start parts, and scene-break lines such as `***`
+  start scenes. Like the bundle and DOCX imports, Factory keeps the exact file,
+  shows the chapter mapping and what the conversion changes, and appends the
+  chapters only after the writer consents to that report. Text files that are
+  not UTF-8 are read as Windows-1252, and the report says so.
+  `POST /api/books/:bookId/import-originals/:originalId` takes
+  `?format=markdown` or `?format=plain-text`; without it the upload is a legacy
+  bundle as before. No database migration.
 - New Factory routes: `GET /api/books/:bookId/writing-stats`,
   `PUT /api/books/:bookId/writing-goal`,
   `GET /api/books/:bookId/recommendations` and `GET /api/plot/archetypes`.
