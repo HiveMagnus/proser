@@ -67,6 +67,15 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 - The `CANVAS_*.md` release-process documents moved to `docs/`, the Author
   workspace packages are named `@hivemagnus/proser-*`, and two stray Factory
   scripts were removed.
+### Fixes
+
+- Signing out checks the browser for drafts Proser has not saved. When there
+  are any, Author lists them and offers to download them, remove every Proser
+  draft and recovery journal from the browser (for shared devices), or keep
+  them for the next sign-in.
+- A scene draft or passage whose save Factory never confirmed is no longer
+  deleted after 30 days; it stays until the writer recovers, downloads or
+  discards it.
 
 ### New features
 
