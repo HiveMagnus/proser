@@ -78,6 +78,13 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
   workspace packages are named `@hivemagnus/proser-*`, and two stray Factory
   scripts were removed.
 
+### Writing view
+
+- **Focus mode** in the desktop Manuscript hides the sidebar, top bar and
+  banners (the **Focus** button or Ctrl/⌘+Shift+F), and **Typewriter** keeps
+  the line being typed in the middle of the screen. Both settings are kept
+  per browser.
+
 ### New features
 
 - **Writing statistics and goals.** The Analytics page (back in the sidebar)
