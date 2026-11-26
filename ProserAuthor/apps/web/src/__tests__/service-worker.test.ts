@@ -98,7 +98,7 @@ describe('offline shell service worker', () => {
       expect(request.redirect).toBe('error');
     }
     expect([...worker.stores.keys()].sort()).toEqual(['other-app', 'proser-shell-v1']);
-    expect(worker.self.clients.claim).toHaveBeenCalled();
+    expect(worker.self.clients.claim).not.toHaveBeenCalled();
   });
 
   it('never answers API, auth or non-GET requests, so they are never cached', () => {

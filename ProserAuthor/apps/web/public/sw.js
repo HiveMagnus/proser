@@ -36,8 +36,9 @@ self.addEventListener('activate', (event) => {
             .filter((key) => key.startsWith('proser-') && key !== SHELL_CACHE)
             .map((key) => caches.delete(key)),
         ),
-      )
-      .then(() => self.clients.claim()),
+      ),
+    // No clients.claim(): pages that are already open stay uncontrolled until
+    // their next navigation, so a running session never changes under them.
   );
 });
 
