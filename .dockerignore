@@ -84,6 +84,7 @@ ProserAuthor/packages/editor/**
 !scripts/
 scripts/**
 !scripts/initialize-compose-database.mjs
+!scripts/init-compose-env.mjs
 
 **/.git
 **/.env*

@@ -37,6 +37,9 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 - A scene draft or passage whose save Factory never confirmed is no longer
   deleted after 30 days; it stays until the writer recovers, downloads or
   discards it.
+- The release image builds again: `.dockerignore` now passes
+  `scripts/init-compose-env.mjs`, which the Dockerfile copies into the image.
+  A root test checks every Dockerfile `COPY` source against the build context.
 
 ### Backup and restore
 
