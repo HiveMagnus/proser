@@ -1,4 +1,4 @@
-import { projectDocument, type ProserDocument } from '@cheftaco/proser-contracts';
+import { projectDocument, type ProserDocument } from '@hivemagnus/proser-contracts';
 import { documentDraftStore } from './document-drafts';
 
 /**

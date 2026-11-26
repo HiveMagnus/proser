@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { documentFromText } from '@cheftaco/proser-contracts';
+import { documentFromText } from '@hivemagnus/proser-contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { installFakeIndexedDB } from './fake-indexeddb';
