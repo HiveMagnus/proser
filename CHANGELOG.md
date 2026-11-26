@@ -109,6 +109,7 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 
 ### Changes
 
+- Dependabot now opens one grouped weekly pull request (group `hivemagnus`) for `@hivemagnus/*` package updates, so suite package bumps arrive together. Repository configuration only; nothing to do when upgrading.
 - New [Writing with Proser](docs/WRITING_WITH_PROSER.md) guide for writers,
   linked from the README, and [UPGRADING.md](UPGRADING.md) for operators.
 - `node dist/operations/imageOrphanSweep.js` in the Factory container reports
