@@ -19,6 +19,9 @@ vi.mock('@/components/layout/top-bar', () => ({ TopBar: () => <header>App top ba
 vi.mock('@/components/layout/command-palette', () => ({ CommandPalette: () => null }));
 vi.mock('@/components/layout/keyboard-shortcuts', () => ({ KeyboardShortcutsDialog: () => null }));
 vi.mock('@/components/layout/onboarding-banner', () => ({ OnboardingBanner: () => null }));
+vi.mock('@/components/layout/next-action-banner', () => ({
+  NextActionBanner: () => <aside>Next step banner</aside>,
+}));
 vi.mock('@/components/layout/generation-recovery-banner', () => ({
   GenerationRecoveryBanner: () => null,
 }));
@@ -50,6 +53,7 @@ describe('focus mode', () => {
     await userEvent.setup().click(screen.getByRole('button', { name: 'Focus' }));
     expect(screen.queryByText('App sidebar')).not.toBeInTheDocument();
     expect(screen.queryByText('App top bar')).not.toBeInTheDocument();
+    expect(screen.queryByText('Next step banner')).not.toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem('proser-writing-view') ?? '{}').focus).toBe(true);
     await userEvent.setup().click(screen.getByRole('button', { name: 'Exit focus' }));
     expect(screen.getByText('App top bar')).toBeInTheDocument();
