@@ -29,6 +29,13 @@ Every save is kept as a revision, so earlier versions of a scene are not lost.
 If someone else (or another tab) changed the same scene, Proser does not
 overwrite it: it shows both versions and asks which to keep.
 
+### Focus on the page
+
+In the Manuscript, **Focus** (or Ctrl+Shift+F, ⌘+Shift+F on a Mac) hides the
+sidebar and menus so only the page is left; choose **Exit focus** to bring them
+back. **Typewriter** keeps the line you are typing in the middle of the screen.
+Proser remembers both on this computer.
+
 ## Get work back after a problem
 
 While you type, Proser also keeps a copy of the scene in your browser. If the
