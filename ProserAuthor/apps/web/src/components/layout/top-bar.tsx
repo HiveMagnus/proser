@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { usePathname } from 'next/navigation';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { LogOut, Settings, Keyboard, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -15,6 +15,7 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { Breadcrumbs, BreadcrumbItem } from '@/components/ui/breadcrumbs';
+import { useSignOutWithLocalDrafts } from './sign-out-dialog';
 
 const routeLabels: Record<string, string> = {
   '': 'Dashboard',
@@ -33,6 +34,7 @@ const routeLabels: Record<string, string> = {
 export function TopBar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { requestSignOut, dialog: signOutDialog } = useSignOutWithLocalDrafts();
 
   const segments = pathname.split('/').filter(Boolean);
   const currentSection = segments[0] ?? '';
@@ -115,7 +117,7 @@ export function TopBar() {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+              onClick={() => void requestSignOut()}
               className="text-danger focus:text-danger"
             >
               <LogOut className="mr-2 size-4" />
@@ -123,6 +125,7 @@ export function TopBar() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        {signOutDialog}
       </div>
     </header>
   );

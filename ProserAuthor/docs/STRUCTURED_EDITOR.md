@@ -122,7 +122,14 @@ paragraph/cell identities. They emit bounded operations rather than uploading a
 whole scene, expand text differences to grapheme boundaries, and reject protected
 objects or ambiguous scopes. The user/book/scene journal retains the frozen window,
 newer local text and exact original commit/restore request for thirty days.
+A scene draft or passage whose save Factory has not confirmed is kept past
+thirty days until the writer recovers, downloads or discards it.
 Competing tabs and stale acknowledgements cannot replace or delete a newer draft.
+
+Signing out checks this browser for scene and passage drafts. When there are
+any, Author lists them and offers to download them as text, remove every Proser
+draft and recovery journal from the browser, or keep them for the next
+sign-in.
 Operation dispatch persists first and recovers the original receipt before an
 explicit retry; account changes suppress late acknowledgement callbacks.
 

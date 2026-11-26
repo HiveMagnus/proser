@@ -52,7 +52,10 @@ export async function readDocumentDraft(
   );
   if (!draft || draft.userId !== userId || draft.bookId !== bookId || draft.sceneId !== sceneId)
     return undefined;
-  if (draft.updatedAt < Date.now() - RETENTION_MS) {
+  // An old draft is dropped only when nothing in it waits for Factory. A draft
+  // with an unconfirmed save stays until the writer recovers, downloads or
+  // discards it, so expiry never loses unsent work.
+  if (draft.updatedAt < Date.now() - RETENTION_MS && !draft.pendingSave) {
     await deleteDocumentDraft(key);
     return undefined;
   }

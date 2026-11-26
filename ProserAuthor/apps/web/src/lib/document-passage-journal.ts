@@ -117,7 +117,12 @@ export async function readDocumentPassageDraft(
     row.sceneId !== sceneId
   )
     return;
-  if (!Number.isFinite(row.updatedAt) || row.updatedAt < Date.now() - retention) {
+  // Expiry never drops a passage whose operation Factory has not confirmed.
+  if (
+    (!Number.isFinite(row.updatedAt) || row.updatedAt < Date.now() - retention) &&
+    !row.pending &&
+    !row.prepared
+  ) {
     await deleteDocumentPassageDraft(userId, bookId, sceneId, row.version);
     return;
   }
