@@ -27,3 +27,20 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: redis
         update-types: ["version-update:semver-major"]
+  # Suite packages: one grouped weekly pull request for every @hivemagnus/* update.
+  - package-ecosystem: npm
+    directories:
+      - /ProserAuthor
+      - /ProserFactory
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    allow:
+      - dependency-name: "@hivemagnus/*"
+    ignore:
+      # Built from this repository and resolved as workspace links; versions move with the release bump.
+      - dependency-name: "@hivemagnus/proser-*"
+    groups:
+      hivemagnus:
+        patterns:
+          - "@hivemagnus/*"
