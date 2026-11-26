@@ -60,3 +60,58 @@ export interface DocumentSearchIndexRecoveryResponse {
   complete: boolean;
   nextAfter?: string;
 }
+
+/** Book-wide replace previews every match against the current immutable head.
+ * Applying commits all selected matches as one book revision; restoring
+ * previousRevisionId undoes it while the head is still that revision. */
+export interface DocumentReplacePreviewRequest {
+  q: string;
+  replacement: string;
+  caseSensitive?: boolean;
+}
+export type DocumentReplaceSkipReason =
+  'formatting' | 'boundary' | 'tracked-change' | 'unsupported';
+export interface DocumentReplaceMatch {
+  id: string;
+  sceneId: number;
+  sceneNumber: number;
+  chapterId: number;
+  sceneRevisionId: string;
+  from: number;
+  to: number;
+  sourceText: string;
+  excerpt: string;
+  excerptFrom: number;
+  excerptTo: number;
+  replaceable: boolean;
+  reason?: DocumentReplaceSkipReason;
+}
+export interface DocumentReplacePreviewResponse {
+  schemaVersion: 1;
+  sourceBookRevisionId: string;
+  query: string;
+  replacement: string;
+  caseSensitive: boolean;
+  matches: DocumentReplaceMatch[];
+  sceneCount: number;
+  truncated: boolean;
+}
+export interface DocumentReplaceApplyRequest {
+  schemaVersion: 1;
+  operationId: string;
+  expectedRevisionId: string;
+  q: string;
+  replacement: string;
+  caseSensitive?: boolean;
+  matches: Array<{ sceneId: number; sceneRevisionId: string; from: number; to: number }>;
+}
+export interface DocumentReplaceApplyReceipt {
+  kind: 'replace';
+  operationId: string;
+  revisionId: string;
+  previousRevisionId: string;
+  contentHash: string;
+  replacedCount: number;
+  scenes: Array<{ sceneId: number; revisionId: string; contentHash: string; wordCount: number }>;
+  status: 'completed';
+}

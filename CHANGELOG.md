@@ -134,6 +134,15 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 - New Factory routes: `GET /api/books/:bookId/writing-stats`,
   `PUT /api/books/:bookId/writing-goal`,
   `GET /api/books/:bookId/recommendations` and `GET /api/plot/archetypes`.
+- **Find and replace across the book.** The desktop Manuscript has a **Find
+  and replace** panel: it previews every match in the saved manuscript with
+  its context, lets the writer untick matches to keep, and saves the rest as
+  one book revision. **Undo replace** restores the revision before it while
+  nothing else has been saved since. Matches that cross formatting, a
+  paragraph or a pending tracked change are listed but skipped. A replace
+  covers at most 1000 matches in 100 scenes; preview again for the rest. New
+  Factory routes: `POST /api/books/:bookId/document-replace/preview` and
+  `POST /api/books/:bookId/document-replace`.
 
 ### Install on a phone
 

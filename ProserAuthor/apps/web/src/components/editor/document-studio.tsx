@@ -1,5 +1,5 @@
 'use client';
-import { ChevronLeft, ChevronRight, Search, Settings2, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Replace, Search, Settings2, RefreshCw } from 'lucide-react';
 import { headerFooterForChapter } from '@/lib/document-layout-editing';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useProtectedRouter as useRouter } from '@/hooks/use-protected-router';
@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { DocumentBookContext } from './document-book-context';
 import { DocumentLayoutSettings } from './document-layout-settings';
 import { DocumentBookSearch } from './document-book-search';
+import { DocumentBookReplace } from './document-book-replace';
 import { DocumentFirstScene } from './document-first-scene';
 
 /** Structured navigation contains identities/metadata, never every scene body.
@@ -64,6 +65,10 @@ export function DocumentStudio({
   const [layoutDirty, setLayoutDirty] = useState(false);
   const [layoutOpen, setLayoutOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [replaceOpen, setReplaceOpen] = useState(false);
+  // A book-wide replace or its undo changes saved scenes outside the open
+  // editor, so the editing workspace remounts on the new revision.
+  const [replaceGeneration, setReplaceGeneration] = useState(0);
   const [searchHit, setSearchHit] = useState<DocumentSearchHit>();
   const dirty = bodyDirty || layoutDirty;
   useEffect(() => {
@@ -510,6 +515,16 @@ export function DocumentStudio({
           type="button"
           variant="ghost"
           className="proser-navigation-action"
+          aria-expanded={replaceOpen}
+          aria-controls="manuscript-book-replace"
+          onClick={() => setReplaceOpen((value) => !value)}
+        >
+          <Replace aria-hidden="true" /> Find and replace
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          className="proser-navigation-action"
           aria-expanded={layoutOpen}
           onClick={() => setLayoutOpen((value) => !value)}
           disabled={layoutDirty}
@@ -526,6 +541,17 @@ export function DocumentStudio({
             setSearchHit(hit);
             setWindowFocusId(hit.sceneId);
             if (String(hit.sceneId) !== sceneId) router.replace(sceneRoute(hit.sceneId));
+          }}
+        />
+      </div>
+      <div id="manuscript-book-replace" hidden={!replaceOpen}>
+        <DocumentBookReplace
+          bookId={bookId}
+          disabled={dirty}
+          onCommitted={() => {
+            setSearchHit(undefined);
+            setReplaceGeneration((value) => value + 1);
+            setReload((value) => value + 1);
           }}
         />
       </div>
@@ -587,7 +613,7 @@ export function DocumentStudio({
       ) : editingScope === 'scene' ? (
         session?.user?.id ? (
           <DocumentPassageWorkspace
-            key={`${scope}:${selected.sceneId}:bounded`}
+            key={`${scope}:${selected.sceneId}:bounded:${replaceGeneration}`}
             namedStyles={current.layout.styles}
             searchHit={searchHit}
             userId={session.user.id}
@@ -632,7 +658,7 @@ export function DocumentStudio({
           </nav>
           {session?.user?.id ? (
             <DocumentPassageWindowWorkspace
-              key={`${scope}:bounded-window:${windowScenes.map((scene) => scene.sceneId).join(',')}`}
+              key={`${scope}:bounded-window:${windowScenes.map((scene) => scene.sceneId).join(',')}:${replaceGeneration}`}
               searchHit={searchHit}
               userId={session.user.id}
               bookId={bookId}
