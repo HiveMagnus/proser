@@ -8,7 +8,7 @@ fonts. Configure text and image models separately if you need generation.
 ## First run
 
 Use the [prebuilt-image quick start](../README.md#quick-start) for the released
-`linux/amd64` image. Use the checkout matching the image's GitHub release tag.
+image (`linux/amd64`, and `linux/arm64` for releases after v1.0.7). Use the checkout matching the image's GitHub release tag.
 
 Releases after v1.0.7 can also generate `.env.compose` from the image, so a
 prebuilt install needs only Docker and the release's `compose.yml` and

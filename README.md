@@ -7,7 +7,7 @@ EPUB. Connect compatible model providers to use AI-assisted writing and images.
 ## Quick start
 
 Install Git, Docker with the Compose plugin, and Node.js `24.22.3`. The prebuilt
-image is `linux/amd64`. Run these commands in Bash from a fresh checkout.
+image covers `linux/amd64` and, for releases after v1.0.7, `linux/arm64`. Run these commands in Bash from a fresh checkout.
 
 ```bash
 git clone --branch v1.0.7 https://github.com/HiveMagnus/proser.git
