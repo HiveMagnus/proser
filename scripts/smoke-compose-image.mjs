@@ -1,9 +1,17 @@
 import assert from "node:assert/strict";
 import { createHmac, randomUUID } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { parseEnv } from "node:util";
 
+// node scripts/smoke-compose-image.mjs <env> [--record <state> | --verify <state>]
+// --record saves a synthetic book and writes its details to <state>; --verify
+// checks that book after an upgrade. Without either, the script does both.
 const config = parseEnv(readFileSync(process.argv[2], "utf8"));
+const [mode, statePath] = process.argv.slice(3);
+assert(
+  mode === undefined || (["--record", "--verify"].includes(mode) && statePath),
+  "Usage: smoke-compose-image.mjs <env> [--record <state> | --verify <state>]",
+);
 const author = `http://localhost:${config.PROSER_WEB_PORT}`;
 const factory = `http://127.0.0.1:${config.PROSER_FACTORY_PORT}`;
 assert.equal(config.PROSER_ORIGIN, author);
@@ -90,64 +98,80 @@ for (const base of [author, factory]) {
   assert.equal((await request(base, "/api/books")).status, 401);
 }
 
-const title = `Compose image smoke ${randomUUID()}`;
-const text =
-  "A synthetic manuscript paragraph persisted through the public image.";
-const cookie = await signIn();
-const book = await api(
-  author,
-  "/api/books",
-  { cookie },
-  { title, operationId: randomUUID() },
-  201,
-);
-const path = `/api/books/${book.id}`;
-const head = await api(author, `${path}/document-manifest`, { cookie });
-const draft = await api(
-  author,
-  `${path}/document-quick-drafts`,
-  { cookie },
-  {
-    schemaVersion: 1,
-    operationId: randomUUID(),
-    expectedRevisionId: head.revisionId,
-    expectedScopes: { structure: head.scopes.structure.revisionId },
-    summary: "Release smoke test",
-    outline: "Save a synthetic scene.",
-  },
-  201,
-);
-const documentPath = `${path}/scenes/${draft.result.sceneId}/document`;
-const scene = await api(author, documentPath, { cookie });
-scene.document.blocks[0].runs[0].text = text;
-await api(
-  author,
-  `${path}/document-commits`,
-  { cookie },
-  {
-    schemaVersion: 1,
-    operationId: randomUUID(),
-    expectedRevisionId: scene.bookRevisionId,
-    scenes: [
-      {
-        sceneId: scene.sceneId,
-        expectedRevisionId: scene.revisionId,
-        document: scene.document,
-      },
-    ],
-  },
-);
-const reopened = await signIn();
-assert.equal((await api(author, path, { cookie: reopened })).title, title);
-assert.equal(
-  (await api(author, documentPath, { cookie: reopened })).projection.text,
-  text,
-);
-assert.equal(
-  (await api(factory, documentPath, { authorization: factoryCredential() }))
-    .projection.text,
-  text,
-);
-console.log(
-  "Author sign-in, synthetic manuscript save and reopen, and protected Factory access passed.",
-);
+async function record() {
+  const title = `Compose image smoke ${randomUUID()}`;
+  const text =
+    "A synthetic manuscript paragraph persisted through the public image.";
+  const cookie = await signIn();
+  const book = await api(
+    author,
+    "/api/books",
+    { cookie },
+    { title, operationId: randomUUID() },
+    201,
+  );
+  const path = `/api/books/${book.id}`;
+  const head = await api(author, `${path}/document-manifest`, { cookie });
+  const draft = await api(
+    author,
+    `${path}/document-quick-drafts`,
+    { cookie },
+    {
+      schemaVersion: 1,
+      operationId: randomUUID(),
+      expectedRevisionId: head.revisionId,
+      expectedScopes: { structure: head.scopes.structure.revisionId },
+      summary: "Release smoke test",
+      outline: "Save a synthetic scene.",
+    },
+    201,
+  );
+  const documentPath = `${path}/scenes/${draft.result.sceneId}/document`;
+  const scene = await api(author, documentPath, { cookie });
+  scene.document.blocks[0].runs[0].text = text;
+  await api(
+    author,
+    `${path}/document-commits`,
+    { cookie },
+    {
+      schemaVersion: 1,
+      operationId: randomUUID(),
+      expectedRevisionId: scene.bookRevisionId,
+      scenes: [
+        {
+          sceneId: scene.sceneId,
+          expectedRevisionId: scene.revisionId,
+          document: scene.document,
+        },
+      ],
+    },
+  );
+  return { path, documentPath, title, text };
+}
+
+async function verify({ path, documentPath, title, text }) {
+  const reopened = await signIn();
+  assert.equal((await api(author, path, { cookie: reopened })).title, title);
+  assert.equal(
+    (await api(author, documentPath, { cookie: reopened })).projection.text,
+    text,
+  );
+  assert.equal(
+    (await api(factory, documentPath, { authorization: factoryCredential() }))
+      .projection.text,
+    text,
+  );
+}
+
+if (mode === "--verify") {
+  await verify(JSON.parse(readFileSync(statePath, "utf8")));
+  console.log("The synthetic book saved before the upgrade reopened intact.");
+} else {
+  const saved = await record();
+  await verify(saved);
+  if (mode === "--record")
+    writeFileSync(statePath, JSON.stringify(saved), { mode: 0o600 });
+  console.log(
+    "Author sign-in, synthetic manuscript save and reopen, and protected Factory access passed.",
+  );
+}

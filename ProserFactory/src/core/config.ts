@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import dotenv from 'dotenv';
 import { installedRevision } from './installedRevision';
+import { releaseVersion } from './releaseVersion';
 import { loadInferenceSettingsFile } from './inferenceSettingsFile';
 
 // Ensure environment variables from .env and .env.local are loaded before parsing
@@ -13,6 +14,8 @@ loadInferenceSettingsFile();
 
 const revision = installedRevision();
 if (revision) { process.env.GIT_COMMIT = revision; process.env.COMMIT_SHA = revision; }
+/** The Proser release version, from the image's VERSION file or package.json. */
+export const PROSER_VERSION = releaseVersion();
 
 function isLoopbackUrl(value: string): boolean {
   try {

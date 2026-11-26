@@ -81,6 +81,12 @@ describe('SettingsPage', () => {
         });
       }
 
+      if (url === '/api/settings/about') {
+        return createJsonResponse({
+          data: { version: '1.0.8', revision: '0123456789abcdef0123456789abcdef01234567' },
+        });
+      }
+
       if (url === '/api/models/status') {
         return createJsonResponse({ data: { connected: true } });
       }
@@ -93,6 +99,13 @@ describe('SettingsPage', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it('shows the release version and revision the installation runs', async () => {
+    render(<SettingsPage />);
+    expect(await screen.findByTestId('proser-release')).toHaveTextContent(
+      'Proser 1.0.8 · revision 0123456789ab',
+    );
   });
 
   it('shows runtime inference settings as read-only', async () => {

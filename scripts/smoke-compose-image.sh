@@ -31,3 +31,10 @@ const { encryptionKey } = require('./.next/server/server-reference-manifest.json
 assert(Buffer.from(encryptionKey, 'base64').some(byte => byte !== 0));
 JS
 node scripts/smoke-compose-image.mjs "$temporary/compose.env"
+# Release images report their tag version from Factory and Settings.
+expected_version=$(docker image inspect "$image" --format '{{index .Config.Labels "org.opencontainers.image.version"}}')
+if [[ -n "$expected_version" && "$expected_version" != "<no value>" ]]; then
+  curl -fsS "http://127.0.0.1:$factory/health" |
+    node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const v=JSON.parse(s).version;if(v!==process.argv[1]){console.error("Factory reports "+v+", expected "+process.argv[1]);process.exit(1)}})' "$expected_version"
+fi
+"${compose[@]}" ps --format '{{.Health}}' worker | grep -Fxq healthy

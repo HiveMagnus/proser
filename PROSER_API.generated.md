@@ -225,6 +225,7 @@ The rate-limit column is sourced from the same constants used by rate-limited ru
 | POST | `/api/scenes/{sceneId}/apply-feedback` | Bearer JWT | JSON: recommendations? | No route-specific limit | Apply feedback to scene |
 | GET | `/api/settings` | Bearer JWT | — | No route-specific limit | Hermes-supported API operation |
 | PUT | `/api/settings` | Bearer JWT | — | No route-specific limit | Hermes-supported API operation |
+| GET | `/api/settings/about` | Bearer JWT | — | No route-specific limit | Get the running Proser release version and revision |
 | GET | `/api/shared-resource-operations/{operationId}` | Bearer JWT | — | No route-specific limit | Recover a fenced Nova provider operation |
 | GET | `/api/workflows/{runId}` | Bearer JWT | — | No route-specific limit | Hermes-supported API operation |
 | GET | `/api/workflows/{runId}/artifacts` | Bearer JWT | — | No route-specific limit | Hermes-supported API operation |

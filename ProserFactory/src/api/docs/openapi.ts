@@ -702,6 +702,15 @@ registerPath({
   responses: { 200: successEnvelope(z.any(), 'Template detail'), 404: errorResponse('Template not found', 404) },
 });
 
+registerPath({
+  method: 'get', path: '/api/settings/about', summary: 'Get the running Proser release version and revision', tags: ['System'],
+  security: authHeader,
+  responses: {
+    200: successEnvelope(z.object({ version: z.string(), revision: z.string().nullable() }), 'Release version and Git revision'),
+    401: errorResponse('Authentication required', 401),
+  },
+});
+
 // ── Metrics ────────────────────────────────────────────────────
 
 registerPath({

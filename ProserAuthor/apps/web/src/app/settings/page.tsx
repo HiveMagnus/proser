@@ -90,6 +90,9 @@ export default function SettingsPage() {
   const [prefsSaved, setPrefsSaved] = useState(false);
   const [prefsError, setPrefsError] = useState('');
 
+  // ── Installation ──
+  const [release, setRelease] = useState<{ version: string; revision: string | null } | null>(null);
+
   const loadSettings = useCallback(async () => {
     try {
       const res = await fetch('/api/settings');
@@ -151,6 +154,26 @@ export default function SettingsPage() {
     } finally {
       setModelsLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch('/api/settings/about');
+        if (!res.ok) return;
+        const json = (await res.json()) as {
+          data?: { version?: unknown; revision?: unknown };
+        };
+        if (typeof json.data?.version === 'string') {
+          setRelease({
+            version: json.data.version,
+            revision: typeof json.data.revision === 'string' ? json.data.revision : null,
+          });
+        }
+      } catch {
+        /* The version line is informational. */
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -262,6 +285,12 @@ export default function SettingsPage() {
         <p className="mt-1 text-[length:--text-sm] text-text-secondary">
           Configure your writing environment and AI connections.
         </p>
+        {release ? (
+          <p className="mt-1 text-[length:--text-xs] text-text-muted" data-testid="proser-release">
+            Proser {release.version}
+            {release.revision ? ` · revision ${release.revision.slice(0, 12)}` : ''}
+          </p>
+        ) : null}
       </div>
 
       <Tabs defaultValue="profile">
