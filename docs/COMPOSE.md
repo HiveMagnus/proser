@@ -230,8 +230,11 @@ Record the running image digest, read the target release notes, and run
 release checkout, update `PROSER_IMAGE`, and pull the new image.
 For database changes, follow the
 [document authority procedure](../ProserFactory/docs/DOCUMENT_AUTHORITY_ENFORCEMENT.md)
-before starting the stack. Use a reviewed import plan for moving data from a
-separate installation.
+before starting the stack. To move books from a separate installation, export
+each one from **Publish → Book archive** and import the archive on the new
+installation; see [the writer's guide](WRITING_WITH_PROSER.md#move-a-book-to-another-installation).
+An archive carries the current version of a book, not its revision history, so
+keep the old installation's backup.
 
 An existing installation never applies database migrations on its own. When a
 release adds one, the `initialize` service exits with the pending migration

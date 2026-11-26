@@ -23,6 +23,7 @@ The rate-limit column is sourced from the same constants used by rate-limited ru
 | POST | `/api/books/{bookId}/acts/{actId}/reorder-chapters` | Bearer JWT | JSON: documentPreconditions?, reorderedChapters | No route-specific limit | Reorder chapters |
 | GET | `/api/books/{bookId}/ai-policy` | Bearer JWT | — | No route-specific limit | Read whether AI is switched off for the book |
 | PUT | `/api/books/{bookId}/ai-policy` | Bearer JWT | JSON: aiDisabled | No route-specific limit | Switch AI off or on for the book |
+| GET | `/api/books/{bookId}/archive` | Bearer JWT | — | 50/day per user; 20/day per book; 1 concurrent per user; 1 concurrent per book; 0B payload; 120000ms execution | Export the whole book as a portable versioned archive (format proser-book-archive v1) with a SHA-256 for every file |
 | GET | `/api/books/{bookId}/chapter-transitions` | Bearer JWT | — | No route-specific limit | First three actual adjacent chapter endings/openings from one owned saved manuscript revision |
 | DELETE | `/api/books/{bookId}/chapters/{chapterId}` | Bearer JWT | — | No route-specific limit | Hermes-supported API operation |
 | PUT | `/api/books/{bookId}/chapters/{chapterId}` | Bearer JWT | — | No route-specific limit | Hermes-supported API operation |
@@ -168,6 +169,7 @@ The rate-limit column is sourced from the same constants used by rate-limited ru
 | GET | `/api/books/{id}` | Bearer JWT | — | No route-specific limit | Get revision-bound book metadata; includeProse=1 requests compatibility prose |
 | PUT | `/api/books/{id}` | Bearer JWT | JSON: documentPreconditions?, title?, genre?, targetAudience?, summary?, tagline?, storyOutline?, draftStatus?, … | No route-specific limit | Update book |
 | GET | `/api/books/ai-policies` | Bearer JWT | — | No route-specific limit | List the user's books that have AI switched off |
+| POST | `/api/books/archive-imports` | Bearer JWT | — | 20/day per user; 1 concurrent per user; 134217728B payload; 300000ms execution | Import a verified book archive as a new book; retrying the same operationId returns the same receipt |
 | GET | `/api/books/document-capabilities` | Bearer JWT | — | No route-specific limit | Authenticated document capabilities before first-book creation |
 | GET | `/api/books/document-creation-operations/{operationId}` | Bearer JWT | — | No route-specific limit | Recover an owned book creation acknowledgement without repeating the mutation |
 | GET | `/api/books/trash` | Bearer JWT | — | No route-specific limit | List deleted books with the revision each can be restored to |

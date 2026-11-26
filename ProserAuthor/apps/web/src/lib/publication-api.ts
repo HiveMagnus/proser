@@ -172,3 +172,52 @@ export const commitTextManuscript = (
     } satisfies DocumentTextImportCommitRequest),
     signal,
   });
+
+export const BOOK_ARCHIVE_MAX_BYTES = 128 * 1024 * 1024;
+export interface BookArchiveImportReceipt {
+  operationId: string;
+  bookId: number;
+  title: string | null;
+  revisionId: string;
+  status: 'completed';
+  counts: {
+    acts: number;
+    chapters: number;
+    scenes: number;
+    codex: number;
+    notes: number;
+    plotThreads: number;
+    images: number;
+    wordCount: number;
+  };
+  losses: { resolvedReviewFolded: number; commentsDropped: number; plainTextFallbacks: number };
+}
+/** Same-origin download path of a book's portable archive. */
+export const bookArchiveUrl = (bookId: string) => `${base(bookId)}/archive`;
+/** Import a book archive as a new book. Retrying with the same operation ID
+ * returns the original receipt instead of importing twice. */
+export async function importBookArchive(file: File, operationId: string, signal?: AbortSignal) {
+  if (!file.size || file.size > BOOK_ARCHIVE_MAX_BYTES)
+    throw new Error('Book archives must contain 1 byte to 128 MiB.');
+  const timeout = AbortSignal.timeout(5 * 60_000);
+  const response = await fetch(
+    `/api/books/archive-imports?operationId=${encodeURIComponent(operationId)}`,
+    {
+      method: 'POST',
+      body: file,
+      headers: { 'Content-Type': 'application/zip' },
+      cache: 'no-store',
+      signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
+    },
+  );
+  const body = (await response.json().catch(() => null)) as {
+    success?: boolean;
+    data?: BookArchiveImportReceipt;
+    error?: string | { message?: string };
+  } | null;
+  if (!response.ok || !body?.success || !body.data) {
+    const message = typeof body?.error === 'string' ? body.error : body?.error?.message;
+    throw new Error(message || `Book archive import failed (${response.status}).`);
+  }
+  return body.data;
+}
