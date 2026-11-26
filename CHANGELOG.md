@@ -28,6 +28,16 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
   stop Factory, stored cloud API keys are removed and never returned, and
   Oathweave accounts with MFA can sign in.
 
+### Fixes
+
+- Signing out checks the browser for drafts Proser has not saved. When there
+  are any, Author lists them and offers to download them, remove every Proser
+  draft and recovery journal from the browser (for shared devices), or keep
+  them for the next sign-in.
+- A scene draft or passage whose save Factory never confirmed is no longer
+  deleted after 30 days; it stays until the writer recovers, downloads or
+  discards it.
+
 ### Operations
 
 - Release images record their version; Factory reports it from `/health`,

@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { signOut, useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
+import { useSignOutWithLocalDrafts } from '@/components/layout/sign-out-dialog';
 import { User, Cpu, Loader2, LogOut, PenTool, RefreshCw, Save, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -62,6 +63,7 @@ async function getResponseErrorMessage(res: Response, fallback: string) {
 
 export default function SettingsPage() {
   const { data: session } = useSession();
+  const { requestSignOut, dialog: signOutDialog } = useSignOutWithLocalDrafts();
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   // ── Profile state ──
@@ -197,7 +199,8 @@ export default function SettingsPage() {
       if (!res.ok) {
         throw new Error(await getResponseErrorMessage(res, 'Sessions could not be signed out.'));
       }
-      await signOut({ callbackUrl: '/auth/signin' });
+      await requestSignOut();
+      setSessionsRevoking(false);
     } catch (error) {
       setSessionsError(getErrorMessage(error, 'Sessions could not be signed out.'));
       setSessionsRevoking(false);
@@ -550,6 +553,7 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      {signOutDialog}
     </div>
   );
 }
