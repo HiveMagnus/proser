@@ -59,6 +59,7 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 - The `CANVAS_*.md` release-process documents moved to `docs/`, the Author
   workspace packages are named `@hivemagnus/proser-*`, and two stray Factory
   scripts were removed.
+
 ### New features
 
 - **Writing statistics and goals.** The Analytics page (back in the sidebar)

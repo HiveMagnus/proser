@@ -70,6 +70,23 @@ Exports always use the last saved revision, so save (or wait for **Saved**)
 before exporting. Each export is recorded with the revision it came from, and
 you can download it again later.
 
+## Track progress and goals
+
+**Analytics** in the sidebar shows the open book's word count, the words you
+wrote each day over the last week, month or three months, your best day and
+your writing streak. Words count when they are saved, in your own time zone.
+Text that came from an import, the AI or a workflow is shown separately and
+never counts toward goals or streaks.
+
+Under **Goals**, set a length for the book, a deadline and a daily goal (any of
+them, or none). Proser then tells you how many words are left today and how
+many a day would finish the book on time; with a daily goal, a streak day is a
+day you reached it. The Dashboard shows the streak and a few suggested next
+steps for the open book.
+
+**Plot Studio** shows the story archetype the book follows, with a description
+of each one. Choose or change it with **Edit Project** on the Dashboard.
+
 ## Set up AI
 
 Proser writes, revises and reviews with a language model that you or your

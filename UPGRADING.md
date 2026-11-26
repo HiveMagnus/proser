@@ -31,7 +31,10 @@ a newer release. The general procedure (back up, switch the checkout and
   `X-Forwarded-Host` or set `PROSER_ORIGIN` to that address.
 - **Rate limits:** Hermes agents using `pnv_` service-principal tokens now share
   one global rate-limit bucket per client address.
-- No database migrations, and the document enforcement guards are unchanged.
+- **Database migration:** `20261126000000_book_writing_goals` adds the
+  `book_writing_goals` table. `initialize` stops with the pending migration
+  name until you apply it with `migrate deploy` (step 4 above). The document
+  enforcement guards are unchanged.
 
 ## v1.0.6 and v1.0.7
 
