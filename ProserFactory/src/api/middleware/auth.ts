@@ -11,6 +11,7 @@ import { authenticateServicePrincipal } from './servicePrincipal';
 import { databaseService } from '../../lib/database';
 import { NovaGrantError } from './novaGrant';
 import { withDocumentMutationContext } from '@/services/documentMutationContext';
+import { refuseAiRequestForDisabledBook } from '@/lib/ai/bookAiPolicy';
 import { beginSharedResourceMutation, SharedResourceError } from '../../services/sharedResourceService';
 
 /** Constant-time secret comparison to avoid leaking length or content via timing. */
@@ -569,6 +570,7 @@ export const authenticateRequest = async (
   const authenticatedNext = () => {
     void (async()=>{
       if (!req.user) { next(); return; }
+      await refuseAiRequestForDisabledBook(req.method, req.originalUrl, req.user.id);
       const dispatch=()=>withDocumentMutationContext({ userId: req.user!.id, actorGithubId: req.authActor?.githubId, sharedResourceOperationId: req.sharedResourceOperationId, signal: () => req.operationSignal }, () => next());
       if(releaseRequestKind(req.method,req.originalUrl)==='mutation'){
         const canary=await configuredReleaseCanary(req.method,req.originalUrl,req.user.id);

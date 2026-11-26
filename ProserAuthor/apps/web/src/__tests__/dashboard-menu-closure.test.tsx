@@ -36,6 +36,12 @@ vi.mock('@/hooks/queries/use-writing-stats', () => ({
   useRecommendations: () => ({ data: undefined }),
 }));
 vi.mock('@/components/dashboard/book-trash', () => ({ BookTrash: () => null }));
+vi.mock('@/hooks/queries/use-book-ai-policy', () => ({
+  useAiDisabledBookIds: () => ({ data: ['1'] }),
+}));
+vi.mock('@/components/dashboard/book-ai-setting', () => ({
+  BookAiSetting: ({ bookId }: { bookId: string }) => <p>AI setting for book {bookId}</p>,
+}));
 vi.mock('@/hooks/use-document-book-catalog', () => ({
   useDocumentBookCatalog: () => ({
     prepare: mocks.prepare,

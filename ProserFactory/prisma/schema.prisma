@@ -143,9 +143,22 @@ model Book {
   styleFingerprints    StyleFingerprint[]
   evaluationRuns       EvaluationRun[]
   writingGoal          BookWritingGoal?
+  aiPolicy             BookAiPolicy?
 
   @@index([userId], map: "idx_books_user_id")
   @@map("books")
+}
+
+/// The writer's per-book AI switch. With aiDisabled, Factory refuses every
+/// model-provider request made for the book. No row means AI is allowed.
+model BookAiPolicy {
+  bookId     Int      @id @map("book_id")
+  aiDisabled Boolean  @default(false) @map("ai_disabled")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  book       Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@index([aiDisabled], map: "idx_book_ai_policies_disabled")
+  @@map("book_ai_policies")
 }
 
 /// The writer's word-count target, deadline and daily goal for one book.

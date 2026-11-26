@@ -51,6 +51,8 @@ import { useBooks, useCreateBook, bookKeys } from '@/hooks/queries/use-books';
 import { useRecommendations, useWritingStats } from '@/hooks/queries/use-writing-stats';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { BookTrash } from '@/components/dashboard/book-trash';
+import { BookAiSetting } from '@/components/dashboard/book-ai-setting';
+import { useAiDisabledBookIds } from '@/hooks/queries/use-book-ai-policy';
 import { AsyncBoundary } from '@/components/ui/async-boundary';
 import {
   PageTransition,
@@ -174,6 +176,7 @@ export default function DashboardPage() {
 
 function OwnedDashboard({ userId }: { userId: string }) {
   const { data: books = [], isLoading, error } = useBooks();
+  const { data: aiDisabledBookIds = [] } = useAiDisabledBookIds();
   const { activeBookId, activeBookTitle, setActiveBookId, setActiveBookTitle } = useWorkspace();
   const createBookMutation = useCreateBook();
   const { data: activeStats } = useWritingStats(activeBookId, 30);
@@ -825,6 +828,11 @@ function OwnedDashboard({ userId }: { userId: string }) {
                           <Badge variant={statusColors[project.draftStatus ?? 'draft']}>
                             {project.draftStatus ?? 'draft'}
                           </Badge>
+                          {aiDisabledBookIds.includes(project.id) && (
+                            <Badge variant="warning" title="AI is switched off for this book">
+                              AI off
+                            </Badge>
+                          )}
                           {project.archetype && (
                             <span className="text-[length:--text-xs] text-text-muted">
                               {project.archetype}
@@ -1064,6 +1072,7 @@ function OwnedDashboard({ userId }: { userId: string }) {
                 </Button>
               </div>
             </form>
+            {activeEditSnapshot && <BookAiSetting bookId={activeEditSnapshot.bookId} />}
           </DialogContent>
         </Dialog>
 

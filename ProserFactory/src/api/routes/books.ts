@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { registerDocumentRoutes } from './documents';
 import { exportCreativePackage } from '../../services/creativeImportService';
 import { getRecommendations, getWritingStats, setWritingGoal } from '../../services/writingStatsService';
+import { getBookAiPolicy, listAiDisabledBookIds, setBookAiPolicy } from '../../services/bookAiPolicyService';
 import { respondSuccess } from '../utils/response';
 import { BooksController } from '../controllers/books';
 import { booksService } from '../../services/booksService';
@@ -25,7 +26,7 @@ import {
   bookIdActIdParams, bookIdChapterIdParams, bookIdSceneIdParams,
   sceneBody, sceneGenerationBody, batchScenesBody, reorderScenesBody,
   bookIdNoteIdParams, noteBody, exportQuery, createExportArtifactBody,
-  exportArtifactParams, readExportArtifactQuery, writingStatsQuery, writingGoalBody, recommendationsQuery,
+  exportArtifactParams, readExportArtifactQuery, writingStatsQuery, writingGoalBody, recommendationsQuery, bookAiPolicyBody,
   bookIdParams, idParams, paginationQuery, compatibilityProjectionQuery,
 } from '../schemas/books';
 import { prosePreferenceBody } from '../schemas/prose';
@@ -46,6 +47,12 @@ router.get('/', BooksController.getBooks);
 router.get('/trash', async (req, res) => {
   res.setHeader('Cache-Control', 'private, no-store');
   respondSuccess(res, { books: await booksService.listDeletedBooks(req.user!.id) });
+});
+
+// GET /api/books/ai-policies - The user's books with AI switched off
+router.get('/ai-policies', async (req, res) => {
+  res.setHeader('Cache-Control', 'private, no-store');
+  respondSuccess(res, { aiDisabledBookIds: await listAiDisabledBookIds(req.user!.id) });
 });
 
 // POST /api/books - Create new book
@@ -285,6 +292,21 @@ router.put('/:bookId/writing-goal',
   zBody(writingGoalBody),
   async (req, res) => {
     respondSuccess(res, { goal: await setWritingGoal(req.user!.id, Number(req.params.bookId), req.body) });
+  });
+
+// Per-book AI switch: with aiDisabled, Factory refuses every model-provider request for the book.
+router.get('/:bookId/ai-policy',
+  zParams(bookIdParams),
+  async (req, res) => {
+    res.setHeader('Cache-Control', 'private, no-store');
+    respondSuccess(res, await getBookAiPolicy(req.user!.id, Number(req.params.bookId)));
+  });
+
+router.put('/:bookId/ai-policy',
+  zParams(bookIdParams),
+  zBody(bookAiPolicyBody),
+  async (req, res) => {
+    respondSuccess(res, await setBookAiPolicy(req.user!.id, Number(req.params.bookId), req.body));
   });
 
 router.get('/:bookId/recommendations',

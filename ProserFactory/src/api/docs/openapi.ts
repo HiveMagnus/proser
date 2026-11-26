@@ -743,6 +743,29 @@ registerPath({
   responses: { 200: successEnvelope(z.object({ goal: writingGoalSchema.nullable() }), 'Stored goal; null after clearing every field'), 401: errorResponse('Authentication required', 401), 404: errorResponse('Book not found', 404), 422: errorResponse('Invalid goal', 422) },
 });
 
+const bookAiPolicySchema = z.object({ bookId: z.number(), aiDisabled: z.boolean(), updatedAt: z.string().nullable() });
+
+registerPath({
+  method: 'get', path: '/api/books/{bookId}/ai-policy', summary: 'Read whether AI is switched off for the book', tags: ['Books'],
+  security: authHeader,
+  request: { params: z.object({ bookId: z.string() }) },
+  responses: { 200: successEnvelope(bookAiPolicySchema, 'The book AI switch; aiDisabled is false when never set'), 401: errorResponse('Authentication required', 401), 404: errorResponse('Book not found', 404) },
+});
+
+registerPath({
+  method: 'put', path: '/api/books/{bookId}/ai-policy', summary: 'Switch AI off or on for the book', tags: ['Books'],
+  description: 'While aiDisabled is true, every request that would send the book to a model provider (generation, revision, review, proposals, campaigns, workflows, image generation, embeddings) is refused with 409 BOOK_AI_DISABLED before the provider is called. Queued workflows pause.',
+  security: authHeader,
+  request: { params: z.object({ bookId: z.string() }), body: { content: { 'application/json': { schema: z.object({ aiDisabled: z.boolean() }) } } } },
+  responses: { 200: successEnvelope(bookAiPolicySchema, 'Stored AI switch'), 401: errorResponse('Authentication required', 401), 404: errorResponse('Book not found', 404), 422: errorResponse('Invalid body', 422) },
+});
+
+registerPath({
+  method: 'get', path: '/api/books/ai-policies', summary: "List the user's books that have AI switched off", tags: ['Books'],
+  security: authHeader,
+  responses: { 200: successEnvelope(z.object({ aiDisabledBookIds: z.array(z.number()) }), 'Book IDs with AI switched off'), 401: errorResponse('Authentication required', 401) },
+});
+
 registerPath({
   method: 'get', path: '/api/books/{bookId}/recommendations', summary: 'Next writing steps derived from the saved book, goals and Story Bible', tags: ['Books'],
   security: authHeader,

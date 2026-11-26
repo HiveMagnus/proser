@@ -143,6 +143,15 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
   covers at most 1000 matches in 100 scenes; preview again for the rest. New
   Factory routes: `POST /api/books/:bookId/document-replace/preview` and
   `POST /api/books/:bookId/document-replace`.
+- **Keep a book away from AI.** Edit Details on the Dashboard has a per-book
+  switch, and such books show an **AI off** badge. Factory enforces it: every
+  request that would send the book to a model provider (generation, revision,
+  review, proposals, campaigns, plot-thread reviews, workflows, image
+  generation, Hermes and Nova routes) is refused with `409 BOOK_AI_DISABLED`
+  before the provider is called. Queued workflows pause and live judging
+  stops; retrieval skips embeddings and uses keyword search. Changes are
+  recorded in the audit log. New routes:
+  `GET`/`PUT /api/books/:bookId/ai-policy` and `GET /api/books/ai-policies`.
 
 ### Install on a phone
 
@@ -165,6 +174,9 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
   `linux/arm64`; the version tag's digest is the list's digest. Pin that
   digest, not a `-amd64` or `-arm64` staging tag. Pi-class and Apple-silicon
   hosts can use releases after v1.0.7.
+- **Database migration:** `20261127000000_book_ai_policies` adds the
+  `book_ai_policies` table (no rows means AI stays on for every book). Apply it
+  with the same `migrate deploy` step as the writing-goals migration.
 - **Database migration:** `20261126000000_book_writing_goals` adds the
   `book_writing_goals` table. Existing Compose installs stop at `initialize`
   until it is applied with the documented `migrate deploy` command.

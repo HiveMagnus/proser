@@ -11,6 +11,7 @@
 import logger from '@/lib/logger';
 import { CONFIG } from '@/core/config';
 import { withRetry } from '@/lib/resilience';
+import { aiDisabledBooks } from './bookAiPolicy';
 import {
   combinedInferenceSignal,
   inferenceLimits,
@@ -41,6 +42,10 @@ export async function generateEmbedding(
     CONFIG.OLLAMA_HOST ||
     CONFIG.VLLM_BASE_URL
   ).replace(/\/+$/, '');
+
+  // A book with AI switched off is not sent to the embedding provider;
+  // callers fall back to keyword retrieval.
+  if ((await aiDisabledBooks()).length) return null;
 
   try {
     const result = await withRetry(

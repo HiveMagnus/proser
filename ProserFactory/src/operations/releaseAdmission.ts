@@ -5,6 +5,7 @@ import type { RequestHandler } from "express";
 import { databaseService } from "@/lib/database";
 import { canonicalDocument } from "@/documents/model";
 import { DocumentError } from "@/documents/errors";
+import { assertBookAiAllowed } from "@/lib/ai/bookAiPolicy";
 import {
   configuredReleaseCanary,
   validateReleaseCanaryAdmission,
@@ -153,6 +154,10 @@ export async function admitReleaseMutation(
   request: unknown,
   userId?: number,
 ) {
+  // A book with AI switched off never reaches a provider, whichever path
+  // the request took: the request's books and the provider effect's source.
+  if (kind === "provider")
+    await assertBookAiAllowed([providerEffects.getStore()?.source?.bookId]);
   const admitted = await databaseService.client.$transaction(async (tx) => {
     const value = await assertNewReleaseAdmission(tx);
     const admitted = await tx.releaseMutationAdmission.create({
