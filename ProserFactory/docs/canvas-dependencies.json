@@ -4,7 +4,7 @@
   "packages": {
     "engine": {
       "name": "@hivemagnus/canvas-word-engine",
-      "version": "1.2.0",
+      "version": "1.2.2",
       "source": "packages/engine",
       "upstreamCommit": "948e6ac583f63efc48403e2a63a32456ee9c274c",
       "preservedPullRequests": [
@@ -14,18 +14,19 @@
         1506,
         1508,
         1509
-      ]
+      ],
+      "releaseCommit": "47a7b3dcfa79d38e489e171ee36f359ede9c2d8d"
     },
     "codec": {
       "name": "@hivemagnus/canvas-word-codec",
       "version": "1.1.0",
       "source": "packages/codec",
-      "upstreamCommit": "0e8a1b36c8e94061edc19ce05b93c12fbad03b34"
+      "upstreamCommit": "0e8a1b36c8e94061edc19ce05b93c12fbad03b34",
+      "releaseCommit": "8116514eb8d5b536ca639f30d9f0101f1394e251"
     }
   },
   "historicalOwnedForkLedger": "docs/history/canvas-owned-forks-20261108",
   "actualWordAcceptance": "unverified",
   "physicalDeviceAcceptance": "incomplete",
-  "performanceCertification": "deferred-R6",
-  "releaseCommit": "8116514eb8d5b536ca639f30d9f0101f1394e251"
+  "performanceCertification": "deferred-R6"
 }

@@ -123,7 +123,7 @@ cd apps/web && pnpm exec playwright test --project=mobile-chrome --project=mobil
 Set the test credentials as described in [Playwright E2E](docs/DEVELOPMENT.md#playwright-e2e).
 
 Author and its browser regression fixtures both pin
-`@hivemagnus/canvas-word-engine` 1.2.0.
+`@hivemagnus/canvas-word-engine` 1.2.2.
 
 The root `npm run test:canvas-mobile -- --repeat 3` builds and serves a production
 fixture for native Chromium/WebKit input checks. Each repetition uses fresh

@@ -6,6 +6,9 @@ allowBuilds:
   esbuild: true
   sharp: true
 
+minimumReleaseAgeExclude:
+  - '@hivemagnus/canvas-word-engine@1.2.2'
+
 overrides:
   '@babel/core': '^7.29.1'
   esbuild: '^0.28.1'
