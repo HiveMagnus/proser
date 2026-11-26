@@ -6,6 +6,10 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 
 ## Unreleased
 
+Nothing yet.
+
+## v1.1.0 (2026-11-26)
+
 ### Sign-in
 
 - Proser can sign writers in through Oathweave with OpenID Connect
