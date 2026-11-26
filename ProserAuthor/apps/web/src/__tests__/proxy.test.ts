@@ -64,3 +64,26 @@ describe('page Content Security Policy', () => {
     expect(response?.headers.get('content-security-policy')).toBeNull();
   });
 });
+
+describe('install manifest', () => {
+  it('serves the web manifest and its icons without a session', async () => {
+    const runProxy = proxy as unknown as (
+      request: NextRequest & { auth: unknown },
+      context: { params: Promise<Record<string, string>> },
+    ) => Promise<Response | void> | Response | void;
+    for (const path of ['/manifest.webmanifest', '/icon.svg', '/apple-icon']) {
+      const request = new NextRequest(`https://author.example${path}`);
+      Object.defineProperty(request, 'auth', { value: null });
+      const response = await runProxy(request as NextRequest & { auth: unknown }, {
+        params: Promise.resolve({}),
+      });
+      expect(response?.headers.get('location')).toBeNull();
+    }
+  });
+
+  it('opens installed Proser on the mobile home', async () => {
+    const { default: manifest } = await import('@/app/manifest');
+    expect(manifest()).toMatchObject({ start_url: '/m', display: 'standalone' });
+    expect(manifest().icons?.map((icon) => icon.src)).toEqual(['/icon.svg', '/apple-icon']);
+  });
+});

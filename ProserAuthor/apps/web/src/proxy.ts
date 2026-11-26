@@ -28,7 +28,11 @@ export default auth((req) => {
     pathname.startsWith('/api/auth') ||
     pathname.startsWith('/api/') ||
     pathname.startsWith('/_next') ||
-    pathname === '/favicon.ico'
+    pathname === '/favicon.ico' ||
+    // Browsers fetch the install manifest and its icons without the session cookie.
+    pathname === '/manifest.webmanifest' ||
+    pathname === '/icon.svg' ||
+    pathname === '/apple-icon'
   ) {
     return pathname.startsWith('/auth') ? nextWithContentSecurityPolicy(req) : NextResponse.next();
   }

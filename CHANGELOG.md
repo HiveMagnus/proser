@@ -104,6 +104,12 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
   `PUT /api/books/:bookId/writing-goal`,
   `GET /api/books/:bookId/recommendations` and `GET /api/plot/archetypes`.
 
+### Install on a phone
+
+- Author publishes a web manifest and home-screen icons, so Proser can be added
+  to a phone's home screen and opens standalone on the mobile home. There is no
+  offline service worker yet.
+
 ### Upgrade notes
 
 - If writers open Proser at an address other than `PROSER_ORIGIN`, writes from
