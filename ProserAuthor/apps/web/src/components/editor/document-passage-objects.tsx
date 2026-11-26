@@ -4,7 +4,7 @@ import type {
   DocumentPassage,
   DocumentPassageOperation,
   DocumentImage,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { listImages, type ImageAssetRecord } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 

@@ -69,7 +69,8 @@ describe('Oathweave credential sign-in', () => {
       request(),
       fetchMock as unknown as typeof fetch,
     );
-    expect(user?.iamAccessToken).toBe('fixture-access');
+    expect(user?.iamUsername).toBe('writer');
+    expect(JSON.stringify(user)).not.toContain('fixture-access');
   });
 
   it('reports a rejected code distinctly', async () => {

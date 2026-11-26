@@ -105,8 +105,8 @@ reporting publication complete.
 Use the root Node 24.22.3 pin for local builds and checks. Structured documents
 are active in production. Unprepared installations keep
 `DOCUMENT_AUTHORITY_ENABLED=false` until the selected writer and release
-conditions in `../CANVAS_RELEASE_CHECKLIST.md` pass. R2 device/accessibility
-certification is active and incomplete; follow `../CANVAS_R2_ACCEPTANCE.md` for
+conditions in `../docs/CANVAS_RELEASE_CHECKLIST.md` pass. R2 device/accessibility
+certification is active and incomplete; follow `../docs/CANVAS_R2_ACCEPTANCE.md` for
 the exact candidate and evidence boundaries. Revision campaigns use the practical
 automated gate; unavailable physical-device or actual screen-reader certification
 is nonblocking for development and release. R6 performance certification remains
@@ -170,4 +170,4 @@ Released fork provenance files remain exact package snapshots. Current upstream
 submission status and diagnostic retention are supplemented in
 `../ProserAuthor/docs/CANVAS_MAINTENANCE.md`; update packaged provenance and the
 ledger together when releasing a new fork. Current deployment summaries are in
-`../CANVAS_RELEASE_RECORD.md`. Operators retain exact production evidence privately.
+`../docs/CANVAS_RELEASE_RECORD.md`. Operators retain exact production evidence privately.

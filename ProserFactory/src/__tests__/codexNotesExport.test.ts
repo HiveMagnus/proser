@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 /// <reference types="jest" />
 import request from 'supertest';
 import app from '../index';
@@ -76,20 +77,20 @@ describe('Codex, Notes & Export caching', () => {
     expect(getDeleted.status).toBe(404);
   });
 
-  it('tests export caching behavior (markdown)', async () => {
-    // First export - should generate and cache
+  it('keeps exported manuscript text out of shared caches and tags it with its digest', async () => {
     const first = await auth()(request(app).get(`/api/books/${bookId}/export`).query({ format: 'markdown' }));
     expect(first.status).toBe(200);
+    expect(first.headers['cache-control']).toBe('private, no-store');
     const etag = first.headers['etag'];
-    expect(etag).toBeDefined();
-    // Second export with If-None-Match should yield 304 (served from cache logic path)
+    const digest = createHash('sha256').update(first.body.data.content).digest('base64url');
+    expect(etag).toBe(`"${digest}"`);
     const second = await auth()(request(app).get(`/api/books/${bookId}/export`).set('If-None-Match', etag).query({ format: 'markdown' }));
-    expect([200,304]).toContain(second.status); // 304 if cache recognized, 200 if test env difference
-    // Force cache invalidation by adding an act (structure change triggers export invalidation indirectly via invalidateExport in controllers)
+    expect(second.status).toBe(304);
     const act = await auth()(request(app).post(`/api/books/${bookId}/acts`)).send({ title: 'Act Cache' });
     expect(act.status).toBe(201);
     const third = await auth()(request(app).get(`/api/books/${bookId}/export`).set('If-None-Match', etag).query({ format: 'markdown' }));
-    expect(third.status).toBe(200); // Content changed or version bumped invalidating old etag
+    expect(third.status).toBe(200);
+    expect(third.body.data.content).toContain('Act Cache');
   });
 
   it('negative auth: missing headers', async () => {

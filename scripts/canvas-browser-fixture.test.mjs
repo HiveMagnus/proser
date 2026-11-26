@@ -85,7 +85,7 @@ test("Orca component fixture compiles and loads real workers without claiming sp
     root,
     output: directory,
     alias: {
-      "@cheftaco/proser-contracts": resolve(
+      "@hivemagnus/proser-contracts": resolve(
         repository,
         "ProserAuthor/packages/contracts/src/index.ts",
       ),

@@ -3,7 +3,7 @@ import {
   defaultLayout,
   type DocumentPassage,
   type DocumentPassageReceipt,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import {
   acknowledgedScenePassage,
   getScenePassage,

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { defaultLayout, type DocumentPassage } from '@cheftaco/proser-contracts';
+import { defaultLayout, type DocumentPassage } from '@hivemagnus/proser-contracts';
 import { passageCommit, passageRunEdits } from '@/lib/document-passage-editing';
 import { executePassageOperation } from '@/lib/document-passage-operation';
 import type { DocumentPassageDraft } from '@/lib/document-passage-journal';

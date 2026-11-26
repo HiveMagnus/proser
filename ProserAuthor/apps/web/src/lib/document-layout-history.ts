@@ -1,4 +1,4 @@
-import { canonicalDocument, type BookLayoutSnapshot } from '@cheftaco/proser-contracts';
+import { canonicalDocument, type BookLayoutSnapshot } from '@hivemagnus/proser-contracts';
 import { documentDraftStore } from './document-drafts';
 export interface LayoutHistoryFrame {
   layout: BookLayoutSnapshot;

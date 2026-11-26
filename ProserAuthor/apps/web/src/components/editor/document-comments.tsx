@@ -6,14 +6,14 @@ import {
   visibleRun,
   type DocumentSelection,
   type ProserDocument,
-} from '@cheftaco/proser-editor';
+} from '@hivemagnus/proser-editor';
 import type {
   DocumentAnchor,
   DocumentCommentReviewReceipt,
   DocumentCommentResolutionAction,
   SceneCommentsResponse,
   LayoutStoryCommentsResponse,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import {
   DocumentRequestError,
   getDocumentComments,

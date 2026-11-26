@@ -4,7 +4,7 @@ import {
   type DocumentPassageReceipt,
   type DocumentPassageCommit,
   type DocumentPassageRequest,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { validatePassageSource } from '../../../../packages/editor/src/passage-source';
 import { passageCommit, passageRunEdits, type PassageRunDraft } from './document-passage-editing';
 import { acknowledgedScenePassage } from './document-passage-api';

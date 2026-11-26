@@ -1,7 +1,7 @@
 import type {
   SceneCommentResolutionRequest,
   LayoutStoryCommentResolutionRequest,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { documentDraftStore } from './document-drafts';
 export type CommentScope = { kind: 'scene'; id: string } | { kind: 'layout-story'; id: string };
 export interface DocumentCommentIntent {

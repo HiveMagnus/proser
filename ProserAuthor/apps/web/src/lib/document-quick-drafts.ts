@@ -1,4 +1,4 @@
-import type { DocumentQuickDraftInput } from '@cheftaco/proser-contracts';
+import type { DocumentQuickDraftInput } from '@hivemagnus/proser-contracts';
 export interface QuickDraftRequest {
   /** A workspace creation action retains the exact navigation it displayed. */
   base?: { bookRevisionId: string; structureRevisionId: string };

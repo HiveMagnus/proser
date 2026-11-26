@@ -211,9 +211,9 @@ The released Compose stack bootstraps structured authority and enforcement on a
 fresh database. Native installations default `DOCUMENT_AUTHORITY_ENABLED` to false
 until prepared.
 Activation requires the selected release's writer, preservation and operational
-gates in [the release checklist](CANVAS_RELEASE_CHECKLIST.md). R2 mobile/accessibility
+gates in [the release checklist](docs/CANVAS_RELEASE_CHECKLIST.md). R2 mobile/accessibility
 certification is now active after its earlier release deferral; R6 performance
-certification remains deferred. The [R2 acceptance record](CANVAS_R2_ACCEPTANCE.md)
+certification remains deferred. The [R2 acceptance record](docs/CANVAS_R2_ACCEPTANCE.md)
 separates candidate changes, emulated browser checks, actual assistive technology
 and pending physical-phone evidence. Author negotiates ordered-window/typed-operation
 capability versions before loading a writer; runtime Canvas indexes never become
@@ -234,7 +234,7 @@ Empty workspaces create their opening scene through the existing structured Quic
 Draft transaction with the displayed revision preconditions.
 
 The Canvas workspace does not introduce an Author database, API or inference
-service. See [the delivery ledger](CANVAS_MODERNIZATION.md),
+service. See [the delivery ledger](docs/CANVAS_MODERNIZATION.md),
 [Factory operations](ProserFactory/docs/STRUCTURED_DOCUMENTS.md) and the
 [candidate-reviewed native transition](ProserFactory/docs/CANVAS_REVIEWED_NATIVE_RELEASE.md).
 

@@ -1,7 +1,7 @@
 import type {
   DocumentMutationPreconditions,
   StructureBookMetadata,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import type { Book, updateBook } from './api';
 import { documentDraftStore } from './document-drafts';
 

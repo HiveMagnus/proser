@@ -10,7 +10,7 @@ import {
   type ProserDocument,
   type DocumentParagraph,
   type PassageParagraphSource,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 const equal = (a: unknown, b: unknown) => canonicalDocument(a) === canonicalDocument(b);
 async function digest(value: unknown) {
   const bytes = new TextEncoder().encode(canonicalDocument(value));

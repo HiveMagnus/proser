@@ -7,7 +7,7 @@ import {
   type DocumentPassageRestore,
   type DocumentPassageReceipt,
   type DocumentPassageRestoreResult,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import {
   PassageTypedSession,
   type PassageTypedReceipt,

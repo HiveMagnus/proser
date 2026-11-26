@@ -30,7 +30,7 @@ Run the [authenticated browser gate](../../scripts/DOCUMENT_BROWSER_ACCEPTANCE.m
 for candidate changes that affect writing, ownership, or operation recovery.
 Render and inspect samples independently when changing import or publication.
 Chromium/WebKit emulation, a physical device, and an actual screen reader
-provide separate evidence. See the [acceptance record](../../CANVAS_R2_ACCEPTANCE.md)
+provide separate evidence. See the [acceptance record](../../docs/CANVAS_R2_ACCEPTANCE.md)
 for the current limits.
 
 ## Diagnostic retention

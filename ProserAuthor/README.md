@@ -111,7 +111,7 @@ See [docs/MOBILE.md](docs/MOBILE.md) for the full route, state, and testing refe
 
 ```bash
 pnpm test                        # Active workspace unit/integration tests
-pnpm --filter @cheftaco/proser-web test   # Web tests only
+pnpm --filter @hivemagnus/proser-web test   # Web tests only
 
 # Playwright E2E against a live deployment
 cd apps/web && PLAYWRIGHT_BASE_URL=https://proser.example.com pnpm exec playwright test --project=smoke --project=factory-proxy
@@ -214,13 +214,13 @@ windows remain separate from the writing surface's passage transport.
 
 The selected release includes R1/R3/R4/R5/R7. The user has reopened real-device,
 touch and screen-reader certification (R2); its
-[current acceptance record](../CANVAS_R2_ACCEPTANCE.md) identifies the candidate
+[current acceptance record](../docs/CANVAS_R2_ACCEPTANCE.md) identifies the candidate
 and remaining physical-device checks. Performance certification (R6) remains
 deferred; bounded-loading correctness is required. Exact Microsoft Word behavior
 remains unverified. See the
-[release checklist](../CANVAS_RELEASE_CHECKLIST.md),
-[backlog](../CANVAS_NEXT_RELEASE_BACKLOG.md) and
-[modernization ledger](../CANVAS_MODERNIZATION.md).
+[release checklist](../docs/CANVAS_RELEASE_CHECKLIST.md),
+[backlog](../docs/CANVAS_NEXT_RELEASE_BACKLOG.md) and
+[modernization ledger](../docs/CANVAS_MODERNIZATION.md).
 
 Operator-only `scripts/create-release-canary-session.mjs` creates a short-lived,
 standard encrypted session for a disposable release fixture using the installed

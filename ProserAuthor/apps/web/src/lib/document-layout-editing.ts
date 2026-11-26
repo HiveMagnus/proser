@@ -7,7 +7,7 @@ import {
   type DocumentParagraph,
   type DocumentLayout,
   type ProserDocument,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 /** Text settings retain style runs; ambiguous replacements fail visibly. */
 export function editLayoutStoryParagraph(
   paragraph: DocumentParagraph,

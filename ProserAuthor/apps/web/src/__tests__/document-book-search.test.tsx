@@ -7,7 +7,7 @@ import {
   recoverDocumentSearchIndex,
   DocumentRequestError,
 } from '@/lib/document-api';
-import type { DocumentSearchResponse } from '@cheftaco/proser-contracts';
+import type { DocumentSearchResponse } from '@hivemagnus/proser-contracts';
 vi.mock('@/lib/document-api', async (original) => ({
   ...(await original<typeof import('@/lib/document-api')>()),
   searchDocumentBook: vi.fn(),

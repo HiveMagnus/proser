@@ -5,7 +5,7 @@ import {
   documentFromText,
   type DocumentStorySourceRecord,
   type DocumentParagraph,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { storyDraftContext } from '@/lib/document-story-draft';
 beforeAll(() => {
   vi.stubGlobal('crypto', webcrypto);

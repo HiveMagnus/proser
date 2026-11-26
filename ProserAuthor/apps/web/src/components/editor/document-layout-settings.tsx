@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { SemanticDocument, type ProserDocument, resolveChange } from '@cheftaco/proser-editor';
+import { SemanticDocument, type ProserDocument, resolveChange } from '@hivemagnus/proser-editor';
 import { DocumentLayoutStoryEditor } from './document-layout-story-editor';
 import { DocumentComments } from './document-comments';
 import { DocumentStoryDiscussion } from './document-story-discussion';
@@ -11,7 +11,7 @@ import {
   writeLayoutHistory,
   type LayoutHistory,
 } from '@/lib/document-layout-history';
-import type { DocumentSelection } from '@cheftaco/proser-editor';
+import type { DocumentSelection } from '@hivemagnus/proser-editor';
 import {
   canonicalDocument,
   documentFromText,
@@ -20,7 +20,7 @@ import {
   type DocumentPassageOperation,
   type DocumentStoryDraftReceipt,
   type DocumentStorySourceRecord,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import {
   DocumentRequestError,
   getDocumentScope,

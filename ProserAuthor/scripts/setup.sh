@@ -56,7 +56,7 @@ ok "Dependencies installed"
 
 # ─── 4. Build ───────────────────────────────────────────
 info "Building active web workspace..."
-pnpm --filter @cheftaco/proser-web... build
+pnpm --filter @hivemagnus/proser-web... build
 ok "Build complete"
 
 # ─── Done ────────────────────────────────────────────────
@@ -65,7 +65,7 @@ echo -e "${GREEN}  ╔═══════════════════�
 echo -e "${GREEN}  ║      Setup Complete!           ║${NC}"
 echo -e "${GREEN}  ╚═══════════════════════════════╝${NC}"
 echo ""
-echo -e "  Start development:  ${CYAN}pnpm --filter @cheftaco/proser-web dev${NC}"
+echo -e "  Start development:  ${CYAN}pnpm --filter @hivemagnus/proser-web dev${NC}"
 echo -e "  Web UI:             ${CYAN}http://localhost:3000${NC}"
 echo ""
 echo -e "  ${YELLOW}Don't forget to:${NC}"

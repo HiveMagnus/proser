@@ -3,7 +3,7 @@ import {
   defaultLayout,
   type DocumentPassage,
   type DocumentPassageSourceFrame,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { qualifyPassageSelection, validatePassageSource } from '../passage-source';
 import type { DocumentSelection } from '../document-selection';
 const sourceFrame = (): DocumentPassageSourceFrame => ({

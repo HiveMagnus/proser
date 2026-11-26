@@ -7,7 +7,7 @@ import {
   type PassageStylePatch,
   type TextStyle,
   type DocumentImage,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 export interface FrozenPassageRun {
   source: PassageRunSource;
   text: string;

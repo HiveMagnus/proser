@@ -6,7 +6,7 @@ import type {
   PlotThreadEvidenceRecord,
   PlotThreadRecord,
   PlotThreadReviewRecord,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import type { usePlotThreadActions } from '@/hooks/use-plot-thread-actions';
 const mocks = vi.hoisted(() => ({
   request: vi.fn(),

@@ -2,7 +2,7 @@
 
 The Canvas modernization is under implementation. `DOCUMENT_AUTHORITY_ENABLED`
 defaults to false. Keep it false in production until every writer, mobile flow,
-publication path and deployment/recovery gate in `CANVAS_MODERNIZATION.md` passes.
+publication path and deployment/recovery gate in `docs/CANVAS_MODERNIZATION.md` passes.
 
 ## Implemented foundation
 

@@ -55,8 +55,8 @@ Release builds use [the image publishing workflow](docs/CI.md#container-releases
 and must use the exact verified release commit. Run the scoped Gitleaks checks
 before staging a release.
 
-See `CANVAS_RELEASE_RECORD.md` for the public release scope and
-`CANVAS_NEXT_RELEASE_BACKLOG.md` for the remaining work. Preserve immutable
+See `docs/CANVAS_RELEASE_RECORD.md` for the public release scope and
+`docs/CANVAS_NEXT_RELEASE_BACKLOG.md` for the remaining work. Preserve immutable
 receipts, source data, and unique evidence. Keep installed-host receipts and
 production diagnostics in private operator storage.
 
@@ -64,7 +64,7 @@ production diagnostics in private operator storage.
 
 R1/R3/R4/R5/R7 are shipped. R2 mobile/accessibility certification remains
 active and incomplete, and R6 performance certification remains deferred.
-Follow [R2 acceptance](CANVAS_R2_ACCEPTANCE.md) for candidate-specific evidence.
+Follow [R2 acceptance](docs/CANVAS_R2_ACCEPTANCE.md) for candidate-specific evidence.
 Revision campaigns require automated browser, keyboard, accessibility and exact
 recovery checks. Run available physical-device and actual screen-reader checks.
 Record unavailable certification as incomplete and nonblocking. Preserve prior

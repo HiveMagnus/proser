@@ -208,10 +208,10 @@ importers:
 
   apps/web:
     dependencies:
-      '@cheftaco/proser-contracts':
+      '@hivemagnus/proser-contracts':
         specifier: workspace:^
         version: link:../../packages/contracts
-      '@cheftaco/proser-editor':
+      '@hivemagnus/proser-editor':
         specifier: workspace:^
         version: link:../../packages/editor
       '@radix-ui/react-accordion':
@@ -367,7 +367,7 @@ importers:
 
   packages/editor:
     dependencies:
-      '@cheftaco/proser-contracts':
+      '@hivemagnus/proser-contracts':
         specifier: workspace:^
         version: link:../contracts
       '@hivemagnus/canvas-word-engine':

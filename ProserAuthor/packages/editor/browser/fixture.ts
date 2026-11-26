@@ -1161,7 +1161,7 @@ async function run() {
   }
   const passageParagraph = documentFromText('A😀éZ', id)
     .blocks[0] as import('../src/document-model').DocumentParagraph;
-  const passageWindow: import('@cheftaco/proser-contracts').DocumentPassage = {
+  const passageWindow: import('@hivemagnus/proser-contracts').DocumentPassage = {
     schemaVersion: 1,
     bookRevisionId: 'book-before',
     sceneId: 2,
@@ -1262,7 +1262,7 @@ async function run() {
               ...(
                 newest.pending as {
                   kind: 'commit';
-                  request: import('@cheftaco/proser-contracts').DocumentPassageCommit;
+                  request: import('@hivemagnus/proser-contracts').DocumentPassageCommit;
                 }
               ).request,
               operationId: crypto.randomUUID(),

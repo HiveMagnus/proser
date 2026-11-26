@@ -11,7 +11,7 @@ import {
   type PassageStylePatch,
   type TextStyle,
   type ParagraphStyle,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 
 const equal = (a: unknown, b: unknown) => canonicalDocument(a) === canonicalDocument(b);
 const paragraphText = (paragraph: DocumentParagraph, changes: ProserDocument['changes']) =>

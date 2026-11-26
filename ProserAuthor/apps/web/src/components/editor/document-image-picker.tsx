@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { paragraphsOf, visibleRun, type ProserDocument } from '@cheftaco/proser-editor';
+import { paragraphsOf, visibleRun, type ProserDocument } from '@hivemagnus/proser-editor';
 import { listImages, type ImageAssetRecord } from '@/lib/api';
 import { insertDocumentImage } from '@/lib/document-image-editing';
 export function DocumentImagePicker({

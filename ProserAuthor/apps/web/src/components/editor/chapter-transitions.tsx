@@ -8,7 +8,7 @@ import type {
   DocumentDiscussionInput,
   DocumentProposalRequest,
   DocumentProposalRecord,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { Button } from '@/components/ui/button';
 import {
   requestDocumentResource,

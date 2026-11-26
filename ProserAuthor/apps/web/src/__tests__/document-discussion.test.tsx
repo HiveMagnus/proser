@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { canonicalDocument, documentFromText } from '@cheftaco/proser-editor';
+import { canonicalDocument, documentFromText } from '@hivemagnus/proser-editor';
 import { DocumentDiscussion } from '@/components/editor/document-discussion';
 import { BoundedDocumentDiscussion } from '@/components/editor/bounded-document-discussion';
 import type { useDocumentSession } from '@/hooks/use-document-session';
@@ -11,7 +11,7 @@ import type {
   DocumentPassage,
   DocumentPassageOperation,
   DocumentManifest,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import * as api from '@/lib/document-api';
 vi.mock('@/lib/document-api', () => ({
   prepareDocumentDiscussion: vi.fn(),

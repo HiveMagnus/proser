@@ -1,6 +1,6 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { documentFromText } from '@cheftaco/proser-contracts';
+import { documentFromText } from '@hivemagnus/proser-contracts';
 import type { PassageTypedSnapshot } from '@/lib/document-passage-typed-session';
 const records = vi.hoisted(() => {
   class FakeSession {

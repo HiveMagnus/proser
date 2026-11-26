@@ -1,5 +1,5 @@
 {
-  "name": "@cheftaco/proser-web",
+  "name": "@hivemagnus/proser-web",
   "version": "0.1.0",
   "scripts": {
     "dev": "next dev --port 3000",
@@ -12,8 +12,8 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@cheftaco/proser-editor": "workspace:^",
-    "@cheftaco/proser-contracts": "workspace:^",
+    "@hivemagnus/proser-editor": "workspace:^",
+    "@hivemagnus/proser-contracts": "workspace:^",
     "@radix-ui/react-accordion": "^1.3.1",
     "@radix-ui/react-avatar": "^1.3.1",
     "@radix-ui/react-dialog": "^1.3.1",

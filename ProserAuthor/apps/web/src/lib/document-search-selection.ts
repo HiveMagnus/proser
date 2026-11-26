@@ -4,8 +4,8 @@ import {
   paragraphsOf,
   visibleRun,
   type DocumentSelection,
-} from '@cheftaco/proser-editor';
-import type { DocumentSearchHit } from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-editor';
+import type { DocumentSearchHit } from '@hivemagnus/proser-contracts';
 import type { SavedSceneDocument } from './document-api';
 /** Restore only immutable returned identities, never a quotation search. */
 export async function selectionForDocumentSearch(

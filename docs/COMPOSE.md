@@ -198,6 +198,19 @@ or Compose files than the environment file selects. `scripts/test-compose-backup
 <image>` rehearses a backup, a change and a restore on a disposable project and
 checks that the data and readiness come back.
 
+## Remove unreferenced image files
+
+Deleting an image in Proser keeps its file, because another image or import can
+share it. To find files no image record references, run the sweep. It only
+reports until you add `--apply`, and it leaves files younger than 24 hours
+(`--min-age-hours=<n>`) because generation and imports write a file before the
+record that points to it. Back up first.
+
+```bash
+docker compose --env-file .env.compose exec factory node dist/operations/imageOrphanSweep.js
+docker compose --env-file .env.compose exec factory node dist/operations/imageOrphanSweep.js --apply
+```
+
 ## Upgrades and recovery
 
 Keep the Compose project name, existing `.env.compose`, and named volumes.

@@ -94,7 +94,7 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        command: 'pnpm --filter @cheftaco/proser-web dev',
+        command: 'pnpm --filter @hivemagnus/proser-web dev',
         env: {
           ...process.env,
           AUTH_SECRET:

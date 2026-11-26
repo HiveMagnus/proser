@@ -6,7 +6,7 @@ import type {
   DocumentProposalValidationRecord,
   PlotThreadRecord,
   PlotThreadReviewRecord,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import type { usePlotThreadActions } from '@/hooks/use-plot-thread-actions';
 import { plotRequest } from '@/lib/plot-thread-api';
 import { getDocumentManifest } from '@/lib/document-api';

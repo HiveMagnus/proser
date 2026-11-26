@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { documentFromText, projectDocument, type DocumentParagraph } from '@cheftaco/proser-editor';
+import {
+  documentFromText,
+  projectDocument,
+  type DocumentParagraph,
+} from '@hivemagnus/proser-editor';
 import { insertDocumentImage } from '@/lib/document-image-editing';
 let sequence = 0;
 const id = () => `image-${++sequence}`;

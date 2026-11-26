@@ -4,7 +4,7 @@ import {
   documentFromText,
   projectDocument,
   type SceneDocumentReference,
-} from '@cheftaco/proser-editor';
+} from '@hivemagnus/proser-editor';
 import { useDocumentWindowSession } from '@/hooks/use-document-window-session';
 import {
   DocumentRequestError,

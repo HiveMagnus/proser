@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import type { DocumentQuickDraftReceipt } from '@cheftaco/proser-contracts';
+import type { DocumentQuickDraftReceipt } from '@hivemagnus/proser-contracts';
 import { createBook } from '@/lib/api';
 import {
   createDocumentQuickDraft,

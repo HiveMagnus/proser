@@ -7,7 +7,7 @@ import type {
   DocumentTraceReview,
   DocumentCompareRequest,
   DocumentCompareReceipt,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import * as api from '@/lib/document-api';
 import * as journal from '@/lib/document-review-journal';
 vi.mock('next-auth/react', () => ({

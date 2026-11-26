@@ -1,5 +1,5 @@
 import type { ActRecord } from './api';
-import { orderedSceneReferences } from '@cheftaco/proser-contracts';
+import { orderedSceneReferences } from '@hivemagnus/proser-contracts';
 import { getDocumentManifest, getDocumentScope } from './document-api';
 
 /** Metadata-only navigation; prose bodies are fetched by the active session. */

@@ -3,7 +3,7 @@ import type {
   DocumentSpan,
   DocumentAnchorLineage,
   DocumentManifestResponse,
-} from '@cheftaco/proser-editor';
+} from '@hivemagnus/proser-editor';
 import type {
   VerifiedDocumentAnchorLineage,
   DocumentCapabilities,
@@ -23,7 +23,7 @@ import type {
   DocumentTraceReview,
   DocumentCompareRequest,
   DocumentCompareValidationRecord,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 export class DocumentRequestError extends Error {
   constructor(
     message: string,
@@ -292,12 +292,12 @@ export const recordDocumentCompare = (
   sceneId: string,
   body: DocumentCompareRequest,
 ) =>
-  request<{ documentReceipt: import('@cheftaco/proser-contracts').DocumentCompareReceipt }>(
+  request<{ documentReceipt: import('@hivemagnus/proser-contracts').DocumentCompareReceipt }>(
     `${base(bookId)}/scenes/${encodeURIComponent(sceneId)}/prose/preferences`,
     { method: 'POST', body: JSON.stringify(body) },
   );
 export const recoverDocumentCompare = (bookId: string, operationId: string) =>
-  request<import('@cheftaco/proser-contracts').DocumentCompareReceipt>(
+  request<import('@hivemagnus/proser-contracts').DocumentCompareReceipt>(
     `${base(bookId)}/document-operations/${encodeURIComponent(operationId)}`,
   );
 export const cancelDocumentAnalysis = (bookId: string, operationId: string) =>
@@ -319,7 +319,7 @@ export const applyDocumentProposal = (
   proposalId: string,
   body: DocumentProposalApply,
 ) =>
-  request<import('@cheftaco/proser-contracts').DocumentProposalApplicationReceipt>(
+  request<import('@hivemagnus/proser-contracts').DocumentProposalApplicationReceipt>(
     `${base(bookId)}/document-proposals/${encodeURIComponent(proposalId)}/apply`,
     {
       method: 'POST',
@@ -335,20 +335,20 @@ export const getDocumentComments = (
   signal?: AbortSignal,
 ) =>
   request<
-    | import('@cheftaco/proser-contracts').SceneCommentsResponse
-    | import('@cheftaco/proser-contracts').LayoutStoryCommentsResponse
+    | import('@hivemagnus/proser-contracts').SceneCommentsResponse
+    | import('@hivemagnus/proser-contracts').LayoutStoryCommentsResponse
   >(commentBase(bookId, scope), { signal });
 export const revalidateDocumentComment = (
   bookId: string,
   scope: { kind: 'scene' | 'layout-story'; id: string },
   commentId: string,
   body:
-    | import('@cheftaco/proser-contracts').SceneCommentRevalidationRequest
-    | import('@cheftaco/proser-contracts').LayoutStoryCommentRevalidationRequest,
+    | import('@hivemagnus/proser-contracts').SceneCommentRevalidationRequest
+    | import('@hivemagnus/proser-contracts').LayoutStoryCommentRevalidationRequest,
 ) =>
   request<
-    | import('@cheftaco/proser-contracts').SceneCommentRevalidationResponse
-    | import('@cheftaco/proser-contracts').LayoutStoryCommentRevalidationResponse
+    | import('@hivemagnus/proser-contracts').SceneCommentRevalidationResponse
+    | import('@hivemagnus/proser-contracts').LayoutStoryCommentRevalidationResponse
   >(`${commentBase(bookId, scope)}/${encodeURIComponent(commentId)}/revalidate`, {
     method: 'POST',
     body: JSON.stringify(body),
@@ -358,24 +358,24 @@ export const resolveDocumentComment = (
   scope: { kind: 'scene' | 'layout-story'; id: string },
   commentId: string,
   body:
-    | import('@cheftaco/proser-contracts').SceneCommentResolutionRequest
-    | import('@cheftaco/proser-contracts').LayoutStoryCommentResolutionRequest,
+    | import('@hivemagnus/proser-contracts').SceneCommentResolutionRequest
+    | import('@hivemagnus/proser-contracts').LayoutStoryCommentResolutionRequest,
 ) =>
-  request<import('@cheftaco/proser-contracts').DocumentCommentReviewReceipt>(
+  request<import('@hivemagnus/proser-contracts').DocumentCommentReviewReceipt>(
     `${commentBase(bookId, scope)}/${encodeURIComponent(commentId)}/resolve`,
     { method: 'POST', body: JSON.stringify(body) },
   );
 export const recoverDocumentComment = (bookId: string, operationId: string) =>
-  request<import('@cheftaco/proser-contracts').DocumentCommentReviewReceipt>(
+  request<import('@hivemagnus/proser-contracts').DocumentCommentReviewReceipt>(
     `${base(bookId)}/document-operations/${encodeURIComponent(operationId)}`,
   );
 export const getDocumentLayoutRevision = (bookId: string, revisionId: string) =>
-  request<import('@cheftaco/proser-contracts').DocumentLayoutRevisionResponse>(
+  request<import('@hivemagnus/proser-contracts').DocumentLayoutRevisionResponse>(
     `${base(bookId)}/document-layout-revisions/${encodeURIComponent(revisionId)}`,
   );
 export const searchDocumentBook = (
   bookId: string,
-  input: import('@cheftaco/proser-contracts').DocumentSearchRequest,
+  input: import('@hivemagnus/proser-contracts').DocumentSearchRequest,
   signal?: AbortSignal,
 ) => {
   const query = new URLSearchParams({
@@ -384,17 +384,17 @@ export const searchDocumentBook = (
     caseSensitive: input.caseSensitive ? '1' : '0',
   });
   if (input.cursor) query.set('cursor', input.cursor);
-  return request<import('@cheftaco/proser-contracts').DocumentSearchResponse>(
+  return request<import('@hivemagnus/proser-contracts').DocumentSearchResponse>(
     `${base(bookId)}/document-search?${query.toString()}`,
     { signal },
   );
 };
 export const recoverDocumentSearchIndex = (
   bookId: string,
-  input: import('@cheftaco/proser-contracts').DocumentSearchIndexRecoveryRequest,
+  input: import('@hivemagnus/proser-contracts').DocumentSearchIndexRecoveryRequest,
   signal?: AbortSignal,
 ) =>
-  request<import('@cheftaco/proser-contracts').DocumentSearchIndexRecoveryResponse>(
+  request<import('@hivemagnus/proser-contracts').DocumentSearchIndexRecoveryResponse>(
     `${base(bookId)}/document-search-index/recover`,
     { method: 'POST', body: JSON.stringify(input), signal },
   );

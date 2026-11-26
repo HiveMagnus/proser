@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import type { CanonSnapshot, ScopeReference } from '@cheftaco/proser-contracts';
+import type { CanonSnapshot, ScopeReference } from '@hivemagnus/proser-contracts';
 import { getDocumentScope } from '@/lib/document-api';
 import { Button } from '@/components/ui/button';
 

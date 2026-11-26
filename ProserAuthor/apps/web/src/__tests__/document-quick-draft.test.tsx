@@ -15,7 +15,7 @@ vi.mock('@/lib/document-quick-drafts', async () => ({
 import type {
   DocumentQuickDraftInput,
   DocumentQuickDraftReceipt,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 vi.mock('@/lib/api', () => ({ createBook: vi.fn() }));
 vi.mock('@/lib/document-api', async () => ({
   ...(await vi.importActual<typeof import('@/lib/document-api')>('@/lib/document-api')),

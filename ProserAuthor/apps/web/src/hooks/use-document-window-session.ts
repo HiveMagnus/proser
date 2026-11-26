@@ -8,7 +8,7 @@ import {
   movedBlockLineage,
   type DocumentAnchorLineage,
   type SceneDocumentReference,
-} from '@cheftaco/proser-editor';
+} from '@hivemagnus/proser-editor';
 import { useDocumentSession } from './use-document-session';
 import {
   DocumentRequestError,

@@ -1,4 +1,4 @@
-import { type ProserDocument } from '@cheftaco/proser-editor';
+import { type ProserDocument } from '@hivemagnus/proser-editor';
 /** Durable acknowledgement can arrive after more typing. Preserve that body,
  * but carry authenticated attribution and server-derived annotation evidence
  * into its next request instead of replaying provisional metadata. */

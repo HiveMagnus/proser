@@ -18,7 +18,7 @@ import {
   formatDocumentSelection,
   formatDocumentParagraph,
   type DocumentSelection,
-} from '@cheftaco/proser-editor';
+} from '@hivemagnus/proser-editor';
 import {
   canonicalDocument,
   visibleRun,
@@ -28,7 +28,7 @@ import {
   type DocumentTargetInput,
   type DocumentPassageOperation,
   type DocumentSearchHit,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { editManualParagraphText } from '../../../../../packages/editor/src/manual-review-editing';
 import { useDocumentPassageSession } from '@/hooks/use-document-passage-session';
 import { useRejectedDocumentEdit } from '@/hooks/use-rejected-document-edit';
@@ -57,7 +57,7 @@ function PartialPassageTable({
   document: ProserDocument;
   editable: boolean;
   actorId: number;
-  namedStyles?: import('@cheftaco/proser-contracts').DocumentStyleDefinitions;
+  namedStyles?: import('@hivemagnus/proser-contracts').DocumentStyleDefinitions;
   onChange(document: ProserDocument): void;
   onSelection(selection: DocumentSelection | undefined, error?: string): void;
   onComposition(pending: boolean): void;
@@ -199,7 +199,7 @@ export function DocumentPassageWorkspace({
   actorId: number;
   bookRevisionId?: string;
   displayStories?: { header?: ProserDocument; footer?: ProserDocument };
-  namedStyles?: import('@cheftaco/proser-contracts').DocumentStyleDefinitions;
+  namedStyles?: import('@hivemagnus/proser-contracts').DocumentStyleDefinitions;
   searchHit?: DocumentSearchHit;
   onDirtyChange?: (dirty: boolean) => void;
   onAcknowledged?: (passage: DocumentPassage) => void;

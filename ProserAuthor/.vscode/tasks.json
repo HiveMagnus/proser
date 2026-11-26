@@ -8,7 +8,7 @@
     {
       "label": "Web: Dev Server",
       "type": "shell",
-      "command": "pnpm --filter @cheftaco/proser-web dev",
+      "command": "pnpm --filter @hivemagnus/proser-web dev",
       "options": {
         "cwd": "${workspaceFolder}"
       },

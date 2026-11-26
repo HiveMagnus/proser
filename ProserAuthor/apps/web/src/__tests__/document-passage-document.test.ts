@@ -3,7 +3,7 @@ import {
   defaultLayout,
   type DocumentPassage,
   type ProserDocument,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { passageDocument, passageDocumentOperations } from '@/lib/document-passage-document';
 const paragraph = {
   type: 'paragraph' as const,

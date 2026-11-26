@@ -1,5 +1,5 @@
 {
-  "name": "@cheftaco/proser-editor",
+  "name": "@hivemagnus/proser-editor",
   "version": "0.1.0",
   "type": "module",
   "main": "dist/index.js",
@@ -18,7 +18,7 @@
     "vitest": "5.0.5"
   },
   "dependencies": {
-    "@cheftaco/proser-contracts": "workspace:^",
+    "@hivemagnus/proser-contracts": "workspace:^",
     "@hivemagnus/canvas-word-engine": "1.2.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { PassageRunSource, PassageOperationMapping } from '@cheftaco/proser-contracts';
+import type { PassageRunSource, PassageOperationMapping } from '@hivemagnus/proser-contracts';
 import {
   passageRunGesture,
   materializeDeferredPassageIntent,

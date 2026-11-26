@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { CampaignDetail } from '@cheftaco/proser-contracts';
+import type { CampaignDetail } from '@hivemagnus/proser-contracts';
 import { CampaignWorkflow } from '@/components/campaigns/campaign-workflow';
 const campaignId = '5d16eb2b-f8c9-48c9-a68d-4cdfc216f823';
 const mocks = vi.hoisted(() => ({

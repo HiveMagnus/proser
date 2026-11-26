@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { documentFromText, projectDocument, type ProserDocument } from '@cheftaco/proser-editor';
+import { documentFromText, projectDocument, type ProserDocument } from '@hivemagnus/proser-editor';
 import { useDocumentSession } from '@/hooks/use-document-session';
 import {
   DocumentRequestError,

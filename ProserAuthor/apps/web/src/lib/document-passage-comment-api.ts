@@ -4,7 +4,7 @@ import type {
   PassageCommentPageRequest,
   PassageCommentPage,
   DocumentPassageReceipt,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { requestDocumentResource } from './document-api';
 const comments = (bookId: string, sceneId: string) =>
   `/api/books/${encodeURIComponent(bookId)}/scenes/${encodeURIComponent(sceneId)}/document-passages/comments`;

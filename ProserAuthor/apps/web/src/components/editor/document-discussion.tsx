@@ -6,7 +6,7 @@ import {
   visibleParagraph,
   visibleRun,
   type DocumentSelection,
-} from '@cheftaco/proser-editor';
+} from '@hivemagnus/proser-editor';
 import type {
   DocumentDiscussionRecord,
   DocumentProposalRecord,
@@ -21,7 +21,7 @@ import type {
   DocumentStoryDiscussionRecord,
   DocumentStoryProposalRecord,
   ProserDocument,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import type { useDocumentSession } from '@/hooks/use-document-session';
 import {
   prepareDocumentDiscussion,

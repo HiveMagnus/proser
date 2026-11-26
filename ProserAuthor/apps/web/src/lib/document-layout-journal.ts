@@ -1,4 +1,4 @@
-import type { BookLayoutSnapshot, DocumentStoryDraftCommit } from '@cheftaco/proser-contracts';
+import type { BookLayoutSnapshot, DocumentStoryDraftCommit } from '@hivemagnus/proser-contracts';
 import type { SaveLayoutRequest } from './document-api';
 import type { LayoutHistory } from './document-layout-history';
 import { documentDraftStore } from './document-drafts';

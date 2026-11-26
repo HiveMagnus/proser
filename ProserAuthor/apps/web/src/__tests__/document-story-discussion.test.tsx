@@ -8,7 +8,7 @@ import {
   type DocumentStoryDiscussionRecord,
   type DocumentStoryProposalRecord,
   type DocumentParagraph,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { storyDraftContext } from '@/lib/document-story-draft';
 import { DocumentStoryDiscussion } from '@/components/editor/document-story-discussion';
 import * as api from '@/lib/document-story-api';

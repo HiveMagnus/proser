@@ -5,7 +5,7 @@ import {
   canonicalDocument,
   reconcileDocuments,
   type ProserDocument,
-} from '@cheftaco/proser-editor';
+} from '@hivemagnus/proser-editor';
 import {
   DocumentRequestError,
   getSceneDocument,

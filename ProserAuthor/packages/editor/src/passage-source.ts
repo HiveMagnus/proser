@@ -2,7 +2,7 @@ import {
   visibleRun,
   type DocumentPassage,
   type DocumentPassageSourceFrame,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import type { DocumentSelection } from './document-selection';
 const digest = (value: unknown) => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 export function validatePassageSource(

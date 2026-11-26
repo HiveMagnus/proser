@@ -6,7 +6,7 @@ import {
   writeRejectedDocumentEdit,
   type RejectedDocumentEdit,
 } from '@/lib/document-rejected-edits';
-import type { ProserDocument } from '@cheftaco/proser-contracts';
+import type { ProserDocument } from '@hivemagnus/proser-contracts';
 export function useRejectedDocumentEdit(
   userId: string | undefined,
   bookId: string,

@@ -8,7 +8,7 @@ import type {
   DocumentPublicationMode,
   DocumentPublicationPreset,
   DocumentDocxImportPreview,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { Button } from '@/components/ui/button';
 import { getDocumentManifest } from '@/lib/document-api';

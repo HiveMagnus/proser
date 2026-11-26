@@ -200,8 +200,8 @@ router.delete('/:id', async (req, res) => {
     await tx.imageAsset.delete({ where: { id } });
   }));
   // Retain bytes even for an unreferenced deleted ID. Other assets or imports
-  // may share the filename; physical cleanup requires a separate reachability
-  // sweep rather than a racy filesystem action in this request.
+  // may share the filename; operators remove unreferenced files with the
+  // dry-run-first sweep in operations/imageOrphanSweep.ts instead.
   return respondSuccess(res, { deleted: true });
 });
 

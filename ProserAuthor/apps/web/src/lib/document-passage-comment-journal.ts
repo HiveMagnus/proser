@@ -1,4 +1,4 @@
-import type { PassageCommentCommit } from '@cheftaco/proser-contracts';
+import type { PassageCommentCommit } from '@hivemagnus/proser-contracts';
 import { documentDraftStore } from './document-drafts';
 export interface PassageCommentIntent {
   schemaVersion: 1;

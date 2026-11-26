@@ -1,4 +1,4 @@
-import type { ProserDocument } from '@cheftaco/proser-contracts';
+import type { ProserDocument } from '@hivemagnus/proser-contracts';
 import { documentDraftStore } from './document-drafts';
 export interface RejectedDocumentEdit {
   schemaVersion: 1;

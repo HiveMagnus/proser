@@ -1,4 +1,4 @@
-// @cheftaco/proser-editor — owned Canvas and semantic document surfaces
+// @hivemagnus/proser-editor — owned Canvas and semantic document surfaces
 
 export { CanvasDocumentEditor } from './components/canvas-document-editor';
 export { SemanticDocument } from './components/semantic-document';

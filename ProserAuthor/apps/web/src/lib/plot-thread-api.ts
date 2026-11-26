@@ -2,7 +2,7 @@ import type {
   PlotThreadRecord,
   PlotThreadSummary,
   PlotThreadReviewRecord,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { requestFactory } from './api';
 import type { PlotThreadIntent } from './plot-thread-journal';
 export function verifyPlotThreadAcknowledgement(

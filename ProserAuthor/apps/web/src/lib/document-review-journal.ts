@@ -1,4 +1,4 @@
-import type { DocumentCompareRequest } from '@cheftaco/proser-contracts';
+import type { DocumentCompareRequest } from '@hivemagnus/proser-contracts';
 
 export interface DocumentCompareIntent {
   schemaVersion: 1;

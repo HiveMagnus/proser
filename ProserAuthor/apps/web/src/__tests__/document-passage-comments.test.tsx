@@ -6,7 +6,7 @@ import {
   type DocumentPassage,
   type DocumentPassageReceipt,
   type PassageCommentAcknowledgement,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { DocumentPassageComments } from '@/components/editor/document-passage-comments';
 import * as api from '@/lib/document-passage-comment-api';
 import * as recovery from '@/lib/document-passage-api';

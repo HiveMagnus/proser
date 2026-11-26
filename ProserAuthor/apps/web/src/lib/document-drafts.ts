@@ -1,4 +1,4 @@
-import type { ProserDocument } from '@cheftaco/proser-editor';
+import type { ProserDocument } from '@hivemagnus/proser-editor';
 import type { SaveDocumentRequest } from './document-api';
 import type { DocumentHistory } from './document-history';
 export interface DocumentDraft {
