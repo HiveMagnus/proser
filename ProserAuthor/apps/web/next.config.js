@@ -18,7 +18,17 @@ const nextConfig = {
   poweredByHeader: false,
   async headers() {
     // API responses are relayed from Factory, which sets its own headers.
-    return [{ source: '/((?!api/).*)', headers: securityHeaders }];
+    return [
+      { source: '/((?!api/).*)', headers: securityHeaders },
+      // Browsers check the offline worker for updates on every visit.
+      {
+        source: '/sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache' },
+          { key: 'Service-Worker-Allowed', value: '/' },
+        ],
+      },
+    ];
   },
   ...(process.env.PROSER_NEXT_DIST_DIR ? { distDir: process.env.PROSER_NEXT_DIST_DIR } : {}),
   experimental: { proxyClientMaxBodySize: '32mb' },

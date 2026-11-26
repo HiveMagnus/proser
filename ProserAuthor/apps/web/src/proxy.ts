@@ -31,6 +31,9 @@ export default auth((req) => {
     pathname === '/favicon.ico' ||
     // Browsers fetch the install manifest and its icons without the session cookie.
     pathname === '/manifest.webmanifest' ||
+    // The offline worker and its offline page are public and hold no user data.
+    pathname === '/sw.js' ||
+    pathname === '/offline.html' ||
     pathname === '/icon.svg' ||
     pathname === '/apple-icon'
   ) {

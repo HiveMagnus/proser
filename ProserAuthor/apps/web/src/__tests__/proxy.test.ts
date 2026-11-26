@@ -71,7 +71,13 @@ describe('install manifest', () => {
       request: NextRequest & { auth: unknown },
       context: { params: Promise<Record<string, string>> },
     ) => Promise<Response | void> | Response | void;
-    for (const path of ['/manifest.webmanifest', '/icon.svg', '/apple-icon']) {
+    for (const path of [
+      '/manifest.webmanifest',
+      '/icon.svg',
+      '/apple-icon',
+      '/sw.js',
+      '/offline.html',
+    ]) {
       const request = new NextRequest(`https://author.example${path}`);
       Object.defineProperty(request, 'auth', { value: null });
       const response = await runProxy(request as NextRequest & { auth: unknown }, {

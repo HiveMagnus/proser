@@ -156,8 +156,11 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 ### Install on a phone
 
 - Author publishes a web manifest and home-screen icons, so Proser can be added
-  to a phone's home screen and opens standalone on the mobile home. There is no
-  offline service worker yet.
+  to a phone's home screen and opens standalone on the mobile home.
+- Production builds register a small offline service worker. Opening Proser
+  with no connection shows an offline page that explains unsaved drafts stay on
+  the device. The worker stores only the offline page, the icons and the
+  manifest; it never caches pages, `/api/*` or sign-in responses.
 
 ### Upgrade notes
 
