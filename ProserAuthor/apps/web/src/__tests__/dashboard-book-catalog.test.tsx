@@ -41,10 +41,6 @@ vi.mock('@/hooks/use-document-book-catalog', () => ({
     discardRejected: vi.fn(),
   }),
 }));
-vi.mock('@/hooks/queries/use-analytics', () => ({ useWritingStats: () => ({ data: undefined }) }));
-vi.mock('@/hooks/queries/use-recommendations', () => ({
-  useRecommendations: () => ({ data: undefined }),
-}));
 vi.mock('@/contexts/workspace-context', () => ({
   useWorkspace: () => ({
     activeBookId: '1',

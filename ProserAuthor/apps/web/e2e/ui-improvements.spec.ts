@@ -23,12 +23,6 @@ test.describe('UI Improvement Plan – Page Navigation', () => {
     });
   });
 
-  test('analytics page loads', async ({ page }) => {
-    await page.goto('/analytics');
-    await page.waitForLoadState('networkidle');
-    await expect(page.getByRole('heading', { name: /analytics/i })).toBeVisible({ timeout: 10000 });
-  });
-
   test('publish page loads', async ({ page }) => {
     await page.goto('/publish');
     await page.waitForLoadState('networkidle');
@@ -67,7 +61,6 @@ test.describe('UI Improvement Plan – Sidebar Navigation', () => {
     await expect(nav.getByText('Plot')).toBeVisible();
     await expect(nav.getByText('Continuity')).toBeVisible();
     await expect(nav.getByText('Story Bible')).toBeVisible();
-    await expect(nav.getByText('Analytics')).toBeVisible();
   });
 
   test('clicking sidebar nav changes page', async ({ page }) => {

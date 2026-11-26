@@ -18,7 +18,6 @@ import {
   Pencil,
   Trash2,
   ArrowRight,
-  Flame,
   PenTool,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -48,8 +47,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useBooks, useCreateBook, bookKeys } from '@/hooks/queries/use-books';
-import { useWritingStats } from '@/hooks/queries/use-analytics';
-import { useRecommendations } from '@/hooks/queries/use-recommendations';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { AsyncBoundary } from '@/components/ui/async-boundary';
 import {
@@ -175,8 +172,6 @@ export default function DashboardPage() {
 function OwnedDashboard({ userId }: { userId: string }) {
   const { data: books = [], isLoading, error } = useBooks();
   const { activeBookId, activeBookTitle, setActiveBookId, setActiveBookTitle } = useWorkspace();
-  const { data: stats } = useWritingStats(undefined, 30);
-  const { data: recommendations } = useRecommendations(activeBookId);
   const createBookMutation = useCreateBook();
   const queryClient = useQueryClient();
   const catalog = useDocumentBookCatalog(userId);
@@ -770,20 +765,10 @@ function OwnedDashboard({ userId }: { userId: string }) {
         )}
 
         {/* ── Stats Row ──────────────────────── */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <StatCard
             label="Total Words"
             value={<AnimatedNumber value={totalWords} format={(n) => n.toLocaleString()} />}
-          />
-          <StatCard
-            label="Writing Streak"
-            value={
-              <span className="flex items-center gap-1.5">
-                <Flame className="size-4 text-orange-400" />
-                <AnimatedNumber value={stats?.streakDays ?? 0} />
-                <span className="text-[length:--text-sm] text-text-muted">days</span>
-              </span>
-            }
           />
           <StatCard label="Active Projects" value={<AnimatedNumber value={activeCount} />} />
           <StatCard label="Completed" value={<AnimatedNumber value={completedCount} />} />
@@ -900,33 +885,6 @@ function OwnedDashboard({ userId }: { userId: string }) {
             </div>
           </AsyncBoundary>
         </section>
-
-        {/* ── Recommendations ──────────────── */}
-        {(recommendations?.length ?? 0) > 0 && (
-          <FadeIn>
-            <section>
-              <h2 className="mb-4 text-[length:--text-lg] font-semibold text-text-primary">
-                Recommendations
-              </h2>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {recommendations!.map((rec) => (
-                  <Link key={rec.action} href={rec.href}>
-                    <Card className="transition-all hover:border-accent-500/40 hover:shadow-md h-full">
-                      <CardContent className="py-4">
-                        <p className="text-[length:--text-sm] font-medium text-text-primary">
-                          {rec.label}
-                        </p>
-                        <p className="mt-1 text-[length:--text-xs] text-text-secondary">
-                          {rec.description}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          </FadeIn>
-        )}
 
         {/* ── Edit Project Dialog ────────────── */}
         <Dialog

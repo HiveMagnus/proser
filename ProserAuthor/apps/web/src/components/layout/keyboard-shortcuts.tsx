@@ -27,7 +27,6 @@ const shortcutGroups: ShortcutGroup[] = [
       { keys: ['⌘', '4'], description: 'Go to Manuscript' },
       { keys: ['⌘', '5'], description: 'Go to Continuity Radar' },
       { keys: ['⌘', '6'], description: 'Go to Quality Board' },
-      { keys: ['⌘', '7'], description: 'Go to Analytics' },
       { keys: ['⌘', '8'], description: 'Go to Publish Center' },
     ],
   },

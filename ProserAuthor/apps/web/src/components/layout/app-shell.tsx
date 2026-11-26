@@ -15,7 +15,6 @@ import { TopBar } from './top-bar';
 import { CommandPalette } from './command-palette';
 import { KeyboardShortcutsDialog } from './keyboard-shortcuts';
 import { OnboardingBanner } from './onboarding-banner';
-import { NextActionBanner } from './next-action-banner';
 import { GenerationRecoveryBanner } from './generation-recovery-banner';
 import { useNavigationShortcuts } from '@/hooks/use-navigation-shortcuts';
 import { Toaster } from 'sonner';
@@ -47,7 +46,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <Sidebar />
                   <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                     <TopBar />
-                    <NextActionBanner />
                     <GenerationRecoveryBanner />
                     <main className="flex-1 overflow-y-auto">
                       <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">

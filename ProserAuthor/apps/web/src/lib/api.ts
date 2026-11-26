@@ -102,10 +102,6 @@ export function cancelGenerationOperation(operationId: string) {
   );
 }
 
-function isRouteUnavailable(error: unknown) {
-  return error instanceof FactoryRequestError && [404, 405, 501].includes(error.status);
-}
-
 type FactoryRequestInit = RequestInit & { timeoutMs?: number; responseLimitBytes?: number };
 
 function responseLimit(path: string) {
@@ -365,30 +361,6 @@ export interface CommandReviseResult {
   revised: string;
   scope: 'scene' | 'paragraph';
   model?: string;
-}
-
-export interface BookQualityOverview {
-  overallScore: number;
-  reviewedSceneCount: number;
-  chapterQualities: Array<{
-    chapter: string;
-    score: number;
-    issues: number;
-    reviewed: boolean;
-  }>;
-  issues: Array<{
-    id: number;
-    sceneId: number;
-    sceneNumber: number;
-    chapter: string;
-    severity: string;
-    category: string;
-    title: string;
-    description: string;
-    suggestion?: string | null;
-    fixable: boolean;
-    traceId?: string;
-  }>;
 }
 
 function normalizeScene(scene: Record<string, unknown>): SceneRecord {
@@ -742,30 +714,6 @@ export async function submitScenePreference(
   return { data };
 }
 
-export async function getBookQualityOverview(
-  bookId: string,
-): Promise<{ data: BookQualityOverview }> {
-  const data = await requestFactory<BookQualityOverview>(
-    `/api/quality/book/${encodeURIComponent(bookId)}/overview`,
-  );
-  return { data };
-}
-
-export interface QualityScanResult {
-  issueCount: number;
-  newIssues: number;
-  scannedScenes: number;
-  scannedAt: string;
-}
-
-export async function runQualityScan(bookId: string): Promise<{ data: QualityScanResult }> {
-  const data = await requestFactory<QualityScanResult>(
-    `/api/quality/book/${encodeURIComponent(bookId)}/scan`,
-    { method: 'POST', signal: AbortSignal.timeout(10 * 60_000) }, // 10 minutes for multi-batch scan on slow GPUs
-  );
-  return { data };
-}
-
 /* ── Codex (Story Bible) ──────────────────────────── */
 
 export interface CodexListResponse {
@@ -899,28 +847,6 @@ export async function deleteCodexEntry(_bookId: string, id: string): Promise<voi
 
 /* ── Export ─────────────────────────────────────────── */
 
-export interface ExportHistoryItem {
-  id: string;
-  bookId: string;
-  format: string;
-  url?: string | null;
-  createdAt: string;
-}
-
-export async function getExportHistory(bookId: string): Promise<{ data: ExportHistoryItem[] }> {
-  try {
-    const data = await requestFactory<ExportHistoryItem[]>(
-      `/api/export/${encodeURIComponent(bookId)}/history`,
-    );
-    return { data: Array.isArray(data) ? data : [] };
-  } catch (error) {
-    if (isRouteUnavailable(error)) {
-      return { data: [] };
-    }
-    throw error;
-  }
-}
-
 export async function exportBook(
   bookId: string,
   input: {
@@ -957,253 +883,15 @@ export async function generateBookSummary(
   return { data };
 }
 
-/* ── Analytics ─────────────────────────────────────── */
-
-export interface DailyWritingStat {
-  date: string;
-  wordCount: number;
-  generationCount: number;
-}
-
-export interface WritingStatsResponse {
-  daily: DailyWritingStat[];
-  totalWords: number;
-  dailyAverage: number;
-  bestDay: DailyWritingStat | null;
-  streakDays: number;
-}
-
-export async function getWritingStats(
-  bookId?: string,
-  days = 30,
-): Promise<{ data: WritingStatsResponse }> {
-  const sp = new URLSearchParams({ days: String(days) });
-  if (bookId) sp.set('bookId', bookId);
-  try {
-    const data = await requestFactory<WritingStatsResponse>(`/api/analytics/writing-stats?${sp}`);
-    return { data };
-  } catch (error) {
-    if (isRouteUnavailable(error)) {
-      return {
-        data: {
-          daily: [],
-          totalWords: 0,
-          dailyAverage: 0,
-          bestDay: null,
-          streakDays: 0,
-        },
-      };
-    }
-    throw error;
-  }
-}
-
-/* ── Continuity ────────────────────────────────────── */
-
-export interface ContinuityIssue {
-  id: string;
-  bookId: string;
-  issueType: string;
-  severity: 'critical' | 'warning' | 'info';
-  title: string;
-  description: string;
-  sourceSceneId?: string | null;
-  targetSceneId?: string | null;
-  sourceLabel?: string | null;
-  targetLabel?: string | null;
-  suggestion?: string | null;
-  confidence?: number;
-  resolved: boolean;
-  createdAt: string;
-}
-
-export interface ContinuityScanResult {
-  issueCount: number;
-  issues: ContinuityIssue[];
-  scannedAt: string;
-}
-
-export async function runContinuityScan(bookId: string): Promise<{ data: ContinuityScanResult }> {
-  try {
-    const data = await requestFactory<ContinuityScanResult>(
-      `/api/continuity/${encodeURIComponent(bookId)}/scan`,
-      { method: 'POST' },
-    );
-    return { data };
-  } catch (error) {
-    if (isRouteUnavailable(error)) {
-      return {
-        data: {
-          issueCount: 0,
-          issues: [],
-          scannedAt: new Date().toISOString(),
-        },
-      };
-    }
-    throw error;
-  }
-}
-
-export async function getContinuityIssues(
-  bookId: string,
-  params?: { severity?: string; resolved?: boolean },
-): Promise<{ data: ContinuityIssue[] }> {
-  const sp = new URLSearchParams();
-  if (params?.severity) sp.set('severity', params.severity);
-  if (params?.resolved !== undefined) sp.set('resolved', String(params.resolved));
-  const qs = sp.toString();
-  try {
-    const data = await requestFactory<ContinuityIssue[]>(
-      `/api/continuity/${encodeURIComponent(bookId)}/issues${qs ? `?${qs}` : ''}`,
-    );
-    return { data: Array.isArray(data) ? data : [] };
-  } catch (error) {
-    if (isRouteUnavailable(error)) {
-      return { data: [] };
-    }
-    throw error;
-  }
-}
-
-export async function resolveContinuityIssue(
-  bookId: string,
-  issueId: string,
-  resolved = true,
-): Promise<void> {
-  await requestFactory<{ ok: boolean }>(
-    `/api/continuity/${encodeURIComponent(bookId)}/issues/${encodeURIComponent(issueId)}`,
-    { method: 'PATCH', body: JSON.stringify({ resolved }) },
-  );
-}
-
 /* ── Plot ──────────────────────────────────────────── */
 
-export interface ArchetypeInfo {
-  id: string;
-  name: string;
-  description: string;
-  genreTags: string[];
-  beatCount: number;
-  contentRating: string;
-}
-
-export interface BeatCoverage {
-  archetypeId: string;
-  beats: Array<{
-    key: string;
-    name: string;
-    status: 'pending' | 'mapped' | 'written' | 'revised';
-    sceneId?: string | null;
-    expectedPosition: number;
-  }>;
-  coveragePercent: number;
-}
-
 export type PlotThread = import('@cheftaco/proser-contracts').PlotThreadSummary;
-
-export async function getArchetypes(genre?: string): Promise<{ data: ArchetypeInfo[] }> {
-  const sp = genre ? `?genre=${encodeURIComponent(genre)}` : '';
-  try {
-    const data = await requestFactory<ArchetypeInfo[]>(`/api/plot/archetypes${sp}`);
-    return { data: Array.isArray(data) ? data : [] };
-  } catch (error) {
-    if (isRouteUnavailable(error)) {
-      return { data: [] };
-    }
-    throw error;
-  }
-}
-
-export async function getBeatCoverage(bookId: string): Promise<{ data: BeatCoverage | null }> {
-  try {
-    const data = await requestFactory<BeatCoverage | null>(
-      `/api/plot/${encodeURIComponent(bookId)}/beat-coverage`,
-    );
-    return { data };
-  } catch (error) {
-    if (isRouteUnavailable(error)) {
-      return { data: null };
-    }
-    throw error;
-  }
-}
 
 export async function getPlotThreads(bookId: string): Promise<{ data: PlotThread[] }> {
   const result = await requestFactory<{ threads: PlotThread[] }>(
     `/api/books/${encodeURIComponent(bookId)}/plot-threads`,
   );
   return { data: result.threads };
-}
-
-/* ── Recommendations ───────────────────────────────── */
-
-export interface Recommendation {
-  action: string;
-  label: string;
-  description: string;
-  href: string;
-  priority: number;
-}
-
-export async function getRecommendations(bookId: string): Promise<{ data: Recommendation[] }> {
-  try {
-    const data = await requestFactory<Recommendation[]>(
-      `/api/recommendations/${encodeURIComponent(bookId)}`,
-    );
-    return { data: Array.isArray(data) ? data : [] };
-  } catch (error) {
-    if (isRouteUnavailable(error)) {
-      return { data: [] };
-    }
-    throw error;
-  }
-}
-
-/* ── Quality compatibility ─────────────────────────── */
-
-export interface QualityReport {
-  counts: { critical: number; error: number; warning: number; info: number; total: number };
-  issues: Array<{
-    id: string;
-    bookId: string;
-    sceneId?: string;
-    issueType: string;
-    severity: string;
-    message: string;
-    evidence?: string;
-    suggestion?: string;
-    resolved: boolean;
-  }>;
-}
-
-export async function getBookQualityReport(bookId: string): Promise<{ data: QualityReport }> {
-  const overview = await getBookQualityOverview(bookId);
-  const counts = {
-    critical: overview.data.issues.filter((issue) => issue.severity === 'critical').length,
-    error: overview.data.issues.filter((issue) => issue.severity === 'error').length,
-    warning: overview.data.issues.filter((issue) => issue.severity === 'warning').length,
-    info: overview.data.issues.filter(
-      (issue) => !['critical', 'error', 'warning'].includes(issue.severity),
-    ).length,
-    total: overview.data.issues.length,
-  };
-
-  return {
-    data: {
-      counts,
-      issues: overview.data.issues.map((issue) => ({
-        id: String(issue.id),
-        bookId,
-        sceneId: String(issue.sceneId),
-        issueType: issue.category,
-        severity: issue.severity,
-        message: issue.description,
-        evidence: issue.title,
-        suggestion: issue.suggestion ?? undefined,
-        resolved: false,
-      })),
-    },
-  };
 }
 
 // ─── Image API ─────────────────────────────────────────
