@@ -6,6 +6,10 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 
 ## Unreleased
 
+Nothing yet.
+
+## v1.2.0 (2026-11-26)
+
 ### Sign-in
 
 - The Oathweave password relay is removed. Proser no longer takes an
@@ -13,12 +17,29 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
   writers sign in only through Oathweave OpenID Connect (authorization code with
   S256 PKCE), where passwords, second factors and passkeys are entered at
   Oathweave. `OATHWEAVE_PASSWORD_RELAY` has no effect and Author warns while it
-  is set. Local and GitHub accounts are unchanged.
-- **Upgrade note:** an installation that sets `IAM_CORE_URL` must configure
-  `OATHWEAVE_OIDC_*` before upgrading, or Oathweave writers cannot sign in
-  (Author logs the reason at startup). Installations that already set
-  `OATHWEAVE_PASSWORD_RELAY=false` with OIDC see no change. See
+  is set. Local and GitHub accounts are unchanged. (#49)
+
+### Dependencies
+
+- The Compose `postgres` service uses a refreshed `postgres:17-alpine` digest.
+  (#47)
+
+### Upgrade notes
+
+- **Oathweave OIDC is the only Oathweave sign-in.** An installation that sets
+  `IAM_CORE_URL` must configure `OATHWEAVE_OIDC_*` before upgrading, or
+  Oathweave writers cannot sign in (Author logs the reason at startup). Keep
+  `IAM_CORE_URL` set: without it Author offers the local credentials from
+  `LOCAL_AUTH_*`. Remove `OATHWEAVE_PASSWORD_RELAY`. Installations that already
+  set `OATHWEAVE_PASSWORD_RELAY=false` with OIDC see no change. See
   [Upgrading from the password relay](docs/OATHWEAVE_OIDC.md#upgrading-from-the-password-relay).
+- **Existing accounts keep their books.** Accounts the relay created
+  (`iam:<username>`) and already linked to an Oathweave `sub` resolve by that
+  `sub` as before. A relay account not yet linked is linked on its writer's
+  first OIDC sign-in by Oathweave username. Sessions signed in through the
+  relay stay valid until they expire or are revoked.
+- **No database migration** and no change to the document enforcement guards.
+  Rolling back to v1.1.0 is a matter of running its image with its settings.
 
 ## v1.1.0 (2026-11-26)
 
