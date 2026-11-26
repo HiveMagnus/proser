@@ -22,12 +22,11 @@ application secrets. See [Compose configuration](../../docs/COMPOSE.md).
 | `FACTORY_AUTH_SECRET`            | Yes                 | -                | Dedicated secret for Author-to-Factory JWTs; must match Factory |
 | `FACTORY_AUTH_ISSUER`            | No                  | `proser-author`  | JWT issuer expected by Factory                                  |
 | `FACTORY_AUTH_AUDIENCE`          | No                  | `proser-factory` | JWT audience expected by Factory                                |
-| `IAM_CORE_URL`                   | If using IAM        | —                | Oathweave IAM login API origin                                  |
+| `IAM_CORE_URL`                   | If using Oathweave  | —                | Marks an Oathweave installation; turns local sign-in off        |
 | `OATHWEAVE_OIDC_ISSUER`          | For Oathweave OIDC  | —                | Exact `iss` of Oathweave's ID tokens                            |
 | `OATHWEAVE_OIDC_CLIENT_ID`       | For Oathweave OIDC  | —                | Client ID registered in Oathweave                               |
 | `OATHWEAVE_OIDC_CLIENT_SECRET`   | Confidential client | —                | Client secret; unset for a public client                        |
 | `OATHWEAVE_OIDC_*` endpoints     | No                  | discovery        | Discovery URL or explicit endpoints; see the OIDC guide         |
-| `OATHWEAVE_PASSWORD_RELAY`       | No                  | on               | `false` stops the password relay once OIDC is configured        |
 | `GITHUB_CLIENT_ID`               | No                  | -                | GitHub OAuth application ID                                     |
 | `GITHUB_CLIENT_SECRET`           | No                  | -                | GitHub OAuth application secret                                 |
 | `GITHUB_ALLOWED_IDS`             | If using GitHub     | -                | Comma-separated numeric GitHub account IDs allowed to sign in   |
@@ -39,19 +38,19 @@ application secrets. See [Compose configuration](../../docs/COMPOSE.md).
 
 Set `AUTH_URL` to the exact scheme, hostname, and optional port users open.
 When `NEXTAUTH_URL` is also set, give it the same value. The native deployment
-scripts expect a canonical HTTPS origin on port 443. `IAM_CORE_URL` selects
-Oathweave IAM. Without it, local credentials are available when explicitly enabled.
+scripts expect a canonical HTTPS origin on port 443. `IAM_CORE_URL` marks an
+Oathweave installation, which offers no local password sign-in. Without it,
+local credentials are available when explicitly enabled.
 `OATHWEAVE_OIDC_ISSUER` and `OATHWEAVE_OIDC_CLIENT_ID` add **Sign in with
 Oathweave** (OpenID Connect, authorization code with S256 PKCE), so passwords
 are entered at Oathweave instead of in Proser. The first OIDC sign-in links the
 writer's existing account by Oathweave username, and later sign-ins use the
-Oathweave `sub`. The password relay stays on as a fallback until
-`OATHWEAVE_PASSWORD_RELAY=false`. Client registration, every OIDC setting and
-the relay switch-off are described in the
-[Oathweave OIDC guide](../../docs/OATHWEAVE_OIDC.md).
-Oathweave accounts with two-step verification are asked for an authenticator or
-recovery code after their password. IAM sign-in failures use the same account
-and trusted-source throttles as local credentials.
+Oathweave `sub`. Proser never takes an Oathweave password: the former password
+relay was removed, and `OATHWEAVE_PASSWORD_RELAY` has no effect. With
+`IAM_CORE_URL` set and OIDC not configured, Oathweave writers cannot sign in,
+and Author logs why at startup. Client registration and every OIDC setting are
+described in the [Oathweave OIDC guide](../../docs/OATHWEAVE_OIDC.md).
+Two-step verification and passkeys are handled on Oathweave's sign-in page.
 
 Local authentication hashes and compares username and password unconditionally,
 combines the two results only afterward, and applies the same failure response

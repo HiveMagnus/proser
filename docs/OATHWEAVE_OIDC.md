@@ -5,10 +5,9 @@ authorization code flow with S256 PKCE. The browser goes to Oathweave to sign
 in, and Proser exchanges the one-time code from its server. Passwords and
 second factors are entered at Oathweave and never pass through Proser.
 
-The password relay (`IAM_CORE_URL`) remains available as a fallback. It posts
-the username and password the writer types into Proser to Oathweave's login
-API. Once OIDC sign-in works, turn the relay off as described in
-[Stop relaying passwords](#stop-relaying-passwords).
+This is the only way Oathweave writers sign in. Earlier releases also had a
+password relay that posted the password typed into Proser to Oathweave's login
+API; it was removed (see [Upgrading from the password relay](#upgrading-from-the-password-relay)).
 
 ## How accounts are matched
 
@@ -16,7 +15,7 @@ Proser keys an Oathweave account on the ID token's `sub`, which is Oathweave's
 stable user ID.
 
 - **First OIDC sign-in of an existing writer:** Factory finds the account the
-  password relay created for the same Oathweave username (`iam:<username>`,
+  former password relay created for the same Oathweave username (`iam:<username>`,
   taken from `preferred_username`). It records the `sub` on that account. Books,
   drafts and settings stay where they are. Drafts kept in the browser stay
   available too, because the relay already used the Oathweave user ID as the
@@ -28,17 +27,16 @@ stable user ID.
   to another. When a different Oathweave user signs in with a username whose
   account belongs to someone else, that user gets a separate account, and
   Factory logs a warning.
-- **Unchanged:** local accounts (`LOCAL_AUTH_*`), GitHub accounts and relay
-  sign-ins resolve exactly as before. A linked account keeps its
-  `iam:<username>` handle, so relay sign-ins and Hermes owner delegations still
-  reach it.
+- **Unchanged:** local accounts (`LOCAL_AUTH_*`) and GitHub accounts resolve
+  exactly as before. A linked account keeps its `iam:<username>` handle, so
+  Hermes owner delegations still reach it.
 
 Local accounts (`LOCAL_AUTH_USERNAME`) use the same `iam:<username>` handle as
 relay accounts. Before you enable OIDC on an installation that used local
 credentials, make sure the local username either matches the intended writer's
 Oathweave username or differs from every Oathweave username. The first OIDC
 sign-in with that username links the local account and its books, as switching
-to the password relay already did.
+to the former password relay did.
 
 The link is stored in the `users.oathweave_subject` column, added by the
 `20261127100000_oathweave_subject` migration. Earlier Proser releases ignore it.
@@ -165,7 +163,6 @@ accepts only public `hivexui-*` clients.
 | `OATHWEAVE_OIDC_TOKEN_URL`         | With explicit | Token endpoint                                                                        |
 | `OATHWEAVE_OIDC_JWKS_URL`          | With explicit | ID-token signing keys                                                                 |
 | `OATHWEAVE_OIDC_USERINFO_URL`      | No            | UserInfo endpoint; Proser reads the ID token's claims                                 |
-| `OATHWEAVE_PASSWORD_RELAY`         | No            | `false` turns the password relay off once OIDC is configured; ignored without OIDC    |
 
 All URLs must use HTTPS. Plain HTTP is accepted only for `localhost` and
 `127.0.0.1`. An incomplete or invalid set of OIDC settings is logged at
@@ -183,32 +180,26 @@ first OIDC sign-in` once for that account.
 A refused sign-in returns to the sign-in page with a message. Author logs the
 reason, for example an ID-token signature or issuer mismatch.
 
-## Stop relaying passwords
+## Upgrading from the password relay
 
-After every writer has signed in through OIDC at least once, or once you have
-confirmed that OIDC works for new sign-ins:
+Proser no longer relays passwords to Oathweave, and `OATHWEAVE_PASSWORD_RELAY`
+has no effect (Author logs a warning while it is set; remove it). Configure
+OIDC as described above before you upgrade an installation that still signed
+writers in through the relay. Keep `IAM_CORE_URL` set: it marks an Oathweave
+installation, and without it Author offers the local credentials from
+`LOCAL_AUTH_*`, which Compose enables by default.
 
-```dotenv
-OATHWEAVE_PASSWORD_RELAY=false
-```
-
-Recreate Author. The sign-in page then offers only **Sign in with Oathweave**,
-and Proser no longer sends passwords to Oathweave. Keep `IAM_CORE_URL` set:
-without it, Author offers the local credentials from `LOCAL_AUTH_*`, which
-Compose enables by default. Sessions signed in through the relay before the
-change stay valid until they expire or are revoked.
-
-The setting is ignored, and the relay stays on, while OIDC is not configured
-or its settings are invalid. Turning it off can therefore never leave Oathweave
-writers without a way to sign in.
+If `IAM_CORE_URL` is set but the OIDC settings are missing or invalid, the
+sign-in page offers no way in and Author logs the reason at startup. Writers
+keep their books: the first OIDC sign-in links each relay account by its
+Oathweave username. Sessions signed in through the relay stay valid until they
+expire or are revoked.
 
 ## Rollback
 
-Remove the `OATHWEAVE_OIDC_*` settings and `OATHWEAVE_PASSWORD_RELAY`, then
-recreate Author. Sign-in returns to the password relay, and every linked
-account is reached through its unchanged `iam:<username>` handle. An earlier
-Proser image works with the migrated database because it ignores the
-`oathweave_subject` column.
+To roll back, run the earlier Proser image with its settings. Every linked
+account is still reached through its unchanged `iam:<username>` handle, and an
+earlier image ignores the `oathweave_subject` column.
 
 ## Security notes
 

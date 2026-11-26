@@ -421,9 +421,9 @@ function isUniqueConstraintError(error: unknown): boolean {
 
 /**
  * Resolve an Oathweave OIDC session to its account, keyed on the Oathweave
- * subject. The first OIDC sign-in links the account the password relay created
- * for the same username (`iam:<username>`), which keeps its handle so relay
- * sign-ins and agent delegations still reach it. A username whose account is
+ * subject. The first OIDC sign-in links the account the former password relay
+ * created for the same username (`iam:<username>`), which keeps its handle so
+ * existing sessions and agent delegations still reach it. A username whose account is
  * already linked to another subject (a renamed or reused Oathweave username) is
  * never handed over: that subject gets an account of its own.
  */

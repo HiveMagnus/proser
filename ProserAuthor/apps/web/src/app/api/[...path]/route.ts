@@ -170,7 +170,7 @@ async function buildAuthorizationHeader(expectedIdentity: string | null) {
   const rawUsername = String(user.username ?? user.name ?? user.email ?? 'author');
   const providerKey = provider.toLowerCase();
   // Oathweave OIDC sessions use the same `iam:<username>` handle as the
-  // password relay, so the account stays reachable through either. The OIDC
+  // former password relay, so accounts it created stay reachable. The OIDC
   // subject comes with it: Factory keys the account on the subject and links
   // it to the relay's account on the first OIDC sign-in.
   const oathweave = providerKey === 'oathweave';

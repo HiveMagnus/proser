@@ -6,8 +6,8 @@ import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
  * Proser redirects the browser to Oathweave, receives a one-time code at
  * `/api/auth/callback/oathweave` and exchanges it on the server. The writer's
  * password never passes through Proser. Accounts are keyed on the ID token's
- * `sub`; Factory links a first OIDC sign-in to the account the password relay
- * created for the same Oathweave username.
+ * `sub`; Factory links a first OIDC sign-in to the account the former password
+ * relay created for the same Oathweave username.
  */
 
 export const OATHWEAVE_PROVIDER_ID = 'oathweave';
@@ -140,22 +140,6 @@ export function readOathweaveOidcConfig(
   }
 }
 
-/**
- * The password relay posts the writer's password to Oathweave's login API.
- * It stays on while OIDC is not configured, whatever the setting says, so
- * turning it off can never leave Oathweave accounts without a way in.
- */
-export function passwordRelayEnabled(
-  environment: NodeJS.ProcessEnv,
-  oidcConfigured: boolean,
-): { enabled: boolean; ignoredOff: boolean } {
-  const off = environment.OATHWEAVE_PASSWORD_RELAY?.trim().toLowerCase() === 'false';
-  if (!off) return { enabled: true, ignoredOff: false };
-  return oidcConfigured
-    ? { enabled: false, ignoredOff: false }
-    : { enabled: true, ignoredOff: true };
-}
-
 /** The discovery document location Auth.js derives from the issuer. */
 export function issuerDiscoveryUrl(issuer: string): string {
   return `${issuer.replace(/\/+$/, '')}/.well-known/openid-configuration`;
@@ -253,8 +237,8 @@ export function oathweaveProfile(claims: Record<string, unknown>): OathweaveProf
     ? claims.roles.filter((role): role is string => typeof role === 'string')
     : [];
   return {
-    // Oathweave's user ID, which the password relay also uses as the session
-    // user ID, so drafts kept in the browser stay with the same writer.
+    // Oathweave's user ID, which the former password relay also used as the
+    // session user ID, so drafts kept in the browser stay with the same writer.
     id: subject,
     name: typeof claims.name === 'string' && claims.name ? claims.name : username,
     email: typeof claims.email === 'string' ? claims.email : null,
