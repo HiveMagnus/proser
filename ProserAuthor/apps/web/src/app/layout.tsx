@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { headers } from 'next/headers';
 import './globals.css';
 import { AppShell } from '@/components/layout/app-shell';
@@ -6,7 +6,11 @@ import { AppShell } from '@/components/layout/app-shell';
 export const metadata: Metadata = {
   title: 'Proser — AI Fiction Studio',
   description: 'An AI-native fiction writing studio for producing publisher-ready manuscripts.',
+  applicationName: 'Proser',
+  appleWebApp: { capable: true, title: 'Proser', statusBarStyle: 'black-translucent' },
 };
+
+export const viewport: Viewport = { themeColor: '#6d28d9' };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Reading the request makes every page render per request, so each one gets
