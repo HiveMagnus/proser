@@ -22,7 +22,7 @@ application secrets. See [Compose configuration](../../docs/COMPOSE.md).
 | `FACTORY_AUTH_SECRET`            | Yes               | -                | Dedicated secret for Author-to-Factory JWTs; must match Factory |
 | `FACTORY_AUTH_ISSUER`            | No                | `proser-author`  | JWT issuer expected by Factory                                  |
 | `FACTORY_AUTH_AUDIENCE`          | No                | `proser-factory` | JWT audience expected by Factory                                |
-| `IAM_CORE_URL`                   | If using IAM      | —                | Magnus IAM login API origin                                     |
+| `IAM_CORE_URL`                   | If using IAM      | —                | Oathweave IAM login API origin                                  |
 | `GITHUB_CLIENT_ID`               | No                | -                | GitHub OAuth application ID                                     |
 | `GITHUB_CLIENT_SECRET`           | No                | -                | GitHub OAuth application secret                                 |
 | `GITHUB_ALLOWED_IDS`             | If using GitHub   | -                | Comma-separated numeric GitHub account IDs allowed to sign in   |
@@ -35,7 +35,10 @@ application secrets. See [Compose configuration](../../docs/COMPOSE.md).
 Set `AUTH_URL` to the exact scheme, hostname, and optional port users open.
 When `NEXTAUTH_URL` is also set, give it the same value. The native deployment
 scripts expect a canonical HTTPS origin on port 443. `IAM_CORE_URL` selects
-Magnus IAM. Without it, local credentials are available when explicitly enabled.
+Oathweave IAM. Without it, local credentials are available when explicitly enabled.
+Oathweave accounts with two-step verification are asked for an authenticator or
+recovery code after their password. IAM sign-in failures use the same account
+and trusted-source throttles as local credentials.
 
 Local authentication hashes and compares username and password unconditionally,
 combines the two results only afterward, and applies the same failure response

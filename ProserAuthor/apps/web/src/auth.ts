@@ -12,6 +12,7 @@ import {
   recordLocalAuthFailure,
 } from '@/lib/local-auth';
 import { isGitHubAccountAllowed, parseGitHubAllowedIds } from '@/lib/github-allow-list';
+import { authorizeIamCredentials } from '@/lib/iam-auth';
 
 const providers: Provider[] = [];
 
@@ -43,49 +44,20 @@ function createIamCredentialsProvider(
     credentials: {
       username: { label: 'Username', type: 'text' },
       password: { label: 'Password', type: 'password' },
+      code: { label: 'Authentication code', type: 'text' },
     },
     authorize,
   });
 }
 
 // ─── IAM Credentials Provider (primary) ─────────────────────────────────
-// Authenticates against Magnus IAM Core API
+// Authenticates against the Oathweave IAM API, including its MFA challenge
 const iamCoreUrl = process.env.IAM_CORE_URL;
 if (iamCoreUrl) {
   providers.push(
-    createIamCredentialsProvider(async (credentials) => {
-      if (!credentials?.username || !credentials?.password) return null;
-
-      try {
-        const res = await fetch(`${iamCoreUrl}/api/v1/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: credentials.username,
-            password: credentials.password,
-          }),
-        });
-
-        if (!res.ok) return null;
-
-        const data = await res.json();
-        if (!data.accessToken || !data.user) return null;
-
-        return {
-          id: data.user.id,
-          name: data.user.displayName || data.user.username,
-          email: data.user.email,
-          image: null,
-          // Stash IAM info for the jwt callback
-          iamAccessToken: data.accessToken,
-          iamRefreshToken: data.refreshToken,
-          iamUsername: data.user.username,
-          iamRoles: data.user.roles,
-        };
-      } catch {
-        return null;
-      }
-    }),
+    createIamCredentialsProvider((credentials, request) =>
+      authorizeIamCredentials(iamCoreUrl, credentials, request),
+    ),
   );
 } else if (isLocalAuthAllowed) {
   const localAuthUsername = normalizeIamUsername(process.env.LOCAL_AUTH_USERNAME);
