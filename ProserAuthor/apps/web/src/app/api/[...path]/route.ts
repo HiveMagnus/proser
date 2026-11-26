@@ -16,6 +16,7 @@ const PUBLICATION_IDLE_TIMEOUT_MS = 30_000;
 const PUBLIC_PROXY_ROUTES = new Set(['/api/readiness']);
 const PUBLICATION_MEDIA_TYPES = new Set([
   'application/pdf',
+  'application/zip',
   'application/epub+zip',
   'application/json',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -244,6 +245,16 @@ function proxyPolicy(pathname: string): {
       streamResponse: true,
       streamKind: 'publication',
     };
+  if (/^\/api\/books\/[0-9]+\/archive$/.test(pathname))
+    return {
+      timeoutMs: PUBLICATION_HEADER_TIMEOUT_MS,
+      idleTimeoutMs: PUBLICATION_IDLE_TIMEOUT_MS,
+      responseLimit: 128 * 1024 * 1024,
+      streamResponse: true,
+      streamKind: 'publication',
+    };
+  if (pathname === '/api/books/archive-imports')
+    return { timeoutMs: 5 * 60_000, responseLimit: 1024 * 1024 };
   if (/\/publication\/[^/]+$/.test(pathname))
     return {
       timeoutMs: PUBLICATION_HEADER_TIMEOUT_MS,
@@ -285,7 +296,7 @@ function safePublicationHeaders(pathname: string, upstream: Response, responseLi
   const canonicalArtifact =
     /^\/api\/books\/[0-9]+\/document-publication-artifacts\/[a-f0-9-]{36}\/(download|review)$/.test(
       pathname,
-    );
+    ) || /^\/api\/books\/[0-9]+\/archive$/.test(pathname);
   const original = /^\/api\/books\/[0-9]+\/import-originals\/([a-f0-9-]{36})\/content$/.exec(
     pathname,
   );

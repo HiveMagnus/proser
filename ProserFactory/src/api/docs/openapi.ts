@@ -640,6 +640,18 @@ registerPath({
 });
 
 registerPath({
+  method: 'get', path: '/api/books/{bookId}/archive', summary: 'Export the whole book as a portable versioned archive (format proser-book-archive v1) with a SHA-256 for every file', tags: ['Books'],
+  security: authHeader, request: { params: bookIdParams },
+  responses: { 200: { description: 'Private ZIP archive; X-Content-SHA256 is the digest of the archive bytes', content: { 'application/zip': { schema: z.string().openapi({ type: 'string', format: 'binary' }) } } }, 413: errorResponse('Book exceeds archive limits', 413), 503: errorResponse('Document authority inactive or stored content invalid', 503) },
+});
+registerPath({
+  method: 'post', path: '/api/books/archive-imports', summary: 'Import a verified book archive as a new book; retrying the same operationId returns the same receipt', tags: ['Books'],
+  security: authHeader,
+  request: { query: z.object({ operationId: z.string().uuid() }), body: { required: true, content: { 'application/zip': { schema: z.string().openapi({ type: 'string', format: 'binary' }) } } } },
+  responses: { 201: successEnvelope(z.unknown(), 'New book ID, revision, counts and what the import normalized'), 409: errorResponse('Operation ID reused for another archive', 409), 413: errorResponse('Archive exceeds 128 MiB or archive limits', 413), 415: errorResponse('Archive must be application/zip', 415), 422: errorResponse('Invalid archive, digest mismatch or unsupported version', 422), 503: errorResponse('Document authority inactive', 503) },
+});
+
+registerPath({
   method: 'post', path: '/api/books/{bookId}/export-artifacts', summary: 'Create a context-efficient Markdown export artifact', tags: ['Books'],
   security: authHeader,
   request: {

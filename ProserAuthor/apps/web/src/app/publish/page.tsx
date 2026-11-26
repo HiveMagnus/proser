@@ -12,6 +12,7 @@ import type {
 import { useWorkspace } from '@/contexts/workspace-context';
 import { Button } from '@/components/ui/button';
 import { TextManuscriptImport } from '@/components/publish/text-manuscript-import';
+import { BookArchive } from '@/components/publish/book-archive';
 import { getDocumentManifest } from '@/lib/document-api';
 import {
   getPublicationCapabilities,
@@ -59,6 +60,7 @@ function PublicationWorkspace({
   const [importComplete, setImportComplete] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [controller] = useState(() => new AbortController());
+  const { setActiveBook } = useWorkspace();
   const remember = (job: DocumentPublicationJob) =>
     setJobs((current) => [job, ...current.filter((item) => item.id !== job.id)]);
   useEffect(() => {
@@ -155,7 +157,18 @@ function PublicationWorkspace({
     });
   }
   if (!authenticated) return <p>Sign in to access publication artifacts.</p>;
-  if (!bookId) return <p>Select a book to prepare an export or import a manuscript.</p>;
+  if (!bookId)
+    return (
+      <div className="space-y-6">
+        <p>Select a book to prepare an export or import a manuscript.</p>
+        <BookArchive
+          bookId={null}
+          disabled={false}
+          signal={controller.signal}
+          onImported={setActiveBook}
+        />
+      </div>
+    );
   return (
     <div className="mx-auto max-w-5xl space-y-8 pb-12">
       <header>
@@ -438,6 +451,12 @@ function PublicationWorkspace({
         bookId={bookId}
         disabled={busy || !capabilities}
         signal={controller.signal}
+      />
+      <BookArchive
+        bookId={bookId}
+        disabled={busy}
+        signal={controller.signal}
+        onImported={setActiveBook}
       />
     </div>
   );

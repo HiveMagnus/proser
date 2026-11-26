@@ -1,6 +1,9 @@
-import { Router } from 'express';
+import { Router, raw } from 'express';
 import { registerDocumentRoutes } from './documents';
 import { exportCreativePackage } from '../../services/creativeImportService';
+import { z } from 'zod';
+import { BOOK_ARCHIVE_MAX_BYTES, exportBookArchive, importBookArchive } from '@/documents/bookArchive';
+import { DocumentError } from '@/documents/errors';
 import { getRecommendations, getWritingStats, setWritingGoal } from '../../services/writingStatsService';
 import { getBookAiPolicy, listAiDisabledBookIds, setBookAiPolicy } from '../../services/bookAiPolicyService';
 import { respondSuccess } from '../utils/response';
@@ -337,6 +340,33 @@ router.get('/:bookId/creative-package',
   res.setHeader('Content-Disposition', `attachment; filename="book-${bookId}-illustrated.zip"`);
   res.setHeader('Cache-Control', 'private, no-store');
   return res.send(archive);
+});
+
+// GET /api/books/:bookId/archive - Portable archive of the whole book
+router.get('/:bookId/archive',
+  zParams(bookIdParams),
+  ownedBookBudget({ source: 'params', required: true }),
+  expensiveRouteLimit('bookArchive'),
+  async (req, res) => {
+  const { archive, sha256, filename } = await exportBookArchive(req.user!.id, Number(req.params.bookId));
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.setHeader('X-Content-SHA256', sha256);
+  res.setHeader('Cache-Control', 'private, no-store');
+  return res.send(archive);
+});
+
+// POST /api/books/archive-imports?operationId= - Import an archive as a new book
+const archiveImportQuery = z.object({ operationId: z.string().uuid() }).strict();
+router.post('/archive-imports',
+  zQuery(archiveImportQuery),
+  expensiveRouteLimit('bookArchiveImport'),
+  (req, _res, next) => { if (!req.is('application/zip')) throw new DocumentError('DOCUMENT_ARCHIVE_MEDIA_TYPE_INVALID', 'Upload the book archive as application/zip.', 415); next(); },
+  (req, res, next) => { raw({ type: 'application/zip', limit: BOOK_ARCHIVE_MAX_BYTES })(req, res, (error: unknown) => { if (error && typeof error === 'object' && 'type' in error && error.type === 'entity.too.large') next(new DocumentError('DOCUMENT_ARCHIVE_TOO_LARGE', 'Book archives must be 128 MiB or smaller.', 413)); else next(error); }); },
+  async (req, res) => {
+  if (!Buffer.isBuffer(req.body)) throw new DocumentError('DOCUMENT_ARCHIVE_INVALID', 'Upload the book archive bytes.', 422);
+  res.setHeader('Cache-Control', 'private, no-store');
+  respondSuccess(res, await importBookArchive(req.user!.id, req.body, String(req.query.operationId)), 201);
 });
 
 router.post('/:bookId/export-artifacts',
