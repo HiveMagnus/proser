@@ -19,7 +19,9 @@ title; the genre and summary are optional and can be changed later with
 On a phone, Proser opens the mobile view. **Quick Draft** there starts a new
 scene (or a new book) from a short summary, and you can carry on at a desk later.
 Use your browser's **Add to Home Screen** to open Proser like an app; it still
-needs a connection to the server.
+needs a connection to the server. If you open it with no connection, Proser
+shows an offline page instead of a browser error. Drafts you have not saved yet
+stay on the phone and come back when you open Proser online again.
 
 ## Write and save
 

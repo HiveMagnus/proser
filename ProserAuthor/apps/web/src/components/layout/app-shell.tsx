@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { installDocumentHistoryTracking } from '@/lib/document-history-navigation';
+import { registerServiceWorker } from '@/lib/service-worker';
 import { SessionProvider } from 'next-auth/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { getQueryClient } from '@/lib/query-client';
@@ -32,6 +33,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const focused = focus && pathname === '/manuscript';
   useNavigationShortcuts(!isMobilePage);
   useEffect(() => installDocumentHistoryTracking(), []);
+  useEffect(() => void registerServiceWorker(), []);
 
   // Auth pages render without the shell chrome
   if (isAuthPage) {
