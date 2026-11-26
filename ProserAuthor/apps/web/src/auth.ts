@@ -1,5 +1,5 @@
-import NextAuth from 'next-auth';
-import type { Provider } from 'next-auth/providers';
+import NextAuth, { customFetch } from 'next-auth';
+import type { OIDCConfig, Provider } from 'next-auth/providers';
 import GitHub from 'next-auth/providers/github';
 import Credentials from 'next-auth/providers/credentials';
 
@@ -13,6 +13,14 @@ import {
 } from '@/lib/local-auth';
 import { isGitHubAccountAllowed, parseGitHubAllowedIds } from '@/lib/github-allow-list';
 import { authorizeIamCredentials } from '@/lib/iam-auth';
+import {
+  OATHWEAVE_PROVIDER_ID,
+  oathweaveProfile,
+  passwordRelayEnabled,
+  readOathweaveOidcConfig,
+  verifyOathweaveIdToken,
+  type OathweaveOidcConfig,
+} from '@/lib/oathweave-oidc';
 
 const providers: Provider[] = [];
 
@@ -35,9 +43,11 @@ function normalizeIamUsername(value: unknown): string {
   return atIndex > 0 ? raw.slice(0, atIndex) : raw;
 }
 
+let passwordSignIn = false;
 function createIamCredentialsProvider(
   authorize: NonNullable<Parameters<typeof Credentials>[0]['authorize']>,
 ) {
+  passwordSignIn = true;
   return Credentials({
     id: 'iam',
     name: 'Proser Login',
@@ -50,10 +60,70 @@ function createIamCredentialsProvider(
   });
 }
 
-// ─── IAM Credentials Provider (primary) ─────────────────────────────────
-// Authenticates against the Oathweave IAM API, including its MFA challenge
+// ─── Oathweave OpenID Connect (preferred) ───────────────────────────────
+// Authorization code with S256 PKCE: the password is entered at Oathweave and
+// never reaches Proser. An incomplete configuration is logged and leaves OIDC
+// off, so the sign-in methods below keep working.
+const oidcResult = readOathweaveOidcConfig(process.env);
+if (oidcResult.status === 'invalid') {
+  console.error(`Oathweave OIDC sign-in is disabled: ${oidcResult.reason}.`);
+}
+const oidcConfig: OathweaveOidcConfig | null =
+  oidcResult.status === 'configured' ? oidcResult.config : null;
+if (oidcConfig) providers.push(createOathweaveProvider(oidcConfig));
+
+function createOathweaveProvider(config: OathweaveOidcConfig): OIDCConfig<Record<string, unknown>> {
+  const authorizationUrl = config.endpoints ? new URL(config.endpoints.authorization) : null;
+  authorizationUrl?.searchParams.set('scope', config.scope);
+  return {
+    id: OATHWEAVE_PROVIDER_ID,
+    name: 'Oathweave',
+    type: 'oidc',
+    issuer: config.issuer,
+    clientId: config.clientId,
+    ...(config.clientSecret
+      ? {
+          clientSecret: config.clientSecret,
+          client: { token_endpoint_auth_method: 'client_secret_basic' },
+        }
+      : { client: { token_endpoint_auth_method: 'none' } }),
+    // State is not among the checks: Auth.js encodes it as a JWE, which the
+    // HiveXUI sign-in portal does not accept. The sign-in button sends a plain
+    // random state instead. PKCE binds the callback to this browser's sign-in
+    // (RFC 9700 §2.1) and the nonce binds the ID token to it.
+    checks: ['pkce', 'nonce'],
+    authorization: authorizationUrl
+      ? { url: authorizationUrl.toString() }
+      : { params: { scope: config.scope } },
+    ...(config.endpoints ? { token: config.endpoints.token } : {}),
+    ...(config.endpoints?.userinfo ? { userinfo: config.endpoints.userinfo } : {}),
+    profile: (claims) => oathweaveProfile(claims),
+    // Oathweave's browser discovery is selected with ?client_id=, which Auth.js
+    // cannot derive from the issuer, so its discovery request is redirected.
+    [customFetch]: (input: string | URL | Request, init?: RequestInit) => {
+      const url = input instanceof Request ? input.url : String(input);
+      if (config.discoveryUrl && url.endsWith('/.well-known/openid-configuration')) {
+        return fetch(config.discoveryUrl, init);
+      }
+      return fetch(input, init);
+    },
+  };
+}
+
+// ─── Oathweave password relay (fallback) ────────────────────────────────
+// Posts the username and password to the Oathweave login API, including its
+// MFA challenge. It stays on unless OATHWEAVE_PASSWORD_RELAY=false and OIDC is
+// configured.
 const iamCoreUrl = process.env.IAM_CORE_URL;
-if (iamCoreUrl) {
+const relay = passwordRelayEnabled(process.env, oidcConfig !== null);
+if (iamCoreUrl && relay.ignoredOff) {
+  console.warn(
+    'OATHWEAVE_PASSWORD_RELAY=false is ignored until Oathweave OIDC sign-in is configured.',
+  );
+}
+if (iamCoreUrl && !relay.enabled) {
+  // Oathweave accounts sign in through OIDC only.
+} else if (iamCoreUrl) {
   providers.push(
     createIamCredentialsProvider((credentials, request) =>
       authorizeIamCredentials(iamCoreUrl, credentials, request),
@@ -119,12 +189,30 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
   }
 }
 
+/** Which sign-in controls the sign-in page shows. */
+export const signInMethods = {
+  oathweave: oidcConfig !== null,
+  password: passwordSignIn,
+};
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers,
   trustHost: true,
   session: { strategy: 'jwt' },
   callbacks: {
-    signIn({ account }) {
+    async signIn({ account }) {
+      if (account?.provider === OATHWEAVE_PROVIDER_ID) {
+        if (!oidcConfig || typeof account.id_token !== 'string') return false;
+        try {
+          const claims = await verifyOathweaveIdToken(oidcConfig, account.id_token);
+          return claims.sub === account.providerAccountId;
+        } catch (error) {
+          console.warn(
+            `Oathweave sign-in refused: ${error instanceof Error ? error.message : 'ID token not verified'}.`,
+          );
+          return false;
+        }
+      }
       if (account?.provider !== 'github') return true;
       return isGitHubAccountAllowed(account.providerAccountId, allowedGitHubIds);
     },
@@ -141,6 +229,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.username = normalizeIamUsername(user.iamUsername ?? user.email ?? user.name);
           token.roles = user.iamRoles;
           token.provider = 'iam';
+        } else if (account?.provider === OATHWEAVE_PROVIDER_ID) {
+          // Neither the ID token nor the access token is kept in the session.
+          token.sub = account.providerAccountId;
+          token.username = normalizeIamUsername(user.iamUsername);
+          token.roles = user.iamRoles;
+          token.provider = OATHWEAVE_PROVIDER_ID;
+          token.oathweaveSubject = account.providerAccountId;
         } else if (account?.provider === 'github') {
           // Auth.js assigns a random user id on every OAuth sign-in when no
           // database adapter is configured. The provider account id is the
@@ -167,6 +262,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.username = typeof token.username === 'string' ? token.username : undefined;
         session.user.roles = Array.isArray(token.roles) ? (token.roles as string[]) : undefined;
         session.user.provider = typeof token.provider === 'string' ? token.provider : undefined;
+        session.user.oathweaveSubject =
+          typeof token.oathweaveSubject === 'string' ? token.oathweaveSubject : undefined;
         session.user.sessionIssuedAt =
           typeof token.sessionIssuedAt === 'number' ? token.sessionIssuedAt : undefined;
       }
@@ -175,5 +272,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   pages: {
     signIn: '/auth/signin',
+    // A refused Oathweave or GitHub sign-in returns to the sign-in page with
+    // the error code, instead of Auth.js's own error page.
+    error: '/auth/signin',
   },
 });

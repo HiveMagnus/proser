@@ -14,5 +14,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
     exclude: ['e2e/**', 'node_modules/**'],
+    // next-auth imports `next/server` without an extension, which Node's ESM
+    // resolver refuses; Vite resolves it when the package is inlined.
+    server: { deps: { inline: ['next-auth'] } },
   },
 });

@@ -89,6 +89,9 @@ returns users to localhost, check this value first.
 Choose the intended Author sign-in provider. Local credentials are enabled by
 default in Compose. For a deployment using Magnus IAM, supply `IAM_CORE_URL`
 and follow the [Author authentication settings](../ProserAuthor/docs/ENVIRONMENT.md).
+To sign in through Oathweave with OpenID Connect and stop relaying passwords,
+register Proser as an Oathweave client as described in the
+[Oathweave OIDC guide](OATHWEAVE_OIDC.md).
 Keep PostgreSQL and Redis unpublished. Use a separately authenticated private
 route if agents need direct access to Factory from another host.
 

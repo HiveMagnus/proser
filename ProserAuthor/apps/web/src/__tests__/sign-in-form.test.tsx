@@ -37,3 +37,58 @@ describe('SignInForm two-step verification', () => {
     ).toBeInTheDocument();
   });
 });
+
+describe('SignInForm with Oathweave OIDC', () => {
+  beforeEach(() => signIn.mockReset());
+
+  it('starts the Oathweave redirect with a portal-compatible random state', async () => {
+    signIn.mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    render(
+      <SignInForm
+        callbackUrl="/books"
+        serverError={null}
+        methods={{ oathweave: true, password: true }}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Sign in with Oathweave' }));
+    expect(signIn).toHaveBeenCalledWith(
+      'oathweave',
+      { redirectTo: '/books' },
+      { state: expect.stringMatching(/^[A-Za-z0-9_-]{43}$/) },
+    );
+    // The password fallback is still offered.
+    expect(screen.getByLabelText('Password')).toBeInTheDocument();
+  });
+
+  it('offers only Oathweave once the password relay is off', () => {
+    render(
+      <SignInForm
+        callbackUrl="/"
+        serverError={null}
+        methods={{ oathweave: true, password: false }}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Sign in with Oathweave' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
+  });
+
+  it('explains a refused Oathweave sign-in', () => {
+    render(
+      <SignInForm
+        callbackUrl="/"
+        serverError="AccessDenied"
+        methods={{ oathweave: true, password: false }}
+      />,
+    );
+    expect(
+      screen.getByText('Oathweave did not confirm this sign-in. Try again.'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows no Oathweave button when OIDC is not configured', () => {
+    render(<SignInForm callbackUrl="/" serverError={null} />);
+    expect(screen.queryByRole('button', { name: 'Sign in with Oathweave' })).toBeNull();
+    expect(screen.getByLabelText('Password')).toBeInTheDocument();
+  });
+});

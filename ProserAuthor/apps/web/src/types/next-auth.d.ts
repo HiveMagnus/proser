@@ -12,6 +12,8 @@ declare module 'next-auth' {
   interface User {
     iamUsername?: string;
     iamRoles?: string[];
+    /** Oathweave's stable user ID (the OIDC `sub`); local accounts have none. */
+    oathweaveSubject?: string;
     login?: string;
   }
 
@@ -21,6 +23,8 @@ declare module 'next-auth' {
       username?: string;
       roles?: string[];
       provider?: string;
+      /** Oathweave's stable user ID, which Factory keys the account on. */
+      oathweaveSubject?: string;
       /** Seconds since the epoch at which this session was signed in. */
       sessionIssuedAt?: number;
     } & DefaultSession['user'];

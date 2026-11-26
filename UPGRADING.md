@@ -32,6 +32,16 @@ a newer release. The general procedure (back up, switch the checkout and
 - **Restores:** `scripts/restore-compose.sh` refuses a backup taken with an
   image other than `PROSER_IMAGE` unless you pass `--allow-image-mismatch`, and
   keeps the replaced database as `proser_previous_<time>` until you drop it.
+- **Database migration:** `20261127100000_oathweave_subject` adds the nullable,
+  unique `users.oathweave_subject` column that Oathweave OIDC accounts are keyed
+  on. It is additive: existing accounts and sign-ins are unchanged, and an
+  earlier image ignores the column. Apply it with `migrate deploy` (step 4).
+- **Oathweave OIDC sign-in (optional):** nothing changes until you set
+  `OATHWEAVE_OIDC_ISSUER` and `OATHWEAVE_OIDC_CLIENT_ID`. Register Proser in
+  Oathweave first ([guide](docs/OATHWEAVE_OIDC.md)); its callback is
+  `<PROSER_ORIGIN>/api/auth/callback/oathweave`. The password relay stays on.
+  After OIDC works, set `OATHWEAVE_PASSWORD_RELAY=false` (and keep
+  `IAM_CORE_URL`) to stop relaying passwords.
 - **Database migration:** `20261126000000_book_writing_goals` adds the
   `book_writing_goals` table. `initialize` stops with the pending migration
   name until you apply it with `migrate deploy` (step 4 above). The document
