@@ -1,7 +1,7 @@
 import type CanvasEditor from '@hivemagnus/canvas-word-engine';
 import { ElementType, SurroundPosition } from '@hivemagnus/canvas-word-engine';
 import type { IElement } from '@hivemagnus/canvas-word-engine';
-import type { DocumentTargetInput } from '@cheftaco/proser-contracts';
+import type { DocumentTargetInput } from '@hivemagnus/proser-contracts';
 import { identityOf } from './canvas-adapter';
 import {
   visibleParagraph,

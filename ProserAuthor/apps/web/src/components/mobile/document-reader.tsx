@@ -2,8 +2,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useProtectedRouter as useRouter } from '@/hooks/use-protected-router';
 import { useSession } from 'next-auth/react';
-import { SemanticDocument, type DocumentManifestResponse } from '@cheftaco/proser-editor';
-import type { DocumentStyleDefinitions } from '@cheftaco/proser-contracts';
+import { SemanticDocument, type DocumentManifestResponse } from '@hivemagnus/proser-editor';
+import type { DocumentStyleDefinitions } from '@hivemagnus/proser-contracts';
 import {
   getDocumentManifest,
   getDocumentScope,

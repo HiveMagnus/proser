@@ -7,7 +7,7 @@ requests stay on relative `/api/*` through the authenticated same-origin proxy.
 
 R2 mobile/accessibility certification is active after the user revoked its earlier
 deferral. Current fixes/evidence and physical-device requirements are in
-[the R2 acceptance record](../../CANVAS_R2_ACCEPTANCE.md); R6 performance
+[the R2 acceptance record](../../docs/CANVAS_R2_ACCEPTANCE.md); R6 performance
 certification remains deferred. Device emulation is not physical-phone acceptance.
 
 ## Entry and authenticated state

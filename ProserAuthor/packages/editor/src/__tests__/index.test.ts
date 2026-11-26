@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-describe('@cheftaco/proser-editor', () => {
+describe('@hivemagnus/proser-editor', () => {
   it('exports the owned Canvas and semantic surfaces without the retired Tiptap contract', async () => {
     const module = await import('../index.js');
     expect(module.CanvasDocumentEditor).toBeDefined();

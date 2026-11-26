@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { defaultLayout, type DocumentPassage } from '@cheftaco/proser-contracts';
+import { defaultLayout, type DocumentPassage } from '@hivemagnus/proser-contracts';
 import { useLayoutEffect } from 'react';
 import { passageDocument } from '@/lib/document-passage-document';
 import { DocumentPassageWorkspace } from '@/components/editor/document-passage-workspace';
@@ -38,8 +38,8 @@ vi.mock('@/components/editor/bounded-document-discussion', () => ({
     return <div>Bounded discussion</div>;
   },
 }));
-vi.mock('@cheftaco/proser-editor', async (importOriginal) => {
-  const original = await importOriginal<typeof import('@cheftaco/proser-editor')>();
+vi.mock('@hivemagnus/proser-editor', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@hivemagnus/proser-editor')>();
   return {
     ...original,
     CanvasDocumentEditor: ({
@@ -49,11 +49,13 @@ vi.mock('@cheftaco/proser-editor', async (importOriginal) => {
       onDocumentSelection,
       onInsertTable,
     }: {
-      document: import('@cheftaco/proser-contracts').ProserDocument;
-      onChange(document: import('@cheftaco/proser-contracts').ProserDocument): void;
-      displayLayout?: import('@cheftaco/proser-contracts').DocumentLayout;
+      document: import('@hivemagnus/proser-contracts').ProserDocument;
+      onChange(document: import('@hivemagnus/proser-contracts').ProserDocument): void;
+      displayLayout?: import('@hivemagnus/proser-contracts').DocumentLayout;
       onDocumentSelection(selection: undefined, error?: string): void;
-      onInsertTable(selection: import('@cheftaco/proser-editor').DocumentSelection): Promise<void>;
+      onInsertTable(
+        selection: import('@hivemagnus/proser-editor').DocumentSelection,
+      ): Promise<void>;
     }) => {
       // Match the native adapter's layout-dependent lifecycle without trying
       // to render a canvas in jsdom. Selection callbacks rerender its owner.

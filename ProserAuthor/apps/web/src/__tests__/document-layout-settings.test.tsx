@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { defaultLayout, type BookLayoutSnapshot } from '@cheftaco/proser-contracts';
+import { defaultLayout, type BookLayoutSnapshot } from '@hivemagnus/proser-contracts';
 import { DocumentLayoutSettings } from '@/components/editor/document-layout-settings';
 import { editLayoutStoryParagraph, reconcileLayoutSettings } from '@/lib/document-layout-editing';
 import * as api from '@/lib/document-api';

@@ -6,7 +6,7 @@ import {
   type DocumentPassage,
   type DocumentPassageCommit,
   type DocumentPassageReceipt,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { usePassageSession } from '@/hooks/use-passage-session';
 import { getScenePassage, saveScenePassage } from '@/lib/document-passage-api';
 import {

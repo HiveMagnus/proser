@@ -10,6 +10,6 @@ uses the [practical browser gate](CANVAS_R2_ACCEPTANCE.md). Device and
 screen-reader certification remain incomplete. Reference-profile performance
 certification and Microsoft Word application acceptance remain open.
 
-See [Compose setup](docs/COMPOSE.md) for deployment, [Canvas maintenance](ProserAuthor/docs/CANVAS_MAINTENANCE.md)
+See [Compose setup](COMPOSE.md) for deployment, [Canvas maintenance](../ProserAuthor/docs/CANVAS_MAINTENANCE.md)
 for dependency provenance, and the [backlog](CANVAS_NEXT_RELEASE_BACKLOG.md)
 for remaining work.

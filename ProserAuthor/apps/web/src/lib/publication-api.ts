@@ -4,7 +4,7 @@ import type {
   DocumentPublicationJob,
   DocumentDocxImportPreview,
   DocumentDocxImportCommitRequest,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
   const timeout = AbortSignal.timeout(30_000);
   const response = await fetch(url, {

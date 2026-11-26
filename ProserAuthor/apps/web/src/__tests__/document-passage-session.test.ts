@@ -5,7 +5,7 @@ import {
   type DocumentPassage,
   type DocumentPassageCommit,
   type DocumentPassageReceipt,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import {
   DocumentPassageSession,
   type PassageSessionDependencies,

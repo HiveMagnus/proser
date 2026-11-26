@@ -3,7 +3,7 @@ import {
   passageRunSpan,
   type DocumentPassage,
   type PassageRunSource,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { passageRunSource } from './document-passage-document';
 export interface AdjacentPassageRange {
   sceneId: number;

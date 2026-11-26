@@ -5,14 +5,14 @@ import {
   documentFromText,
   paragraphSelection,
   type DocumentParagraph,
-} from '@cheftaco/proser-editor';
+} from '@hivemagnus/proser-editor';
 import { DocumentComments } from '@/components/editor/document-comments';
 import * as api from '@/lib/document-api';
 import * as journal from '@/lib/document-comment-journal';
 import type {
   DocumentCommentReviewReceipt,
   SceneCommentsResponse,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 vi.mock('@/lib/document-api', async (original) => ({
   ...(await original<typeof import('@/lib/document-api')>()),
   getDocumentComments: vi.fn(),

@@ -6,7 +6,7 @@ import {
   type DocumentPassageOperationCommit,
   type DocumentPassageOperation,
   type ProserDocument,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { documentDraftStore } from './document-drafts';
 import type { PassageRunDraft } from './document-passage-editing';
 export interface DocumentPassageDraft {

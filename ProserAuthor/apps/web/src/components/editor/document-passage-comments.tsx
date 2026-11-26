@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import type { DocumentSelection } from '@cheftaco/proser-editor';
+import type { DocumentSelection } from '@hivemagnus/proser-editor';
 import type {
   DocumentPassageRequest,
   DocumentPassage,
@@ -9,7 +9,7 @@ import type {
   PassageCommentCommit,
   PassageCommentPage,
   PassageCommentSummary,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { qualifyPassageSelection } from '../../../../../packages/editor/src/passage-source';
 import { acknowledgedScenePassage, recoverScenePassage } from '@/lib/document-passage-api';
 import { commitPassageComment, getPassageComment } from '@/lib/document-passage-comment-api';

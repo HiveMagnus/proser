@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { documentFromText } from '@cheftaco/proser-editor';
+import { documentFromText } from '@hivemagnus/proser-editor';
 import { DocumentReader, readerPreferenceKey } from '@/components/mobile/document-reader';
 import { getDocumentManifest, getDocumentScope, getSceneDocument } from '@/lib/document-api';
 

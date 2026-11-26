@@ -8,7 +8,7 @@ import { databaseService } from '../../lib/database';
 import { NotFoundError, ValidationError } from '../../lib/errors';
 import logger from '../../lib/logger';
 import { respondSuccess } from '../utils/response';
-import { getExportCache, cacheExport } from '../../lib/redis/contentCache';
+import { createHash } from 'node:crypto';
 function escapeHtml(str: string) { return str.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string)); }
 
 export class ExportController {
@@ -46,29 +46,6 @@ export class ExportController {
       const book = await databaseService.client.book.findFirst({ where: { id: bookId, userId } });
   if (!book) throw new NotFoundError('Book not found');
       signal?.throwIfAborted();
-
-      // Try cache only when no extra flags are set (standard export)
-      if (!hasExtras) {
-        const cached = await getExportCache(bookId, format);
-        signal?.throwIfAborted();
-        if (cached.data) {
-          const { content } = cached.data as { format: string; content: string };
-          const etag = 'W/"' + content.length + '-' + (content.charCodeAt(0) ^ content.charCodeAt(content.length - 1 || 0)) + '"';
-          if (req.headers['if-none-match'] === etag) { res.status(304).end(); return; }
-          res.setHeader('ETag', etag);
-          res.setHeader('Cache-Control', 'public, max-age=60');
-          if (download) {
-            const mimeTypes: Record<string, string> = { markdown: 'text/markdown', html: 'text/html', rtf: 'application/rtf' };
-            const exts: Record<string, string> = { markdown: 'md', html: 'html', rtf: 'rtf' };
-            const filename = (book.title || 'book').replace(/[^a-z0-9]+/gi, '_') + '.' + (exts[format] || 'txt');
-            res.setHeader('Content-Type', mimeTypes[format] || 'text/plain');
-            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-            res.status(200).send(content);
-            return;
-          }
-          respondSuccess(res, cached.data); return;
-        }
-      }
 
       const acts = await databaseService.client.act.findMany({ where: { bookId }, orderBy: { actNumber: 'asc' }, include: { chapters: { orderBy: { chapterNumber: 'asc' }, include: { scenes: { where: { deletedAt: null }, orderBy: { sceneNumber: 'asc' } } } } } });
 
@@ -177,73 +154,15 @@ export class ExportController {
           }
         }
         output += '}';
-    } else if (format === 'pdf') {
-        // PDF requires rendering the HTML export; only allowed if enabled via env
-        const enablePdf = process.env.EXPORT_ENABLE_PDF === '1';
-        if (!enablePdf) {
-      throw new ValidationError('PDF export disabled');
-        }
-        // Build HTML first
-        const safeTitle = book.title || 'Untitled Book';
-        let html = `<html><head><meta charset=\"utf-8\"/><title>${escapeHtml(safeTitle)}</title>` +
-          `<style>body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height:1.6; padding:2rem;}
-          h1,h2,h3,h4{margin-top:1.2em} p{margin:0.7em 0; white-space:pre-wrap}</style></head><body>`;
-        html += `<h1>${escapeHtml(safeTitle)}</h1>`;
-        for (const act of acts) {
-          html += `<h2>Act ${act.actNumber}${act.title ? ': ' + escapeHtml(act.title) : ''}</h2>`;
-          for (const chapter of act.chapters) {
-            html += `<h3>Chapter ${chapter.chapterNumber}${chapter.title ? ': ' + escapeHtml(chapter.title) : ''}</h3>`;
-            for (const scene of chapter.scenes) {
-              html += `<h4>Scene ${chapter.chapterNumber}.${scene.sceneNumber}</h4>`;
-              if (scene.prose) html += `<p>${escapeHtml(scene.prose).replace(/\n+/g, '<br/>')}</p>`;
-            }
-          }
-        }
-        html += '</body></html>';
-
-        // Dynamically import puppeteer to avoid adding overhead when not used
-        let pdfBuffer: Buffer | null = null;
-        try {
-          // Use require to avoid TypeScript type resolution issues when types are not present
-          // eslint-disable-next-line @typescript-eslint/no-require-imports -- puppeteer is an optional, lazily-loaded dependency
-          const puppeteer = require('puppeteer');
-          const launchOpts: { executablePath?: string; args?: string[] } = {};
-          if (process.env.PUPPETEER_EXECUTABLE_PATH) {
-            launchOpts.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
-          }
-          // For many Linux servers, disable sandbox if needed
-          launchOpts.args = ['--no-sandbox', '--disable-setuid-sandbox'];
-          const browser = await puppeteer.launch(launchOpts);
-          const page = await browser.newPage();
-          await page.setContent(html, { waitUntil: 'networkidle0' });
-          signal?.throwIfAborted();
-          pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' } });
-          await browser.close();
-          signal?.throwIfAborted();
-  } catch (err) {
-          logger.error({ err }, 'Puppeteer PDF generation failed');
-          throw err;
-        }
-  if (!pdfBuffer) throw new Error('Failed to generate PDF');
-        signal?.throwIfAborted();
-        // Send as binary buffer payload rather than JSON wrapper
-        const filename = (book.title || 'book').replace(/[^a-z0-9]+/gi, '_') + '.pdf';
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-        res.setHeader('Cache-Control', 'no-cache');
-  res.status(200).send(pdfBuffer);
-        return;
-      } else {
+  } else {
         throw new ValidationError('Unsupported format');
       }
-  // Simple ETag based on length + hash of first/last chars
-  const etag = 'W/"' + output.length + '-' + (output.charCodeAt(0) ^ output.charCodeAt(output.length - 1 || 0)) + '"';
-  if (req.headers['if-none-match'] === etag) { res.status(304).end(); return; }
+  // Manuscript text stays out of shared caches; the digest lets a client skip an unchanged body.
+  const etag = `"${createHash('sha256').update(output).digest('base64url')}"`;
   res.setHeader('ETag', etag);
-  res.setHeader('Cache-Control', 'public, max-age=60');
+  res.setHeader('Cache-Control', 'private, no-store');
+  if (req.headers['if-none-match'] === etag) { res.status(304).end(); return; }
   const payload = { format, content: output };
-  signal?.throwIfAborted();
-  if (!hasExtras) await cacheExport(bookId, format, payload);
   signal?.throwIfAborted();
   if (download) {
     const mimeTypes: Record<string, string> = { markdown: 'text/markdown', html: 'text/html', rtf: 'application/rtf' };

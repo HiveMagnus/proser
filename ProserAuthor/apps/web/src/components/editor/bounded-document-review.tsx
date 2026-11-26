@@ -1,9 +1,9 @@
 'use client';
 import { useMemo } from 'react';
-import type { DocumentTraceDisplayTarget } from '@cheftaco/proser-contracts';
+import type { DocumentTraceDisplayTarget } from '@hivemagnus/proser-contracts';
 import type { PassageTypedSession } from '@/lib/document-passage-typed-session';
 import { getScenePassage } from '@/lib/document-passage-api';
-import { canonicalDocument } from '@cheftaco/proser-contracts';
+import { canonicalDocument } from '@hivemagnus/proser-contracts';
 import { getDocumentTraceReview } from '@/lib/document-api';
 import { DocumentReview } from './document-review';
 /** Findings retain exact Factory bindings. Cursors only navigate a pinned source;
@@ -24,7 +24,7 @@ export function BoundedDocumentReview({
   disabled: boolean;
   onPendingChange: (pending: boolean) => void;
   onExternalApplied?: (
-    before: import('@cheftaco/proser-contracts').DocumentPassage,
+    before: import('@hivemagnus/proser-contracts').DocumentPassage,
   ) => Promise<void>;
 }) {
   const adapter = useMemo(
@@ -34,7 +34,7 @@ export function BoundedDocumentReview({
         return { bookRevisionId: before.bookRevisionId, revisionId: before.sceneRevisionId };
       },
       reloadAcknowledged: async (
-        receipt: import('@cheftaco/proser-contracts').DocumentCompareReceipt,
+        receipt: import('@hivemagnus/proser-contracts').DocumentCompareReceipt,
       ) => {
         const reference = receipt.manifest.scenes.find(
           (scene) => scene.sceneId === Number(sceneId),

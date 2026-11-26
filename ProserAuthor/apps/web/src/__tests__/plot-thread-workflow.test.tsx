@@ -6,7 +6,7 @@ import type {
   PlotThreadRecord,
   PlotThreadSummary,
   PlotThreadReviewRecord,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 const mocks = vi.hoisted(() => ({
   list: vi.fn(),
   read: vi.fn(),

@@ -5,7 +5,7 @@ import type {
   DocumentTraceReview,
   DocumentTraceDisplayTarget,
   DocumentCompareReceipt,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { Button } from '@/components/ui/button';
 import {
   getDocumentTraceReview,

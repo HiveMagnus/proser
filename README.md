@@ -26,7 +26,9 @@ refers to the machine running Docker. For access from another machine, use the
 Compose starts Author, Factory, and the worker from **one application image**.
 PostgreSQL, Redis, manuscripts, and images persist in named volumes.
 
-Start writing with **New Project** on desktop or **Quick Draft** on a phone.
+Start writing with **Create New Project** on desktop or **Quick Draft** on a phone.
+[Writing with Proser](docs/WRITING_WITH_PROSER.md) is a short guide to writing,
+recovering drafts, importing Word files, exporting and setting up AI.
 
 For a source build or an upgrade of an existing installation, follow the
 [Compose guide](docs/COMPOSE.md).

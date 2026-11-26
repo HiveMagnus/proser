@@ -4,7 +4,7 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import type {
   ChapterTransitions as Batch,
   DocumentProposalRecord,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { ChapterTransitions } from '@/components/editor/chapter-transitions';
 import * as api from '@/lib/document-api';
 import * as journal from '@/lib/chapter-transition-journal';

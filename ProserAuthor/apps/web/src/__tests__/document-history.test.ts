@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { documentFromText } from '@cheftaco/proser-editor';
+import { documentFromText } from '@hivemagnus/proser-editor';
 import {
   appendDocumentHistory,
   initialDocumentHistory,

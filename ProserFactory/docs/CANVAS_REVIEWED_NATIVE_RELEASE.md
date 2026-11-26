@@ -250,4 +250,4 @@ and readiness. Preserve original env bytes privately.
 The Author rollback guard refuses a checkpoint without its structured-document
 contract when Factory authority is active or unknown. The first old-editor
 checkpoint was tested and refused before any web-service stop. See the root
-[release record](../../CANVAS_RELEASE_RECORD.md) for current production state.
+[release record](../../docs/CANVAS_RELEASE_RECORD.md) for current production state.

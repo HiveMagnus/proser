@@ -43,6 +43,23 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
   installation of the previous release to the candidate image before
   publishing it.
 
+### Changes
+
+- New [Writing with Proser](docs/WRITING_WITH_PROSER.md) guide for writers,
+  linked from the README, and [UPGRADING.md](UPGRADING.md) for operators.
+- `node dist/operations/imageOrphanSweep.js` in the Factory container reports
+  image files no image record references, and removes them with `--apply`
+  (files younger than 24 hours are left alone).
+- The export used when document authority is off (native installs) sends
+  `Cache-Control: private, no-store` and a SHA-256 ETag instead of a public
+  60-second cache and a weak ETag, no longer caches manuscripts in Redis, and
+  drops an unreachable PDF branch that needed Puppeteer.
+- Author no longer keeps Oathweave access and refresh tokens in the session
+  cookie; nothing used them.
+- The `CANVAS_*.md` release-process documents moved to `docs/`, the Author
+  workspace packages are named `@hivemagnus/proser-*`, and two stray Factory
+  scripts were removed.
+
 ### Upgrade notes
 
 - If writers open Proser at an address other than `PROSER_ORIGIN`, writes from

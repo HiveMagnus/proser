@@ -1,8 +1,8 @@
 import { webcrypto } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { documentFromText, type DocumentParagraph } from '@cheftaco/proser-editor';
+import { documentFromText, type DocumentParagraph } from '@hivemagnus/proser-editor';
 import { selectionForDocumentSearch } from '@/lib/document-search-selection';
-import type { DocumentSearchHit } from '@cheftaco/proser-contracts';
+import type { DocumentSearchHit } from '@hivemagnus/proser-contracts';
 let sequence = 0;
 const document = documentFromText('Quote 😀\n\nQuote 😀', () => `search-${++sequence}`);
 const second = document.blocks[1] as DocumentParagraph;

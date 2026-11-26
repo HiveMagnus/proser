@@ -1,4 +1,7 @@
-import type { DocumentDiscussionInput, DocumentProposalRequest } from '@cheftaco/proser-contracts';
+import type {
+  DocumentDiscussionInput,
+  DocumentProposalRequest,
+} from '@hivemagnus/proser-contracts';
 export interface TransitionIntent {
   schemaVersion: 1;
   userId: string;

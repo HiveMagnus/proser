@@ -11,8 +11,8 @@ import type {
   StructureSnapshot,
   BookLayoutSnapshot,
   DocumentSearchHit,
-} from '@cheftaco/proser-contracts';
-import { orderedSceneReferences } from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
+import { orderedSceneReferences } from '@hivemagnus/proser-contracts';
 import { getDocumentManifest, getDocumentScope, getDocumentCapabilities } from '@/lib/document-api';
 import { DocumentPassageWorkspace } from './document-passage-workspace';
 import { DocumentPassageWindowWorkspace } from './document-passage-window-workspace';

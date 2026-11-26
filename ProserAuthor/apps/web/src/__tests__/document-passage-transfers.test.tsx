@@ -6,7 +6,7 @@ import {
   type DocumentPassage,
   type PassageScopeReceipt,
   type PassageScopeTransfer,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { DocumentPassageTransfers } from '@/components/editor/document-passage-transfers';
 import type { PassageTypedSession } from '@/lib/document-passage-typed-session';
 import type { PassageScopeJournal } from '@/lib/document-passage-scope-journal';

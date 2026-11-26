@@ -8,7 +8,7 @@ import type {
   DocumentStoryDraftCommit,
   DocumentStoryDraftReceipt,
   DocumentStorySourceRecord,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { requestDocumentResource } from './document-api';
 const base = (bookId: string) => `/api/books/${encodeURIComponent(bookId)}`;
 const discussion = (bookId: string, id?: string) =>

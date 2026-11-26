@@ -70,7 +70,7 @@ PLAYWRIGHT_IAM_USERNAME=playwright-local \
 PLAYWRIGHT_IAM_PASSWORD='<test-only-password>' \
 AUTH_SECRET='<test-session-secret>' \
 FACTORY_AUTH_SECRET='<test-factory-secret>' \
-pnpm --filter @cheftaco/proser-web exec playwright test
+pnpm --filter @hivemagnus/proser-web exec playwright test
 ```
 
 ## Deployment finish bar
@@ -99,7 +99,7 @@ A deployment is successful only when:
 
 R1/R3/R4/R5/R7 shipped against the root release checklist. R2 device and
 assistive-technology certification remains active and incomplete. Follow
-`../CANVAS_R2_ACCEPTANCE.md` for exact candidate and evidence boundaries. The
+`../docs/CANVAS_R2_ACCEPTANCE.md` for exact candidate and evidence boundaries. The
 practical automated browser, keyboard, accessibility and recovery gate governs
 revision campaign releases; unavailable physical-device or actual screen-reader
 certification is nonblocking. R6 performance certification remains deferred;

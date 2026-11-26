@@ -1,4 +1,4 @@
-import type { DocumentMutationPreconditions } from '@cheftaco/proser-contracts';
+import type { DocumentMutationPreconditions } from '@hivemagnus/proser-contracts';
 const API_BASE = '';
 
 type FactoryEnvelope<T> = {
@@ -885,7 +885,7 @@ export async function generateBookSummary(
 
 /* ── Plot ──────────────────────────────────────────── */
 
-export type PlotThread = import('@cheftaco/proser-contracts').PlotThreadSummary;
+export type PlotThread = import('@hivemagnus/proser-contracts').PlotThreadSummary;
 
 export async function getPlotThreads(bookId: string): Promise<{ data: PlotThread[] }> {
   const result = await requestFactory<{ threads: PlotThread[] }>(

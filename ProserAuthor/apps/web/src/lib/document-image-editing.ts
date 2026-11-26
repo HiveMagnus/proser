@@ -3,7 +3,7 @@ import {
   paragraphsOf,
   visibleRun,
   type ProserDocument,
-} from '@cheftaco/proser-editor';
+} from '@hivemagnus/proser-editor';
 export interface VerifiedImageChoice {
   id: string;
   sha256: string;

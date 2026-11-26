@@ -10,8 +10,6 @@ import type { DefaultSession } from 'next-auth';
 // fields with explicit type guards instead.
 declare module 'next-auth' {
   interface User {
-    iamAccessToken?: string;
-    iamRefreshToken?: string | null;
     iamUsername?: string;
     iamRoles?: string[];
     login?: string;

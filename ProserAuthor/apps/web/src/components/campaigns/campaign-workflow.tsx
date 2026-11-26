@@ -13,7 +13,7 @@ import type {
   DocumentProposalRecord,
   DocumentProposalValidationRecord,
   CampaignVerification,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { useBooks } from '@/hooks/queries/use-books';
 import { useProtectedRouter } from '@/hooks/use-protected-router';

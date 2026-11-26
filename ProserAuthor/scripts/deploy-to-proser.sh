@@ -107,7 +107,7 @@ systemctl is-active --quiet proser-v2-web"
   exit 0
 fi
 if [[ "$MODE" == dry-run ]]; then
-  corepack pnpm --filter @cheftaco/proser-web... build
+  corepack pnpm --filter @hivemagnus/proser-web... build
   ssh "$REMOTE" "test -f '$REMOTE_DIR/REVISION' && systemctl is-active --quiet proser-v2-web && cat '$REMOTE_DIR/REVISION'"
   echo "Dry-run passed for ProserAuthor $DEPLOY_REVISION"
   printf '{"status":"ready","revision":"%s"}\n' "$DEPLOY_REVISION"
@@ -127,7 +127,7 @@ chmod 0600 code.tar.gz code.tar.gz.sha256 candidate-revision previous-revision"
 # ── 1. Build ───────────────────────────────────────────────────
 if [[ "${1:-}" != "--skip-build" ]]; then
   log "Building ProserAuthor web shell..."
-  corepack pnpm --filter @cheftaco/proser-web... build
+  corepack pnpm --filter @hivemagnus/proser-web... build
   log "Build complete."
 else
   log "Skipping build (--skip-build)."

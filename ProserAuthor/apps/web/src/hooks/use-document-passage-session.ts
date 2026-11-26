@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import type { DocumentPassage } from '@cheftaco/proser-contracts';
+import type { DocumentPassage } from '@hivemagnus/proser-contracts';
 import {
   PassageTypedSession,
   type PassageTypedReceipt,
@@ -42,7 +42,7 @@ export function useDocumentPassageSession(
           recover: (operationId) =>
             recoverScenePassage<
               | PassageTypedReceipt['result']
-              | import('@cheftaco/proser-contracts').DocumentPassageRestoreResult
+              | import('@hivemagnus/proser-contracts').DocumentPassageRestoreResult
             >(bookId, operationId) as ReturnType<
               import('@/lib/document-passage-typed-session').PassageTypedDependencies['recover']
             >,

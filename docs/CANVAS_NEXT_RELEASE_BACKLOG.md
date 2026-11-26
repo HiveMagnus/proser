@@ -21,7 +21,7 @@ candidate and open physical-device requirements in
 [the R2 acceptance record](CANVAS_R2_ACCEPTANCE.md). Shipped implementation and
 historical release observations remain separate from current certification.
 Revision campaigns retain owned review snapshots, tracked application and exact
-receipt recovery. See the [campaign guide](ProserAuthor/docs/REVISION_CAMPAIGNS.md)
+receipt recovery. See the [campaign guide](../ProserAuthor/docs/REVISION_CAMPAIGNS.md)
 and [release record](CANVAS_RELEASE_RECORD.md) for scope and certification limits.
 
 ## R2 — Active: mobile/accessibility certification
@@ -138,13 +138,13 @@ and the preservation comparison verified 1,591 existing rows across 14
 tables. The earlier identity release adopted PR 1492 behavior as
 `1.0.4-proser.4`. Keep those results attributed to their releases. See the
 [release record](CANVAS_RELEASE_RECORD.md) and
-[maintenance record](ProserAuthor/docs/CANVAS_MAINTENANCE.md).
+[maintenance record](../ProserAuthor/docs/CANVAS_MAINTENANCE.md).
 
 ## Ongoing maintenance
 
 - Keep generic core/codec fixes separately reviewable and propose them upstream.
   Track checked upstream commits, fixture coverage and actual submission status
-  in [the maintenance record](ProserAuthor/docs/CANVAS_MAINTENANCE.md).
+  in [the maintenance record](../ProserAuthor/docs/CANVAS_MAINTENANCE.md).
 - Review upstream monthly and advisories continuously. Change package pins only
   after the compatibility corpus passes; retain exact license/SBOM provenance.
 - Keep current release status separate from archived checkpoint observations.

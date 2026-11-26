@@ -6,8 +6,8 @@ import {
   type DocumentStoryDiscussionRecord,
   type DocumentPassageOperation,
   type ProserDocument,
-} from '@cheftaco/proser-contracts';
-import type { DocumentSelection } from '@cheftaco/proser-editor';
+} from '@hivemagnus/proser-contracts';
+import type { DocumentSelection } from '@hivemagnus/proser-editor';
 import { getDocumentStory } from '@/lib/document-story-api';
 import { storyDraftContext, type StoryDraftContext } from '@/lib/document-story-draft';
 import { DocumentDiscussion } from './document-discussion';

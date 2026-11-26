@@ -1,4 +1,4 @@
-import { canonicalDocument, type ProserDocument } from '@cheftaco/proser-editor';
+import { canonicalDocument, type ProserDocument } from '@hivemagnus/proser-editor';
 export interface DocumentHistoryEntry {
   id: string;
   createdAt: number;

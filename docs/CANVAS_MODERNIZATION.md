@@ -56,7 +56,7 @@ Keep exact fork pins, rebuilt distributions, embedded-dependency SBOMs and notic
 Propose generic fixes upstream after independent fixture validation; upstream
 acceptance does not control local releases. Review upstream monthly, security
 advisories continuously and the full compatibility corpus before changing pins.
-See [Canvas maintenance](ProserAuthor/docs/CANVAS_MAINTENANCE.md).
+See [Canvas maintenance](../ProserAuthor/docs/CANVAS_MAINTENANCE.md).
 
 Retain immutable originals, receipts, historical hashes, uncertain provider
 outcomes and production checkpoints. Temporary diagnostics can be pruned only

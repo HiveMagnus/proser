@@ -3,7 +3,7 @@ import {
   type PassageScopeTransfer,
   type PassageScopeRestore,
   type DocumentPassageBookCommit,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { documentDraftStore } from './document-drafts';
 export interface PassageScopeJournal {
   key: string;

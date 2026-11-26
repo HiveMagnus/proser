@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import type { DocumentSearchHit, DocumentSearchResponse } from '@cheftaco/proser-contracts';
+import type { DocumentSearchHit, DocumentSearchResponse } from '@hivemagnus/proser-contracts';
 import {
   searchDocumentBook,
   recoverDocumentSearchIndex,
@@ -20,7 +20,7 @@ export function DocumentBookSearch({
   const [result, setResult] = useState<DocumentSearchResponse>();
   const [indexMissing, setIndexMissing] = useState(false);
   const [recovery, setRecovery] =
-    useState<import('@cheftaco/proser-contracts').DocumentSearchIndexRecoveryResponse>();
+    useState<import('@hivemagnus/proser-contracts').DocumentSearchIndexRecoveryResponse>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const abort = useRef<AbortController | undefined>(undefined);

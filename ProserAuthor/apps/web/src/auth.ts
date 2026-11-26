@@ -93,8 +93,6 @@ if (iamCoreUrl) {
         name: username,
         email: `${username}@local.proser`,
         image: null,
-        iamAccessToken: 'local-dev-token',
-        iamRefreshToken: null,
         iamUsername: username,
         iamRoles: ['developer'],
       };
@@ -138,9 +136,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.sessionIssuedAt = Math.floor(Date.now() / 1000);
 
         if (account?.provider === 'iam') {
-          // Store IAM-specific data in the token
-          token.iamAccessToken = user.iamAccessToken;
-          token.iamRefreshToken = user.iamRefreshToken;
+          // Oathweave's own tokens are not kept: nothing in Author uses them,
+          // and the session cookie should not carry them.
           token.username = normalizeIamUsername(user.iamUsername ?? user.email ?? user.name);
           token.roles = user.iamRoles;
           token.provider = 'iam';

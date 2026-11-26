@@ -499,7 +499,7 @@ and preservation rehearsal pass. See
 [structured document operations](docs/STRUCTURED_DOCUMENTS.md) for backfill,
 revision contracts, validation and current limitations. Root checks verify the
 generated Author document contract. The deployed transition and later Author
-releases are recorded in [the release record](../CANVAS_RELEASE_RECORD.md).
+releases are recorded in [the release record](../docs/CANVAS_RELEASE_RECORD.md).
 
 The maintained MIT Word exchange codec is the exact registry dependency
 `@hivemagnus/canvas-word-codec` from [canvas-word](https://github.com/ChefTaco/canvas-word). `npm run build`
@@ -528,7 +528,7 @@ original source and license provenance. See the root Canvas release record and
 Author's maintenance record for synchronization and deployed acceptance.
 
 The user-selected release implements R1, R3, R4, R5 and R7.
-[The release checklist](../CANVAS_RELEASE_CHECKLIST.md) defines the finish line;
+[The release checklist](../docs/CANVAS_RELEASE_CHECKLIST.md) defines the finish line;
 R2 device/accessibility certification remains open and R6 reference-profile
 performance certification is deferred.
 

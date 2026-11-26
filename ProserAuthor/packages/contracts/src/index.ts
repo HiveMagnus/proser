@@ -1,4 +1,4 @@
-// @cheftaco/proser-contracts — Shared API schemas and DTOs
+// @hivemagnus/proser-contracts — Shared API schemas and DTOs
 export { z } from 'zod';
 export * from './schemas/index.js';
 export * from './document-model.js';

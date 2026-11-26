@@ -5,7 +5,7 @@ import type {
   DocumentPassage,
   SceneDocumentReference,
   BookLayoutSnapshot,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import type { PassageTypedSession } from '@/lib/document-passage-typed-session';
 import { DocumentPassageTransfers } from './document-passage-transfers';
 import { DocumentPassageWorkspace } from './document-passage-workspace';
@@ -32,7 +32,7 @@ export function DocumentPassageWindowWorkspace({
   bookRevisionId?: string;
   actorId: number;
   layout?: BookLayoutSnapshot;
-  searchHit?: import('@cheftaco/proser-contracts').DocumentSearchHit;
+  searchHit?: import('@hivemagnus/proser-contracts').DocumentSearchHit;
   selectedSceneId?: number;
   onActiveSceneChange?: (id: number) => void;
   onDirtyChange?: (dirty: boolean) => void;

@@ -43,7 +43,7 @@ try {
     // Native fixtures consume the checked generated contract source even in a
     // fresh checkout; application builds continue using the package's own build.
     alias: {
-      "@cheftaco/proser-contracts": fileURLToPath(
+      "@hivemagnus/proser-contracts": fileURLToPath(
         new URL(
           "../ProserAuthor/packages/contracts/src/index.ts",
           import.meta.url,

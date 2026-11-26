@@ -1,10 +1,10 @@
 'use client';
-import { canonicalDocument, type DocumentSelection } from '@cheftaco/proser-editor';
+import { canonicalDocument, type DocumentSelection } from '@hivemagnus/proser-editor';
 import type {
   DocumentPassage,
   DocumentPassageOperation,
   DocumentTargetInput,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { DocumentDiscussion } from './document-discussion';
 
 /** The discussion UI receives only bounded excerpts and owned source proofs.
@@ -24,7 +24,7 @@ export function BoundedDocumentDiscussion(props: {
     operations: DocumentPassageOperation[];
   }): Promise<void>;
   refresh(
-    receipt: import('@cheftaco/proser-contracts').DocumentProposalApplicationReceipt,
+    receipt: import('@hivemagnus/proser-contracts').DocumentProposalApplicationReceipt,
     beforeSceneRevisionId?: string,
   ): Promise<void>;
   disabled?: boolean;

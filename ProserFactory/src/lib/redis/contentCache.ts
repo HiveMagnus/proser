@@ -35,18 +35,7 @@ export async function cacheStructure(bookId: number, data: unknown) {
 
 export async function invalidateStructure(bookId: number) { await incrVersion('structure', bookId); }
 
-export async function getExportCache(bookId: number, format: string) {
-  const version = await getVersion('export', bookId);
-  const key = `export:book:${bookId}:v${version}:${format}`;
-  return { key, version, data: await getJson<unknown>(key) };
-}
-
-export async function cacheExport(bookId: number, format: string, data: unknown) {
-  const version = await getVersion('export', bookId);
-  const key = `export:book:${bookId}:v${version}:${format}`;
-  await setJson(key, data);
-}
-
+// Book exports are not cached; the counter remains for callers that mark a book's content as changed.
 export async function invalidateExport(bookId: number) { await incrVersion('export', bookId); }
 
 export async function invalidateBookContent(bookId: number) { await Promise.all([invalidateStructure(bookId), invalidateExport(bookId)]); }

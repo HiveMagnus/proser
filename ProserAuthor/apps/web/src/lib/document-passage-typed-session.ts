@@ -13,7 +13,7 @@ import {
   type ProserDocument,
   type DocumentParagraph,
   type SceneDocumentReference,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { validatePassageSource } from '../../../../packages/editor/src/passage-source';
 import { passageDocument, passageDocumentOperations } from './document-passage-document';
 import { acknowledgedScenePassage } from './document-passage-api';

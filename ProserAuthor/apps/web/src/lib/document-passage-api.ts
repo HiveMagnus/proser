@@ -6,7 +6,7 @@ import type {
   DocumentPassageRestore,
   DocumentPassageRestoreResult,
   DocumentPassageOperationCommit,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { DocumentRequestError, requestDocumentResource } from './document-api';
 const scenePath = (bookId: string, sceneId: string) =>
   `/api/books/${encodeURIComponent(bookId)}/scenes/${encodeURIComponent(sceneId)}/document-passages`;

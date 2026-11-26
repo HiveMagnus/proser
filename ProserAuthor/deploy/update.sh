@@ -57,7 +57,7 @@ pnpm install --frozen-lockfile 2>>"$LOG" || {
   exit 1
 }
 
-pnpm --filter @cheftaco/proser-web... build 2>>"$LOG" || {
+pnpm --filter @hivemagnus/proser-web... build 2>>"$LOG" || {
   log "ERROR: pnpm build failed"
   exit 1
 }

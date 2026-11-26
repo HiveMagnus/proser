@@ -9,7 +9,7 @@ import {
   type BookLayoutSnapshot,
   type StructureSnapshot,
   type DocumentManifestResponse,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 const layout: BookLayoutSnapshot = {
   schemaVersion: 1,
   book: documentFromText('', () => crypto.randomUUID()).layout,

@@ -7,8 +7,8 @@ import type {
   PlotThreadEvidenceInput,
   PlotThreadStage,
   SceneDocumentReference,
-} from '@cheftaco/proser-contracts';
-import { orderedSceneReferences, visibleRun } from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
+import { orderedSceneReferences, visibleRun } from '@hivemagnus/proser-contracts';
 import { getDocumentManifest, getDocumentScope } from '@/lib/document-api';
 import { plotRequest } from '@/lib/plot-thread-api';
 import { Button } from '@/components/ui/button';

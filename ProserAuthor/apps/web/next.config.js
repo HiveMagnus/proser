@@ -24,8 +24,8 @@ const nextConfig = {
   experimental: { proxyClientMaxBodySize: '32mb' },
   transpilePackages: [
     '@hivemagnus/canvas-word-engine',
-    '@cheftaco/proser-editor',
-    '@cheftaco/proser-contracts',
+    '@hivemagnus/proser-editor',
+    '@hivemagnus/proser-contracts',
   ],
 };
 

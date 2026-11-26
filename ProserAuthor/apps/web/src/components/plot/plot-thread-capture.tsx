@@ -1,12 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
-import type { DocumentSelection } from '@cheftaco/proser-editor';
+import type { DocumentSelection } from '@hivemagnus/proser-editor';
 import type {
   DocumentPassage,
   PlotThreadStage,
   PlotThreadSummary,
-} from '@cheftaco/proser-contracts';
-import { visibleRun } from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
+import { visibleRun } from '@hivemagnus/proser-contracts';
 import { usePlotThreadActions } from '@/hooks/use-plot-thread-actions';
 import { listThreads, readThread, plotThreadBase } from '@/lib/plot-thread-api';
 import { Button } from '@/components/ui/button';

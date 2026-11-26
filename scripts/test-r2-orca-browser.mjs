@@ -170,7 +170,7 @@ try {
       output: await reserveCanvasOutput(resolve(output, "canvas-browser")),
       root: fixture,
       alias: {
-        "@cheftaco/proser-contracts": resolve(
+        "@hivemagnus/proser-contracts": resolve(
           repository,
           "ProserAuthor/packages/contracts/src/index.ts",
         ),

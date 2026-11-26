@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultLayout, type DocumentPassage } from '@cheftaco/proser-contracts';
+import { defaultLayout, type DocumentPassage } from '@hivemagnus/proser-contracts';
 import { adjacentPassageSelection } from '@/lib/document-adjacent-selection';
 const passage = (sceneId: number, text: string): DocumentPassage => ({
   schemaVersion: 1,

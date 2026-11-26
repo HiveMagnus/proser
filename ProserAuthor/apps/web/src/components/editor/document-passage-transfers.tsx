@@ -12,7 +12,7 @@ import {
   type DocumentPassageReceipt,
   type DocumentPassageBookAcknowledgement,
   type DocumentPassageBookCommit,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import type { PassageTypedSession } from '@/lib/document-passage-typed-session';
 import { passageParagraphSource, passageRunSource } from '@/lib/document-passage-document';
 import { DocumentRequestError, requestDocumentResource } from '@/lib/document-api';
@@ -22,7 +22,7 @@ import {
   passageScopeJournalKey,
   type PassageScopeJournal,
 } from '@/lib/document-passage-scope-journal';
-import { SemanticDocument } from '@cheftaco/proser-editor';
+import { SemanticDocument } from '@hivemagnus/proser-editor';
 import {
   adjacentPassageSelection,
   type AdjacentPassageRange,

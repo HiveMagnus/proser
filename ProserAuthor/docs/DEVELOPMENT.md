@@ -13,7 +13,7 @@ From the repository root:
 ```bash
 corepack pnpm --dir ProserAuthor install --frozen-lockfile
 cd ProserAuthor
-corepack pnpm --filter '@cheftaco/proser-web^...' build
+corepack pnpm --filter '@hivemagnus/proser-web^...' build
 (umask 077; set -o noclobber; cat .env.example > apps/web/.env.local)
 ```
 
@@ -41,7 +41,7 @@ docker compose --env-file .env.compose -f compose.yml -f compose.factory-api.yml
 Run this from `ProserAuthor/` and open `http://localhost:3000`.
 
 ```bash
-corepack pnpm --filter @cheftaco/proser-web dev
+corepack pnpm --filter @hivemagnus/proser-web dev
 ```
 
 [`ENVIRONMENT.md`](ENVIRONMENT.md) covers auth options. If the Factory proxy is

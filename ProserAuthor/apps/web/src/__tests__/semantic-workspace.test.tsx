@@ -7,7 +7,7 @@ import {
   formatDocumentSelection,
   formatDocumentParagraph,
   type ProserDocument,
-} from '@cheftaco/proser-editor';
+} from '@hivemagnus/proser-editor';
 let sequence = 0;
 const id = () => `semantic-browser-${++sequence}`;
 function Workspace({ changed }: { changed: (document: ProserDocument) => void }) {

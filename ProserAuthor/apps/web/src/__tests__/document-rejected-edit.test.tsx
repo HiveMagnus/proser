@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { documentFromText } from '@cheftaco/proser-editor';
+import { documentFromText } from '@hivemagnus/proser-editor';
 import { useRejectedDocumentEdit } from '@/hooks/use-rejected-document-edit';
 import * as journal from '@/lib/document-rejected-edits';
 vi.mock('@/lib/document-rejected-edits', () => ({

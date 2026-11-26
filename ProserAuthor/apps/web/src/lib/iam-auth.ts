@@ -29,8 +29,6 @@ export interface IamSignInUser {
   name: string;
   email: string;
   image: null;
-  iamAccessToken: string;
-  iamRefreshToken: string | null;
   iamUsername: string;
   iamRoles: string[];
 }
@@ -70,9 +68,7 @@ function signedInUser(data: IamTokenResponse): IamSignInUser | null {
     name: data.user.displayName || data.user.username,
     email: data.user.email,
     image: null,
-    // Stash IAM info for the jwt callback
-    iamAccessToken: data.accessToken,
-    iamRefreshToken: data.refreshToken ?? null,
+    // Oathweave's access and refresh tokens prove the sign-in; they are not kept.
     iamUsername: data.user.username,
     iamRoles: data.user.roles ?? [],
   };

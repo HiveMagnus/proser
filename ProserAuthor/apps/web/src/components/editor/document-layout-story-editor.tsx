@@ -5,8 +5,8 @@ import {
   type DocumentSelection,
   type ProserDocument,
   type DocumentLayout,
-} from '@cheftaco/proser-editor';
-import type { BookLayoutSnapshot } from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-editor';
+import type { BookLayoutSnapshot } from '@hivemagnus/proser-contracts';
 import { useRejectedDocumentEdit } from '@/hooks/use-rejected-document-edit';
 import { DocumentImagePicker } from './document-image-picker';
 export function DocumentLayoutStoryEditor({

@@ -3,7 +3,7 @@ import {
   type DocumentPassage,
   type DocumentPassageCommit,
   type DocumentPassageTextEdit,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 
 /** A replacement concerns the displayed fragment of one immutable canonical run. */
 export interface PassageRunDraft {

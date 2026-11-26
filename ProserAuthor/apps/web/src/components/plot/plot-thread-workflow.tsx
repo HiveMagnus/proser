@@ -9,7 +9,7 @@ import type {
   PlotThreadStage,
   PlotThreadAssessment,
   PlotThreadReviewRecord,
-} from '@cheftaco/proser-contracts';
+} from '@hivemagnus/proser-contracts';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { useBooks } from '@/hooks/queries/use-books';
 import { usePlotThreadActions } from '@/hooks/use-plot-thread-actions';

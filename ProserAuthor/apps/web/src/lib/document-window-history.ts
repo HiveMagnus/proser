@@ -2,7 +2,7 @@ import {
   canonicalDocument,
   type ProserDocument,
   type DocumentAnchorLineage,
-} from '@cheftaco/proser-editor';
+} from '@hivemagnus/proser-editor';
 import { documentDraftStore } from './document-drafts';
 export interface WindowDocuments {
   [sceneId: string]: ProserDocument;

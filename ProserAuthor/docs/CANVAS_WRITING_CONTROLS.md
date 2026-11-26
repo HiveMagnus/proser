@@ -66,7 +66,7 @@ unchanged.
 R2 device/assistive-technology certification is active; the user deferred VoiceOver
 and checks requiring their interaction until later. R6 performance certification
 remains deferred. Microsoft Word-specific fidelity remains unverified. Follow the
-root [R2 acceptance record](../../CANVAS_R2_ACCEPTANCE.md) for current evidence;
+root [R2 acceptance record](../../docs/CANVAS_R2_ACCEPTANCE.md) for current evidence;
 the preceding control corpus below retains its historical scope.
 
 The release checks include 46 native Chromium acceptance checks and 32 actual
