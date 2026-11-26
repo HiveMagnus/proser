@@ -10,10 +10,6 @@ export interface UserSettings {
   profile: {
     displayName: string;
   };
-  ai: {
-    openaiKey: string;
-    anthropicKey: string;
-  };
   writing: {
     defaultGenre: string;
     writingStyle: string;
@@ -23,10 +19,11 @@ export interface UserSettings {
 
 type StoredUserSettings = Partial<{
   profile: Partial<UserSettings['profile']>;
-  ai: Partial<UserSettings['ai']>;
   writing: Partial<UserSettings['writing']>;
   updatedAt: string;
 }>;
+
+export type UserSettingsPatch = Pick<StoredUserSettings, 'profile' | 'writing'>;
 
 type SettingsStore = {
   version: 1;
@@ -35,7 +32,6 @@ type SettingsStore = {
 
 const EMPTY_SETTINGS: UserSettings = {
   profile: { displayName: '' },
-  ai: { openaiKey: '', anthropicKey: '' },
   writing: { defaultGenre: '', writingStyle: '', targetAudience: '' },
 };
 
@@ -59,25 +55,45 @@ function ensureStoreShape(raw: unknown): SettingsStore {
   };
 }
 
+/**
+ * Earlier releases stored per-user cloud provider keys (`ai`) that nothing
+ * used. Drop them from the store so they are neither served nor kept at rest.
+ */
+function removeRetiredSecrets(store: SettingsStore): boolean {
+  let changed = false;
+  for (const settings of Object.values(store.users)) {
+    if (settings && typeof settings === 'object' && hasOwn(settings, 'ai')) {
+      delete (settings as Record<string, unknown>).ai;
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 function readStore(): SettingsStore {
   const filePath = getSettingsFilePath();
   if (!fs.existsSync(filePath)) {
     return { version: 1, users: {} };
   }
 
+  let store: SettingsStore;
   try {
     const raw = fs.readFileSync(filePath, 'utf8');
-    return ensureStoreShape(JSON.parse(raw));
+    store = ensureStoreShape(JSON.parse(raw));
   } catch {
     return { version: 1, users: {} };
   }
+  if (removeRetiredSecrets(store)) {
+    try { writeStore(store); } catch { /* the next successful write retries */ }
+  }
+  return store;
 }
 
 function writeStore(store: SettingsStore): void {
   const filePath = getSettingsFilePath();
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  // The store holds provider API keys: keep it owner-only, and replace it
-  // atomically so an interrupted write cannot leave a truncated file.
+  // Keep the store owner-only, and replace it atomically so an interrupted
+  // write cannot leave a truncated file.
   const temporaryPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
   try {
     fs.writeFileSync(temporaryPath, `${JSON.stringify(store, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
@@ -100,10 +116,6 @@ function materializeSettings(user: UserIdentity, stored?: StoredUserSettings): U
         ? String(profile?.displayName ?? '')
         : user.username,
     },
-    ai: {
-      openaiKey: String(stored?.ai?.openaiKey ?? EMPTY_SETTINGS.ai.openaiKey),
-      anthropicKey: String(stored?.ai?.anthropicKey ?? EMPTY_SETTINGS.ai.anthropicKey),
-    },
     writing: {
       defaultGenre: String(stored?.writing?.defaultGenre ?? EMPTY_SETTINGS.writing.defaultGenre),
       writingStyle: String(stored?.writing?.writingStyle ?? EMPTY_SETTINGS.writing.writingStyle),
@@ -112,15 +124,11 @@ function materializeSettings(user: UserIdentity, stored?: StoredUserSettings): U
   };
 }
 
-function mergeStoredSettings(current: StoredUserSettings | undefined, patch: StoredUserSettings): StoredUserSettings {
+function mergeStoredSettings(current: StoredUserSettings | undefined, patch: UserSettingsPatch): StoredUserSettings {
   return {
     profile: {
       ...(current?.profile ?? {}),
       ...(patch.profile ?? {}),
-    },
-    ai: {
-      ...(current?.ai ?? {}),
-      ...(patch.ai ?? {}),
     },
     writing: {
       ...(current?.writing ?? {}),
@@ -136,7 +144,7 @@ class UserSettingsService {
     return materializeSettings(user, store.users[String(user.id)]);
   }
 
-  updateForUser(user: UserIdentity, patch: StoredUserSettings): UserSettings {
+  updateForUser(user: UserIdentity, patch: UserSettingsPatch): UserSettings {
     const store = readStore();
     const userKey = String(user.id);
     store.users[userKey] = mergeStoredSettings(store.users[userKey], patch);

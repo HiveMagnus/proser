@@ -31,12 +31,11 @@ describe('settings routes', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.data).toEqual({
       profile: { displayName: 'fixture-author' },
-      ai: { openaiKey: '', anthropicKey: '' },
       writing: { defaultGenre: '', writingStyle: '', targetAudience: '' },
     });
   });
 
-  it('persists profile, ai, and writing settings by user', async () => {
+  it('persists profile and writing settings by user', async () => {
     const saveRes = await request(app)
       .put('/api/settings')
       .set('x-user-id', '22')
@@ -44,7 +43,6 @@ describe('settings routes', () => {
       .set('x-username', 'fixture-author')
       .send({
         profile: { displayName: 'Swarm Lord' },
-        ai: { openaiKey: 'sk-openai', anthropicKey: 'sk-ant' },
         writing: {
           defaultGenre: 'fantasy',
           writingStyle: 'gothic dread',
@@ -55,7 +53,6 @@ describe('settings routes', () => {
     expect(saveRes.status).toBe(200);
     expect(saveRes.body.success).toBe(true);
     expect(saveRes.body.data.profile.displayName).toBe('Swarm Lord');
-    expect(saveRes.body.data.ai.openaiKey).toBe('sk-openai');
     expect(saveRes.body.data.writing.defaultGenre).toBe('fantasy');
 
     const getRes = await request(app)
@@ -67,7 +64,6 @@ describe('settings routes', () => {
     expect(getRes.status).toBe(200);
     expect(getRes.body.data).toEqual({
       profile: { displayName: 'Swarm Lord' },
-      ai: { openaiKey: 'sk-openai', anthropicKey: 'sk-ant' },
       writing: {
         defaultGenre: 'fantasy',
         writingStyle: 'gothic dread',
@@ -80,5 +76,40 @@ describe('settings routes', () => {
     expect(savedFile).toContain('"displayName": "Swarm Lord"');
     expect(fs.statSync(process.env.USER_SETTINGS_FILE!).mode & 0o777).toBe(0o600);
     expect(savedFile).toContain('"writingStyle": "gothic dread"');
+  });
+
+  it('never stores, returns or keeps cloud provider keys', async () => {
+    fs.writeFileSync(process.env.USER_SETTINGS_FILE!, JSON.stringify({
+      version: 1,
+      users: { 23: { profile: { displayName: 'Earlier' }, ai: { openaiKey: 'sk-retired-openai', anthropicKey: 'sk-retired-ant' } } },
+    }), { mode: 0o600 });
+
+    const getRes = await request(app)
+      .get('/api/settings')
+      .set('x-user-id', '23')
+      .set('x-github-id', 'jest-settings-retired-keys')
+      .set('x-username', 'fixture-author');
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.data).not.toHaveProperty('ai');
+    expect(JSON.stringify(getRes.body)).not.toContain('sk-retired');
+    expect(fs.readFileSync(process.env.USER_SETTINGS_FILE!, 'utf8')).not.toContain('sk-retired');
+
+    const keysOnly = await request(app)
+      .put('/api/settings')
+      .set('x-user-id', '23')
+      .set('x-github-id', 'jest-settings-retired-keys')
+      .set('x-username', 'fixture-author')
+      .send({ ai: { openaiKey: 'sk-new' } });
+    expect(keysOnly.status).toBe(422);
+
+    const mixed = await request(app)
+      .put('/api/settings')
+      .set('x-user-id', '23')
+      .set('x-github-id', 'jest-settings-retired-keys')
+      .set('x-username', 'fixture-author')
+      .send({ profile: { displayName: 'Later' }, ai: { openaiKey: 'sk-new' } });
+    expect(mixed.status).toBe(200);
+    expect(mixed.body.data).not.toHaveProperty('ai');
+    expect(fs.readFileSync(process.env.USER_SETTINGS_FILE!, 'utf8')).not.toContain('sk-new');
   });
 });

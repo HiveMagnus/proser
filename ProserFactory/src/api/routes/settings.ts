@@ -4,7 +4,7 @@ import { authenticateRequest, revokeUserSessions } from '../middleware/auth';
 import { zBody } from '../middleware/zodValidation';
 import { updateSettingsBody } from '../schemas/settings';
 import { ErrorCodes, respondError, respondSuccess } from '../utils/response';
-import { userSettingsService } from '../../services/userSettingsService';
+import { userSettingsService, type UserSettingsPatch } from '../../services/userSettingsService';
 import logger from '../../lib/logger';
 
 const router = Router();
@@ -24,11 +24,12 @@ router.get('/', (req: AuthenticatedRequest, res: Response): void => {
 
 router.put('/', zBody(updateSettingsBody), (req: AuthenticatedRequest, res: Response): void => {
   const user = req.user!;
-  const body = req.body as Parameters<typeof userSettingsService.updateForUser>[1];
+  // Only the known sections are stored; unknown sections are ignored.
+  const { profile, writing } = req.body as UserSettingsPatch;
   const settings = userSettingsService.updateForUser({
     id: user.id,
     username: user.username,
-  }, body);
+  }, { profile, writing });
 
   logger.info({ userId: user.id }, 'Updated user settings');
   respondSuccess(res, settings);
