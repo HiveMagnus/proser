@@ -31,6 +31,11 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 
 ### Security
 
+- The manuscript editor uses `@hivemagnus/canvas-word-engine` 1.2.2. HTML
+  pasted into the editor is sanitized and never parsed again in the live
+  document, so markup that changes shape when reparsed can no longer run
+  script in the Proser page. Pasted inline SVG, MathML and `template` content
+  is dropped.
 - Author refuses `POST`, `PUT`, `PATCH` and `DELETE` requests to `/api/*` whose
   `Origin` is not the Proser origin (`AUTH_URL`, `NEXTAUTH_URL` or the host the
   request was sent to), or whose `Sec-Fetch-Site` reports another site. A page
