@@ -300,6 +300,25 @@ function verifyBearerToken(req: Request): BackendTokenPayload | null {
 }
 
 /**
+ * The identity a bearer token proves, or null when it is missing, malformed,
+ * expired or not signed by a trusted secret. Only signature and claim checks
+ * run here, so callers such as the global rate limit can use it before routing.
+ */
+export function verifiedBearerIdentity(req: Request): string | null {
+  const token = extractToken(req);
+  if (!token || token.startsWith('pnv_')) return null;
+  if (!backendAuthSecret() && !legacyBackendAuthSecret() && !hermesAgentAuthSecret() && !process.env.HERMES_AGENT_CREDENTIALS && !process.env.HERMES_AGENT_CREDENTIALS_FILE) return null;
+  try {
+    const payload = verifyBearerToken(req);
+    if (!payload) return null;
+    const identity = resolveTokenIdentity(payload);
+    return identity.githubId || identity.sub || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Populate req.user from a verified token payload.
  */
 function setUserFromToken(req: AuthenticatedRequest, payload: BackendTokenPayload, userId: number): void {

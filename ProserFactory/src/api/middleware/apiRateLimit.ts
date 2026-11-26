@@ -1,9 +1,9 @@
-import { createHash } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 import { RateLimiterMemory, RateLimiterRedis, RateLimiterRes } from 'rate-limiter-flexible';
 import redis from '@/lib/redis';
 import logger from '@/lib/logger';
 import { ErrorCodes, respondError } from '@/api/utils/response';
+import { verifiedBearerIdentity } from './auth';
 
 const WINDOW_SECONDS = 60;
 const DEFAULT_PER_MINUTE = 1200;
@@ -17,33 +17,18 @@ export function apiRateLimitPerMinute(environment: NodeJS.ProcessEnv = process.e
   return Number.isInteger(configured) && configured >= MINIMUM_PER_MINUTE ? configured : DEFAULT_PER_MINUTE;
 }
 
-function claimedSubject(token: string): string | null {
-  const payload = token.split('.')[1];
-  if (!payload || payload.length > 4096) return null;
-  try {
-    const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as { githubId?: unknown; sub?: unknown };
-    const subject = typeof claims.githubId === 'string' ? claims.githubId : typeof claims.sub === 'string' ? claims.sub : String(claims.sub ?? '');
-    return SUBJECT.test(subject) ? subject : null;
-  } catch {
-    return null;
-  }
-}
-
 /**
- * The caller a request counts against. Author signs a new token for every
- * request, so bearer tokens are grouped by the identity they claim. A forged
- * claim gains nothing: authentication still rejects the request, and the
- * signature check costs less than the work this limit protects.
+ * The caller a request counts against. A bearer token whose signature and
+ * claims verify counts against the identity it proves; Author signs a new
+ * token for every request, so one writer's requests share a bucket. Anything
+ * else (no token, a forged or expired token, or a service-principal token,
+ * which is only checked later against the database) counts against the
+ * client address, so a request claiming somebody else's identity cannot use
+ * up that person's allowance.
  */
 export function apiRateLimitKey(req: Request): string {
-  const authorization = String(req.headers.authorization ?? '');
-  if (authorization.startsWith('Bearer pnv_')) {
-    return `principal:${createHash('sha256').update(authorization).digest('hex').slice(0, 32)}`;
-  }
-  if (authorization.startsWith('Bearer ')) {
-    const subject = claimedSubject(authorization.slice('Bearer '.length));
-    if (subject) return `subject:${subject}`;
-  }
+  const subject = verifiedBearerIdentity(req);
+  if (subject && SUBJECT.test(subject)) return `subject:${subject}`;
   return `ip:${req.ip || req.socket.remoteAddress || 'unknown'}`;
 }
 

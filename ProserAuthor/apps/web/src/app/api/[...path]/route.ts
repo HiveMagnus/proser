@@ -3,6 +3,7 @@ import { createHash, createHmac } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/auth';
+import { unsafeRequestFromAllowedOrigin } from '@/lib/request-origin';
 
 const FACTORY_URL = process.env.FACTORY_URL;
 const FACTORY_AUTH_SECRET = process.env.FACTORY_AUTH_SECRET || '';
@@ -397,6 +398,19 @@ async function proxy(req: NextRequest) {
   // longer addresses the Factory API on the configured origin.
   if (url.origin !== new URL(FACTORY_URL).origin || !url.pathname.startsWith('/api/')) {
     return NextResponse.json({ ok: false, error: 'Not found' }, { status: 404 });
+  }
+  if (!unsafeRequestFromAllowedOrigin(req.method, req.headers)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        success: false,
+        error: {
+          code: 'CROSS_SITE_REQUEST_REJECTED',
+          message: 'This request did not come from a Proser page.',
+        },
+      },
+      { status: 403 },
+    );
   }
   const policy = proxyPolicy(req.nextUrl.pathname);
   const headers = new Headers();

@@ -30,7 +30,7 @@ The rate-limit column is sourced from the same constants used by rate-limited ru
 | GET | `/api/books/{bookId}/codex` | Bearer JWT | — | No route-specific limit | List codex entries |
 | POST | `/api/books/{bookId}/codex` | Bearer JWT | JSON: documentPreconditions?, entryType, entryName, entryDescription?, attributes? | No route-specific limit | Create codex entry |
 | GET | `/api/books/{bookId}/codex/search` | Bearer JWT | — | No route-specific limit | Search codex (RAG) |
-| GET | `/api/books/{bookId}/creative-package` | Bearer JWT | — | No route-specific limit | Export manuscript and native imported illustrations with source manifest |
+| GET | `/api/books/{bookId}/creative-package` | Bearer JWT | — | 100/day per user; 30/day per book; 2 concurrent per user; 1 concurrent per book; 0B payload; 120000ms execution | Export manuscript and native imported illustrations with source manifest |
 | GET | `/api/books/{bookId}/document-analysis-operations/{operationId}` | Bearer JWT | — | No route-specific limit | Recover retained trace analysis without replaying an unknown provider effect |
 | POST | `/api/books/{bookId}/document-analysis-operations/{operationId}/cancel` | Bearer JWT | JSON | No route-specific limit | Cancel saved trace analysis and suppress late results |
 | GET | `/api/books/{bookId}/document-capabilities` | Bearer JWT | — | No route-specific limit | Structured document capabilities and activation status |

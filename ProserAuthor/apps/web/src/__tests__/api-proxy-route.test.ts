@@ -706,3 +706,60 @@ describe('Factory API proxy session revocation', () => {
     expect(response.headers.getSetCookie()).toEqual([]);
   });
 });
+
+describe('Factory API proxy cross-site protection', () => {
+  const post = async (headers: Record<string, string>) => {
+    const { POST } = await import('@/app/api/[...path]/route');
+    const { NextRequest } = await import('next/server');
+    return POST(
+      new NextRequest('https://author.example/api/settings/sessions/revoke', {
+        method: 'POST',
+        headers,
+      }),
+    );
+  };
+
+  it('refuses a state-changing request from a sibling site before signing a Factory token', async () => {
+    authMock.mockResolvedValue({ user: { id: '42', username: 'author', provider: 'iam' } });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    for (const headers of [
+      { origin: 'https://other.example', host: 'author.example' } as Record<string, string>,
+      { origin: 'null', host: 'author.example' },
+      { 'sec-fetch-site': 'same-site', host: 'author.example' },
+      { 'sec-fetch-site': 'cross-site', host: 'author.example' },
+    ]) {
+      const response = await post(headers);
+      expect(response.status).toBe(403);
+      expect(await response.json()).toMatchObject({
+        error: { code: 'CROSS_SITE_REQUEST_REJECTED' },
+      });
+    }
+    expect(authMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('accepts requests from the Proser origin and from clients without browser headers', async () => {
+    authMock.mockResolvedValue({ user: { id: '42', username: 'author', provider: 'iam' } });
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(
+        async () =>
+          new Response('{"success":true}', { headers: { 'content-type': 'application/json' } }),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    for (const headers of [
+      { origin: 'https://author.example', host: 'author.example' } as Record<string, string>,
+      {
+        origin: 'https://author.example',
+        host: 'author:3000',
+        'x-forwarded-host': 'author.example',
+      },
+      { 'sec-fetch-site': 'same-origin', host: 'author.example' },
+      { host: 'author.example' },
+    ]) {
+      expect((await post(headers)).status).toBe(200);
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+});

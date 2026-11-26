@@ -271,9 +271,12 @@ router.get('/:bookId/export',
   ExportController.exportBook
 );
 
-router.get('/:bookId/creative-package', async (req, res) => {
+router.get('/:bookId/creative-package',
+  zParams(bookIdParams),
+  ownedBookBudget({ source: 'params', required: true }),
+  expensiveRouteLimit('bookCreativePackage'),
+  async (req, res) => {
   const bookId = Number(req.params.bookId);
-  if (!Number.isSafeInteger(bookId) || bookId < 1) return res.status(422).json({ success: false, error: { code: 'INVALID_BOOK_ID' } });
   const archive = await exportCreativePackage(req.user!.id, bookId);
   res.setHeader('Content-Type', 'application/zip');
   res.setHeader('Content-Disposition', `attachment; filename="book-${bookId}-illustrated.zip"`);
