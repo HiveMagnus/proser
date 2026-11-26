@@ -401,3 +401,39 @@ export const recoverDocumentSearchIndex = (
 
 /** Reuse the authenticated, bounded Factory envelope reader for document subresources. */
 export const requestDocumentResource = request;
+export const previewDocumentReplace = (
+  bookId: string,
+  input: import('@hivemagnus/proser-contracts').DocumentReplacePreviewRequest,
+  signal?: AbortSignal,
+) =>
+  request<import('@hivemagnus/proser-contracts').DocumentReplacePreviewResponse>(
+    `${base(bookId)}/document-replace/preview`,
+    { method: 'POST', body: JSON.stringify(input), signal },
+    60_000,
+  );
+export const applyDocumentReplace = (
+  bookId: string,
+  input: import('@hivemagnus/proser-contracts').DocumentReplaceApplyRequest,
+) =>
+  request<import('@hivemagnus/proser-contracts').DocumentReplaceApplyReceipt>(
+    `${base(bookId)}/document-replace`,
+    { method: 'POST', body: JSON.stringify(input) },
+    60_000,
+  );
+/** Undo a book-wide replace by restoring the revision it replaced, only while
+ * the replace revision is still the saved head. */
+export const undoDocumentReplace = (
+  bookId: string,
+  receipt: Pick<
+    import('@hivemagnus/proser-contracts').DocumentReplaceApplyReceipt,
+    'revisionId' | 'previousRevisionId'
+  >,
+  operationId: string,
+) =>
+  request<{ revisionId: string }>(
+    `${base(bookId)}/document-revisions/${encodeURIComponent(receipt.previousRevisionId)}/restore`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ operationId, expectedRevisionId: receipt.revisionId }),
+    },
+  );

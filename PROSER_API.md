@@ -466,6 +466,17 @@ scene boundaries; `/document-passage-scope-restores` restores affected complete
 scene bodies only when unrelated manifest/layout/structure references still match.
 Responses and recovery receipts contain bounded passages and revision references.
 
+Book-wide find and replace has two steps. `POST /api/books/:bookId/document-replace/preview`
+takes `q`, `replacement` and `caseSensitive`, and lists every match in the saved
+manuscript (up to 1000 matches in 100 scenes) with an excerpt and whether it can
+be replaced. A match that crosses formatting, a paragraph, an object or a pending
+tracked change is listed with a reason and cannot be selected.
+`POST /api/books/:bookId/document-replace` takes the selected matches, the
+previewed book revision and an operation UUID, and commits every changed scene
+as one book revision. A stale book returns 412; a match that no longer matches
+returns 409. The receipt names `previousRevisionId`; restore it through
+`/document-revisions/:revisionId/restore` to undo the replace.
+
 Comment creation/resolution/reanchoring uses `/document-passages/comments`.
 Immutable comment detail and review-history endpoints page retained evidence by
 revision and record digest. Factory supplies local attribution, derives exact
