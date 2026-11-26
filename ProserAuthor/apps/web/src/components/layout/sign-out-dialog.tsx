@@ -10,12 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  clearLocalWritingData,
-  downloadLocalDrafts,
-  listLocalDrafts,
-  type LocalDraft,
-} from '@/lib/local-writing-data';
+import type { LocalDraft } from '@/lib/local-writing-data';
+
+// Loaded on first use, so the draft scanner stays out of the shared page bundle.
+const localWritingData = () => import('@/lib/local-writing-data');
 
 const SIGN_IN = { callbackUrl: '/auth/signin' };
 
@@ -36,7 +34,7 @@ export function useSignOutWithLocalDrafts() {
     let found: LocalDraft[] = [];
     if (userId) {
       try {
-        found = await listLocalDrafts(userId);
+        found = await (await localWritingData()).listLocalDrafts(userId);
       } catch {
         /* Without readable local storage there is nothing to protect. */
       }
@@ -52,7 +50,7 @@ export function useSignOutWithLocalDrafts() {
     setBusy(true);
     setError('');
     try {
-      await clearLocalWritingData();
+      await (await localWritingData()).clearLocalWritingData();
       await signOut(SIGN_IN);
     } catch (failure) {
       setError(
@@ -93,7 +91,12 @@ export function useSignOutWithLocalDrafts() {
           </p>
         ) : null}
         <div className="flex flex-wrap justify-end gap-2">
-          <Button variant="secondary" onClick={() => drafts && downloadLocalDrafts(drafts)}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              if (drafts) void localWritingData().then((data) => data.downloadLocalDrafts(drafts));
+            }}
+          >
             Download drafts
           </Button>
           <Button variant="secondary" disabled={busy} onClick={() => void signOut(SIGN_IN)}>
