@@ -1795,6 +1795,8 @@ export async function getStoryArchetypes(signal?: AbortSignal) {
     signal,
   });
   return data.archetypes;
+}
+
 // ── Trash ─────────────────────────────────────────────────────────────
 
 export interface DeletedBook {

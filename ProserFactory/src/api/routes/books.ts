@@ -5,7 +5,6 @@ import { getRecommendations, getWritingStats, setWritingGoal } from '../../servi
 import { respondSuccess } from '../utils/response';
 import { BooksController } from '../controllers/books';
 import { booksService } from '../../services/booksService';
-import { respondSuccess } from '../utils/response';
 import { CodexController } from '../controllers/codex';
 import { StructureController } from '../controllers/structure';
 import { ActsController } from '../controllers/acts';
