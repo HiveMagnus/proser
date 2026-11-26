@@ -68,6 +68,18 @@ export function validTimeZone(value: unknown): string {
   }
 }
 
+const databaseTimeZones = new Map<string, boolean>();
+/** PostgreSQL's zone database can lag the runtime's; refuse zones it does not know. */
+export async function requireDatabaseTimeZone(timeZone: string): Promise<void> {
+  let known = databaseTimeZones.get(timeZone);
+  if (known === undefined) {
+    const rows = await databaseService.client.$queryRaw<Array<{ known: boolean }>>(Prisma.sql`SELECT EXISTS (SELECT 1 FROM pg_timezone_names WHERE name = ${timeZone}) AS known`);
+    known = rows[0]?.known === true;
+    databaseTimeZones.set(timeZone, known);
+  }
+  if (!known) throw new ValidationError('tz is not a time zone the database knows');
+}
+
 export function localDate(instant: Date, timeZone: string): string {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(instant);
   const get = (type: string) => parts.find((part) => part.type === type)?.value ?? '';
@@ -194,6 +206,7 @@ function goalView(goal: { targetWords: number | null; deadline: Date | null; dai
 export async function getWritingStats(userId: number, bookId: number, options: { days?: number; timeZone?: string; now?: Date } = {}): Promise<WritingStats> {
   await ownedBook(userId, bookId);
   const timeZone = validTimeZone(options.timeZone);
+  await requireDatabaseTimeZone(timeZone);
   const days = options.days ?? 30;
   const today = localDate(options.now ?? new Date(), timeZone);
   const start = addDays(today, -(days - 1));
@@ -232,7 +245,7 @@ export async function getWritingStats(userId: number, bookId: number, options: {
 
 export async function setWritingGoal(userId: number, bookId: number, goal: WritingGoal): Promise<WritingGoal | null> {
   await ownedBook(userId, bookId);
-  if (goal.deadline !== null && !DATE.test(goal.deadline)) throw new ValidationError('deadline must be a YYYY-MM-DD date');
+  if (goal.deadline !== null && (!DATE.test(goal.deadline) || new Date(`${goal.deadline}T00:00:00Z`).toISOString().slice(0, 10) !== goal.deadline)) throw new ValidationError('deadline must be a real calendar date');
   const client = databaseService.client;
   if (goal.targetWords === null && goal.deadline === null && goal.dailyWords === null) {
     await client.bookWritingGoal.deleteMany({ where: { bookId } });

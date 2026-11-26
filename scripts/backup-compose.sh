@@ -55,7 +55,10 @@ stamp=$(date -u +%Y%m%dT%H%M%SZ)
 dest="$output/proser-$stamp"
 mkdir -- "$dest"
 
-mapfile -t running < <("${compose[@]}" ps --status running --services)
+# Command substitution, not process substitution, so a failing `ps` stops the
+# backup instead of leaving every writer running during the copy.
+running_services=$("${compose[@]}" ps --status running --services)
+mapfile -t running <<<"$running_services"
 is_running() { printf '%s\n' "${running[@]}" | grep -Fxq -- "$1"; }
 
 writers=()

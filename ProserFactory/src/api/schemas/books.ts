@@ -209,7 +209,9 @@ const nullableGoalInt = (name: string, max: number) =>
 
 export const writingGoalBody = z.object({
   targetWords: nullableGoalInt('targetWords', 10_000_000),
-  deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'deadline must be a YYYY-MM-DD date').nullable(),
+  deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'deadline must be a YYYY-MM-DD date')
+    .refine((value) => { const date = new Date(`${value}T00:00:00Z`); return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value; }, 'deadline must be a real calendar date')
+    .nullable(),
   dailyWords: nullableGoalInt('dailyWords', 1_000_000),
 }).strict();
 
