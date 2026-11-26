@@ -161,6 +161,9 @@ jobs:
         run: |
           docker compose -f compose.yml config --quiet
           docker compose -f compose.yml -f compose.factory-api.yml config --quiet
+      - name: Check Compose backup and restore scripts
+        working-directory: .
+        run: shellcheck scripts/backup-compose.sh scripts/restore-compose.sh scripts/test-compose-backup.sh
   contracts-and-canvas:
     needs: changes
     if: ${{ !cancelled() && needs.changes.outputs['contracts-and-canvas'] != 'false' }}

@@ -143,12 +143,54 @@ docker compose --env-file .env.compose -f compose.yml -f compose.factory-api.yml
 `down` retains named volumes. Adding `--volumes` deletes the database, queues,
 and Factory files belonging to that project.
 
+## Back up and restore
+
+`scripts/backup-compose.sh` writes a dated directory under `backups/` (or the
+directory given with `--output`) containing:
+
+| File                | Contents                                                    |
+| ------------------- | ----------------------------------------------------------- |
+| `postgres.dump`     | PostgreSQL custom-format dump (`pg_dump -Fc`)               |
+| `redis-data.tar`    | The Redis data directory, including the append-only file    |
+| `factory-files.tar` | The Factory `factory-data` and `factory-images` volumes     |
+| `env.compose`       | A copy of `.env.compose`, which **contains all secrets**    |
+| `backup.txt`        | Creation time, running image reference and ID, and revision |
+| `SHA256SUMS`        | Checksums for every file, verified before any restore       |
+
+Run it from the checkout with the same environment file, Compose files and
+project name you use for the stack. For a consistent snapshot the script stops
+Author, Factory, the worker and Redis while it copies, keeps PostgreSQL running
+for `pg_dump`, and then starts the services that were running. Writers see a
+short outage. Keep backups private, because they contain manuscripts and
+`env.compose` holds every credential.
+
+```bash
+scripts/backup-compose.sh --env-file .env.compose
+```
+
+`scripts/restore-compose.sh` verifies the checksums, asks for confirmation (or
+takes `--yes`), stops the application and Redis, recreates the `proser`
+database from the dump, replaces the Redis data and the Factory volumes, and
+starts the stack, which re-runs the `initialize` checks. It does not replace
+`.env.compose`; it notes when the file differs from the backup's copy. Restore
+with the image recorded in `backup.txt` so the schema matches the application,
+then upgrade as usual.
+
+```bash
+scripts/restore-compose.sh --env-file .env.compose backups/proser-<timestamp>
+```
+
+Pass `-p` and `-f` to either script when the stack uses a different project name
+or Compose files than the environment file selects. `scripts/test-compose-backup.sh
+<image>` rehearses a backup, a change and a restore on a disposable project and
+checks that the data and readiness come back.
+
 ## Upgrades and recovery
 
 Keep the Compose project name, existing `.env.compose`, and named volumes.
-Record the running image digest, read the target release notes, and back up
-PostgreSQL, Redis, Factory data and images before changing versions. Switch to
-the matching release checkout, update `PROSER_IMAGE`, and pull the new image.
+Record the running image digest, read the target release notes, and run
+`scripts/backup-compose.sh` before changing versions. Switch to the matching
+release checkout, update `PROSER_IMAGE`, and pull the new image.
 For database changes, follow the
 [document authority procedure](../ProserFactory/docs/DOCUMENT_AUTHORITY_ENFORCEMENT.md)
 before starting the stack. Use a reviewed import plan for moving data from a
@@ -156,9 +198,9 @@ separate installation.
 
 An existing installation never applies database migrations on its own. When a
 release adds one, the `initialize` service exits with the pending migration
-names and the application services do not start. After backing up and reading
-the release notes, apply the migrations with the new image, then start the
-stack:
+names and the application services do not start. After backing up (the backup
+script works while the application is stopped) and reading the release notes,
+apply the migrations with the new image, then start the stack:
 
 ```bash
 docker compose --env-file .env.compose run --rm --no-deps initialize node node_modules/prisma/build/index.js migrate deploy
@@ -172,7 +214,8 @@ and continues. Guards from any other source stop the start with
 `Existing databases require reviewed document enforcement changes.`
 
 For an existing production installation, rehearse the database and Redis
-restore before stopping writers. Preserve the exact image reference,
+restore before stopping writers, for example with `scripts/restore-compose.sh`
+into a separate project. Preserve the exact image reference,
 PostgreSQL and Redis snapshots, assets, imports, signing material, and private
 configuration. Compare PostgreSQL rows, logical Redis records, and file
 digests before reopening traffic. Keep the recovery record private and
