@@ -8,7 +8,7 @@
     "url": "https://github.com/HiveMagnus/proser.git"
   },
   "scripts": {
-    "format:check": "corepack pnpm --dir ProserAuthor format:check && corepack pnpm --dir ProserAuthor exec prettier --check ../README.md ../AGENTS.md ../APP_ARCHITECTURE.md ../PROSER_API.md ../package.json ../CANVAS_MODERNIZATION.md ../CANVAS_NEXT_RELEASE_BACKLOG.md ../CANVAS_RELEASE_CHECKLIST.md ../CANVAS_RELEASE_RECORD.md ../CANVAS_R2_ACCEPTANCE.md ../scripts/validate-markdown-tables.mjs ../scripts/classify-ci-changes.mjs ../scripts/classify-ci-changes.test.mjs ../scripts/check-ci-documentation.mjs ../scripts/ci-validation.mjs ../scripts/ci-validation.test.mjs ../docs/CI.md ../docs/SECURITY_2026_10_31.md ../.github/workflows/verify.yml && npm run docs:validate",
+    "format:check": "corepack pnpm --dir ProserAuthor format:check && corepack pnpm --dir ProserAuthor exec prettier --check ../README.md ../AGENTS.md ../APP_ARCHITECTURE.md ../PROSER_API.md ../package.json ../CANVAS_MODERNIZATION.md ../CANVAS_NEXT_RELEASE_BACKLOG.md ../CANVAS_RELEASE_CHECKLIST.md ../CANVAS_RELEASE_RECORD.md ../CANVAS_R2_ACCEPTANCE.md ../scripts/validate-markdown-tables.mjs ../scripts/classify-ci-changes.mjs ../scripts/classify-ci-changes.test.mjs ../scripts/check-ci-documentation.mjs ../scripts/ci-validation.mjs ../scripts/ci-validation.test.mjs ../scripts/compose-enforcement-upgrades.test.mjs ../docs/CI.md ../docs/SECURITY_2026_10_31.md ../.github/workflows/verify.yml && npm run docs:validate",
     "docs:generate": "npm --prefix ProserFactory run docs:generate",
     "docs:validate": "npm --prefix ProserFactory run docs:check && node scripts/validate-markdown-tables.mjs PROSER_API.md PROSER_API.generated.md",
     "lint": "npm --prefix ProserFactory run lint && corepack pnpm --dir ProserAuthor lint",
@@ -18,7 +18,7 @@
     "audit": "npm --prefix ProserFactory audit && corepack pnpm --dir ProserAuthor audit",
     "documents:sync": "node scripts/sync-document-contract.mjs",
     "documents:check": "node scripts/sync-document-contract.mjs --check",
-    "test:ci": "node --test scripts/classify-ci-changes.test.mjs scripts/ci-validation.test.mjs",
+    "test:ci": "node --test scripts/classify-ci-changes.test.mjs scripts/ci-validation.test.mjs scripts/compose-enforcement-upgrades.test.mjs",
     "test:canvas": "node scripts/test-canvas-browser.mjs",
     "test:canvas-fixtures": "node --test scripts/canvas-browser-fixture.test.mjs",
     "test:canvas-mobile": "node scripts/test-canvas-mobile-browser.mjs",

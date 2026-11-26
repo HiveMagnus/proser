@@ -27,6 +27,10 @@ const UPGRADABLE_ENFORCEMENT = new Map([
     "3995b374b447894edf17fb276aded5cf307c7dac2b52b81d100197806b923f19",
     "v1.0.0 to v1.0.5",
   ],
+  [
+    "af23ed33c4c37ea9bc7017754eecce8f20218fe7fac4360955a979d5363ee000",
+    "v1.0.6 and later",
+  ],
 ]);
 const prisma = (action) =>
   execFileSync(
