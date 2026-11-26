@@ -37,7 +37,6 @@ export function SignInForm({
   const [error, setError] = useState<string | null>(initialError(serverError));
   const [redirecting, setRedirecting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [needsCode, setNeedsCode] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -47,33 +46,23 @@ export function SignInForm({
     const formData = new FormData(e.currentTarget);
     const username = formData.get('username') as string;
     const password = formData.get('password') as string;
-    const code = needsCode ? String(formData.get('code') ?? '') : '';
 
     try {
+      // Local accounts only: Oathweave writers use the Oathweave button, so
+      // their password is never entered here.
       const result = await signIn('iam', {
         username,
         password,
-        ...(code ? { code } : {}),
         callbackUrl,
         redirect: false,
       });
 
       if (result?.error) {
-        if (result.code === 'mfa_required') {
-          setNeedsCode(true);
-          setError(
-            needsCode ? 'Enter the code from your authenticator app or a recovery code.' : null,
-          );
-        } else if (result.code === 'mfa_invalid') {
-          setNeedsCode(true);
-          setError('That authentication code was not accepted. Try again.');
-        } else {
-          setError(
-            result.error === 'CredentialsSignin'
-              ? 'Invalid username or password'
-              : 'Something went wrong. Please try again.',
-          );
-        }
+        setError(
+          result.error === 'CredentialsSignin'
+            ? 'Invalid username or password'
+            : 'Something went wrong. Please try again.',
+        );
         setSubmitting(false);
         return;
       }
@@ -120,9 +109,15 @@ export function SignInForm({
       {methods.oathweave && methods.password && (
         <div className="my-4 flex items-center gap-3 text-[length:--text-xs] text-text-muted">
           <span className="h-px flex-1 bg-border-default" />
-          or use your password
+          or use a local account
           <span className="h-px flex-1 bg-border-default" />
         </div>
+      )}
+
+      {!methods.oathweave && !methods.password && (
+        <p className="text-center text-[length:--text-sm] text-text-muted">
+          Sign-in is not configured on this installation. Ask an administrator to set up sign-in.
+        </p>
       )}
 
       {methods.password && (
@@ -164,32 +159,6 @@ export function SignInForm({
                 placeholder="Enter your password"
               />
             </div>
-            {needsCode && (
-              <div>
-                <label
-                  htmlFor="code"
-                  className="block text-[length:--text-sm] font-medium text-text-secondary mb-1"
-                >
-                  Authentication code
-                </label>
-                <p className="mb-1 text-[length:--text-xs] text-text-muted">
-                  Your account uses two-step verification. Enter the code from your authenticator
-                  app, or a recovery code.
-                </p>
-                <input
-                  id="code"
-                  name="code"
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  required
-                  autoFocus
-                  disabled={submitting}
-                  className="w-full rounded-[--radius-md] border border-border-default bg-surface-sunken px-3 py-2 text-[length:--text-sm] text-text-primary placeholder:text-text-muted focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 transition-colors duration-[--duration-normal]"
-                  placeholder="123456"
-                />
-              </div>
-            )}
             <button
               type="submit"
               disabled={submitting}

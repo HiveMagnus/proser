@@ -4,7 +4,6 @@ import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT } from 'jose';
 import {
   oathweaveJwksUrl,
   oathweaveProfile,
-  passwordRelayEnabled,
   readOathweaveOidcConfig,
   resetOathweaveOidcCachesForTests,
   verifyOathweaveIdToken,
@@ -76,22 +75,6 @@ describe('Oathweave OIDC configuration', () => {
     expect(config({ ...base, OATHWEAVE_OIDC_ISSUER: 'http://127.0.0.1:4200' }).issuer).toBe(
       'http://127.0.0.1:4200',
     );
-  });
-});
-
-describe('password relay setting', () => {
-  it('is on by default, with or without OIDC', () => {
-    expect(passwordRelayEnabled({} as unknown as NodeJS.ProcessEnv, false)).toEqual({
-      enabled: true,
-      ignoredOff: false,
-    });
-    expect(passwordRelayEnabled({} as unknown as NodeJS.ProcessEnv, true).enabled).toBe(true);
-  });
-
-  it('turns off only once OIDC is configured', () => {
-    const off = { OATHWEAVE_PASSWORD_RELAY: 'false' } as unknown as NodeJS.ProcessEnv;
-    expect(passwordRelayEnabled(off, true)).toEqual({ enabled: false, ignoredOff: false });
-    expect(passwordRelayEnabled(off, false)).toEqual({ enabled: true, ignoredOff: true });
   });
 });
 

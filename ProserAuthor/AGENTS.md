@@ -19,8 +19,8 @@ The retired `apps/api`, `apps/worker`, `proser-v2-api`, and `proser-v2-worker` p
 
 ## Security invariants
 
-- Production authentication uses Magnus IAM when `IAM_CORE_URL` is configured.
-- Oathweave OIDC (`OATHWEAVE_OIDC_*`) uses authorization code with S256 PKCE and a nonce, and verifies the ID-token signature. Factory keys those accounts on `oathweaveSubject` and links a first OIDC sign-in to the existing `iam:<username>` account. The password relay stays on unless `OATHWEAVE_PASSWORD_RELAY=false` and OIDC is configured. See `../docs/OATHWEAVE_OIDC.md`.
+- Production authentication uses Oathweave OIDC. `IAM_CORE_URL` marks an Oathweave installation and turns local credentials off.
+- Oathweave OIDC (`OATHWEAVE_OIDC_*`) uses authorization code with S256 PKCE and a nonce, and verifies the ID-token signature. Factory keys those accounts on `oathweaveSubject` and links a first OIDC sign-in to the existing `iam:<username>` account. Author never takes or relays an Oathweave password; do not reintroduce a password relay. See `../docs/OATHWEAVE_OIDC.md`.
 - Local credentials exist only when `LOCAL_AUTH_ENABLED=true` and both `LOCAL_AUTH_USERNAME` and `LOCAL_AUTH_PASSWORD` are explicitly set.
 - `NEXTAUTH_SECRET` protects the web session. `FACTORY_AUTH_SECRET` is a separate shared secret used only for short-lived Author-to-Factory JWTs.
 - Backend JWTs use issuer `proser-author` and audience `proser-factory` by default. Keep these aligned with Factory validation.

@@ -7,34 +7,29 @@ vi.mock('next-auth/react', () => ({ signIn: (...args: unknown[]) => signIn(...ar
 
 import { SignInForm } from '@/app/auth/signin/sign-in-form';
 
-describe('SignInForm two-step verification', () => {
+describe('SignInForm local accounts', () => {
   beforeEach(() => signIn.mockReset());
 
-  it('asks for an authentication code and resubmits it with the password', async () => {
-    signIn
-      .mockResolvedValueOnce({ error: 'CredentialsSignin', code: 'mfa_required', ok: false })
-      .mockResolvedValueOnce({ error: 'CredentialsSignin', code: 'mfa_invalid', ok: false });
+  it('submits a local account password and shows a refusal', async () => {
+    signIn.mockResolvedValueOnce({ error: 'CredentialsSignin', ok: false });
     const user = userEvent.setup();
     render(<SignInForm callbackUrl="/" serverError={null} />);
 
-    await user.type(screen.getByLabelText('Username'), 'writer');
+    await user.type(screen.getByLabelText('Username'), 'author');
     await user.type(screen.getByLabelText('Password'), 'pw');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
 
-    const code = await screen.findByLabelText('Authentication code');
-    expect(screen.queryByText('Invalid username or password')).not.toBeInTheDocument();
-    await user.type(code, '123456');
-    await user.click(screen.getByRole('button', { name: 'Sign in' }));
-
-    await waitFor(() => expect(signIn).toHaveBeenCalledTimes(2));
-    expect(signIn.mock.calls[1]?.[1]).toMatchObject({
-      username: 'writer',
+    await waitFor(() => expect(signIn).toHaveBeenCalledTimes(1));
+    expect(signIn.mock.calls[0]?.[0]).toBe('iam');
+    expect(signIn.mock.calls[0]?.[1]).toEqual({
+      username: 'author',
       password: 'pw',
-      code: '123456',
+      callbackUrl: '/',
+      redirect: false,
     });
-    expect(
-      await screen.findByText('That authentication code was not accepted. Try again.'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Invalid username or password')).toBeInTheDocument();
+    // No second-factor step: that belonged to the removed Oathweave password relay.
+    expect(screen.queryByLabelText('Authentication code')).toBeNull();
   });
 });
 
@@ -57,11 +52,11 @@ describe('SignInForm with Oathweave OIDC', () => {
       { redirectTo: '/books' },
       { state: expect.stringMatching(/^[A-Za-z0-9_-]{43}$/) },
     );
-    // The password fallback is still offered.
+    // A local account, when enabled, is still offered next to Oathweave.
     expect(screen.getByLabelText('Password')).toBeInTheDocument();
   });
 
-  it('offers only Oathweave once the password relay is off', () => {
+  it('offers only Oathweave on an Oathweave installation', () => {
     render(
       <SignInForm
         callbackUrl="/"
@@ -84,6 +79,18 @@ describe('SignInForm with Oathweave OIDC', () => {
     expect(
       screen.getByText('Oathweave did not confirm this sign-in. Try again.'),
     ).toBeInTheDocument();
+  });
+
+  it('explains that no sign-in is configured', () => {
+    render(
+      <SignInForm
+        callbackUrl="/"
+        serverError={null}
+        methods={{ oathweave: false, password: false }}
+      />,
+    );
+    expect(screen.queryByLabelText('Password')).toBeNull();
+    expect(screen.getByText(/Sign-in is not configured/)).toBeInTheDocument();
   });
 
   it('shows no Oathweave button when OIDC is not configured', () => {

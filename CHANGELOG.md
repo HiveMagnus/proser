@@ -6,7 +6,19 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 
 ## Unreleased
 
-Nothing yet.
+### Sign-in
+
+- The Oathweave password relay is removed. Proser no longer takes an
+  Oathweave writer's password or posts it to Oathweave's login API: Oathweave
+  writers sign in only through Oathweave OpenID Connect (authorization code with
+  S256 PKCE), where passwords, second factors and passkeys are entered at
+  Oathweave. `OATHWEAVE_PASSWORD_RELAY` has no effect and Author warns while it
+  is set. Local and GitHub accounts are unchanged.
+- **Upgrade note:** an installation that sets `IAM_CORE_URL` must configure
+  `OATHWEAVE_OIDC_*` before upgrading, or Oathweave writers cannot sign in
+  (Author logs the reason at startup). Installations that already set
+  `OATHWEAVE_PASSWORD_RELAY=false` with OIDC see no change. See
+  [Upgrading from the password relay](docs/OATHWEAVE_OIDC.md#upgrading-from-the-password-relay).
 
 ## v1.1.0 (2026-11-26)
 

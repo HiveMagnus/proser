@@ -6,8 +6,9 @@ import { calculateJwkThumbprint, exportJWK, generateKeyPair, SignJWT } from 'jos
 /**
  * Drives Auth.js through the real sign-in routes with a fake Oathweave: the
  * authorization redirect, the code exchange with PKCE, ID-token checks and
- * the resulting session. The password relay and local accounts are exercised
- * through the same handlers to show they keep working next to OIDC.
+ * the resulting session. Local accounts are exercised through the same
+ * handlers to show they keep working next to OIDC, and Oathweave passwords are
+ * shown never to be relayed.
  */
 
 const ORIGIN = 'https://proser.example.test';
@@ -145,13 +146,6 @@ describe('Oathweave OIDC sign-in through Auth.js', () => {
             id_token: idToken,
           });
         }
-        if (url === `${IAM}/api/v1/auth/login`) {
-          return Response.json({
-            accessToken: 'fixture-relay-access',
-            refreshToken: 'fixture-relay-refresh',
-            user: { id: 'oathweave-user-uuid', email: 'writer@example.test', username: 'writer' },
-          });
-        }
         throw new Error(`Unexpected request to ${url}`);
       }),
     );
@@ -285,44 +279,49 @@ describe('Oathweave OIDC sign-in through Auth.js', () => {
     return { jar, signedIn: await session(handlers, jar) };
   }
 
-  it('keeps the password relay as a fallback next to OIDC by default', async () => {
+  const iamRequests = () =>
+    vi.mocked(fetch).mock.calls.filter(([input]) => String(input).startsWith(IAM));
+
+  it('never posts a password to Oathweave on an Oathweave installation', async () => {
     const { handlers, signInMethods } = await loadAuth({ ...baseEnvironment, IAM_CORE_URL: IAM });
-    expect(signInMethods).toEqual({ oathweave: true, password: true });
-    const { signedIn } = await passwordSignIn(handlers, 'writer', 'fixture-password');
-    expect(signedIn?.user).toMatchObject({
-      id: 'oathweave-user-uuid',
-      username: 'writer',
-      provider: 'iam',
-    });
-    expect(signedIn?.user?.oathweaveSubject).toBeUndefined();
+    expect(signInMethods).toEqual({ oathweave: true, password: false });
+    const { jar, signedIn } = await passwordSignIn(handlers, 'writer', 'fixture-password');
+    expect(signedIn).toBeNull();
+    expect(sessionCookie(jar)).toBeUndefined();
+    expect(iamRequests()).toEqual([]);
   });
 
-  it('turns the relay off once OIDC is configured and OATHWEAVE_PASSWORD_RELAY=false', async () => {
+  it('ignores the retired OATHWEAVE_PASSWORD_RELAY setting', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const { handlers, signInMethods } = await loadAuth({
       ...baseEnvironment,
       IAM_CORE_URL: IAM,
-      OATHWEAVE_PASSWORD_RELAY: 'false',
+      OATHWEAVE_PASSWORD_RELAY: 'true',
     });
     expect(signInMethods).toEqual({ oathweave: true, password: false });
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('OATHWEAVE_PASSWORD_RELAY is no longer used'),
+    );
     const { jar } = await passwordSignIn(handlers, 'writer', 'fixture-password');
     expect(sessionCookie(jar)).toBeUndefined();
-    expect(vi.mocked(fetch)).not.toHaveBeenCalledWith(
-      `${IAM}/api/v1/auth/login`,
-      expect.anything(),
-    );
+    expect(iamRequests()).toEqual([]);
   });
 
-  it('keeps the relay on when it is turned off without a working OIDC configuration', async () => {
+  it('offers no password sign-in and logs why when IAM_CORE_URL is set without OIDC', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const { handlers, signInMethods } = await loadAuth({
       IAM_CORE_URL: IAM,
-      OATHWEAVE_PASSWORD_RELAY: 'false',
       OATHWEAVE_OIDC_ISSUER: ISSUER,
       AUTH_SECRET: baseEnvironment.AUTH_SECRET,
       AUTH_URL: ORIGIN,
     });
-    expect(signInMethods).toEqual({ oathweave: false, password: true });
-    const { signedIn } = await passwordSignIn(handlers, 'writer', 'fixture-password');
-    expect(signedIn?.user).toMatchObject({ provider: 'iam', username: 'writer' });
+    expect(signInMethods).toEqual({ oathweave: false, password: false });
+    expect(error).toHaveBeenCalledWith(
+      expect.stringContaining('Oathweave OIDC sign-in is not configured'),
+    );
+    const { jar } = await passwordSignIn(handlers, 'writer', 'fixture-password');
+    expect(sessionCookie(jar)).toBeUndefined();
+    expect(iamRequests()).toEqual([]);
   });
 
   it('leaves local accounts unchanged next to OIDC', async () => {

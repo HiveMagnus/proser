@@ -48,7 +48,7 @@ export default async function SignInPage(props: {
             <p className="text-[length:--text-xs] text-text-muted">
               {signInMethods.oathweave
                 ? 'Authenticated via Oathweave'
-                : 'Authenticated via Magnus IAM'}
+                : 'Authenticated with a local account'}
             </p>
           </div>
         </div>

@@ -12,11 +12,9 @@ import {
   recordLocalAuthFailure,
 } from '@/lib/local-auth';
 import { isGitHubAccountAllowed, parseGitHubAllowedIds } from '@/lib/github-allow-list';
-import { authorizeIamCredentials } from '@/lib/iam-auth';
 import {
   OATHWEAVE_PROVIDER_ID,
   oathweaveProfile,
-  passwordRelayEnabled,
   readOathweaveOidcConfig,
   verifyOathweaveIdToken,
   type OathweaveOidcConfig,
@@ -44,7 +42,7 @@ function normalizeIamUsername(value: unknown): string {
 }
 
 let passwordSignIn = false;
-function createIamCredentialsProvider(
+function createLocalCredentialsProvider(
   authorize: NonNullable<Parameters<typeof Credentials>[0]['authorize']>,
 ) {
   passwordSignIn = true;
@@ -54,7 +52,6 @@ function createIamCredentialsProvider(
     credentials: {
       username: { label: 'Username', type: 'text' },
       password: { label: 'Password', type: 'password' },
-      code: { label: 'Authentication code', type: 'text' },
     },
     authorize,
   });
@@ -110,25 +107,27 @@ function createOathweaveProvider(config: OathweaveOidcConfig): OIDCConfig<Record
   };
 }
 
-// ─── Oathweave password relay (fallback) ────────────────────────────────
-// Posts the username and password to the Oathweave login API, including its
-// MFA challenge. It stays on unless OATHWEAVE_PASSWORD_RELAY=false and OIDC is
-// configured.
-const iamCoreUrl = process.env.IAM_CORE_URL;
-const relay = passwordRelayEnabled(process.env, oidcConfig !== null);
-if (iamCoreUrl && relay.ignoredOff) {
+// ─── Oathweave installations ────────────────────────────────────────────
+// Oathweave writers sign in only through OIDC above, so Proser never sees
+// their password. IAM_CORE_URL marks an Oathweave installation: it offers no
+// local password sign-in. Proser no longer relays passwords to Oathweave's
+// login API; OATHWEAVE_PASSWORD_RELAY has no effect.
+const oathweaveInstallation = Boolean(process.env.IAM_CORE_URL?.trim());
+if (
+  process.env.OATHWEAVE_PASSWORD_RELAY !== undefined &&
+  process.env.OATHWEAVE_PASSWORD_RELAY !== ''
+) {
   console.warn(
-    'OATHWEAVE_PASSWORD_RELAY=false is ignored until Oathweave OIDC sign-in is configured.',
+    'OATHWEAVE_PASSWORD_RELAY is no longer used: Proser never relays passwords to Oathweave. Remove the setting.',
   );
 }
-if (iamCoreUrl && !relay.enabled) {
-  // Oathweave accounts sign in through OIDC only.
-} else if (iamCoreUrl) {
-  providers.push(
-    createIamCredentialsProvider((credentials, request) =>
-      authorizeIamCredentials(iamCoreUrl, credentials, request),
-    ),
+if (oathweaveInstallation && !oidcConfig) {
+  console.error(
+    'IAM_CORE_URL is set but Oathweave OIDC sign-in is not configured, so Oathweave writers cannot sign in. Proser no longer relays passwords to Oathweave: configure OATHWEAVE_OIDC_* (docs/OATHWEAVE_OIDC.md).',
   );
+}
+if (oathweaveInstallation) {
+  // Oathweave accounts sign in through OIDC only.
 } else if (isLocalAuthAllowed) {
   const localAuthUsername = normalizeIamUsername(process.env.LOCAL_AUTH_USERNAME);
   const localAuthPassword = process.env.LOCAL_AUTH_PASSWORD || '';
@@ -140,7 +139,7 @@ if (iamCoreUrl && !relay.enabled) {
   }
 
   providers.push(
-    createIamCredentialsProvider(async (credentials, request) => {
+    createLocalCredentialsProvider(async (credentials, request) => {
       const username = normalizeIamUsername(credentials?.username);
       const password = String(credentials?.password ?? '');
       const source = localAuthSource(request);
