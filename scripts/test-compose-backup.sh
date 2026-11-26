@@ -45,8 +45,37 @@ backup_dir=$(scripts/backup-compose.sh -p "$project" --env-file "$env_file" \
 set_markers after
 factory_sh 'printf extra > /opt/proser/factory/public/images/after-backup.bin'
 
-scripts/restore-compose.sh -p "$project" --env-file "$env_file" \
-  -f compose.yml -f compose.factory-api.yml --yes "$backup_dir"
+restore=(scripts/restore-compose.sh -p "$project" --env-file "$env_file" -f compose.yml -f compose.factory-api.yml --yes)
+damaged() { # damaged NAME EDIT: a copy of the backup with EDIT applied and fresh checksums
+  rm -rf "${temporary:?}/$1"
+  cp -a "$backup_dir" "$temporary/$1"
+  (cd "$temporary/$1" && eval "$2" && sha256sum postgres.dump redis-data.tar factory-files.tar env.compose backup.txt >SHA256SUMS)
+}
+unchanged() {
+  [[ "$(psql -c 'SELECT v FROM backup_rehearsal')" == after ]]
+  [[ "$(factory_sh 'cat /opt/proser/factory/data/backup-rehearsal.txt')" == after ]]
+}
+
+# An unreadable dump is refused before anything is stopped or changed.
+damaged truncated 'head -c 100 postgres.dump >dump && mv dump postgres.dump'
+if "${restore[@]}" "$temporary/truncated"; then echo "Restored a truncated dump" >&2; exit 1; fi
+unchanged
+"${compose[@]}" ps --status running --services | grep -Fxq factory
+
+# A backup taken with another image is refused unless explicitly allowed.
+damaged other-image 'sed -i "s|^image=.*|image=ghcr.io/hivemagnus/proser:0.0.1|" backup.txt'
+if "${restore[@]}" "$temporary/other-image"; then echo "Restored a backup from another image" >&2; exit 1; fi
+unchanged
+
+# A damaged file archive fails without replacing the current files.
+damaged bad-files 'printf "%01024d" 7 | dd of=factory-files.tar bs=1024 count=1 conv=notrunc 2>/dev/null'
+if "${restore[@]}" --no-start "$temporary/bad-files"; then echo "Restored a damaged file archive" >&2; exit 1; fi
+[[ "$(psql -c 'SELECT v FROM backup_rehearsal')" == after ]]
+[[ "$("${compose[@]}" run --rm --no-deps -T --entrypoint cat factory /opt/proser/factory/data/backup-rehearsal.txt)" == after ]]
+"${compose[@]}" run --rm --no-deps -T --entrypoint sh factory -c 'test ! -e /opt/proser/factory/data/.proser-restore'
+[[ "$("${compose[@]}" exec -T postgres psql -U proser -d postgres -qtA -c "SELECT count(*) FROM pg_database WHERE datname LIKE 'proser_restore_%'")" == 0 ]]
+
+"${restore[@]}" "$backup_dir"
 
 [[ "$(psql -c 'SELECT v FROM backup_rehearsal')" == before ]]
 [[ "$(redis GET proser:backup-rehearsal)" == before ]]
@@ -55,6 +84,12 @@ if factory_sh 'test -e /opt/proser/factory/public/images/after-backup.bin'; then
   echo "Restore kept a file written after the backup" >&2
   exit 1
 fi
+for leftover in /opt/proser/factory/data/.proser-restore /opt/proser/factory/data/.proser-previous /opt/proser/factory/public/images/.proser-previous; do
+  if factory_sh "test -e $leftover"; then echo "Restore left $leftover behind" >&2; exit 1; fi
+done
+databases=$("${compose[@]}" exec -T postgres psql -U proser -d postgres -qtA -c "SELECT datname FROM pg_database WHERE datname LIKE 'proser_%' ORDER BY 1")
+grep -q '^proser_previous_' <<<"$databases" || { echo "The previous database was not kept" >&2; exit 1; }
+if grep -q '^proser_restore_' <<<"$databases"; then echo "A staging database was left behind" >&2; exit 1; fi
 curl -fsS "http://127.0.0.1:$factory/api/readiness" >/dev/null
 curl -fsS "http://127.0.0.1:$web/api/readiness" >/dev/null
 echo "Backup and restore rehearsal passed for $image"

@@ -29,8 +29,9 @@ a newer release. The general procedure (back up, switch the checkout and
   the Proser origin. If writers reach Proser at an address other than
   `PROSER_ORIGIN` through a proxy that rewrites `Host`, pass
   `X-Forwarded-Host` or set `PROSER_ORIGIN` to that address.
-- **Rate limits:** Hermes agents using `pnv_` service-principal tokens now share
-  one global rate-limit bucket per client address.
+- **Restores:** `scripts/restore-compose.sh` refuses a backup taken with an
+  image other than `PROSER_IMAGE` unless you pass `--allow-image-mismatch`, and
+  keeps the replaced database as `proser_previous_<time>` until you drop it.
 - **Database migration:** `20261126000000_book_writing_goals` adds the
   `book_writing_goals` table. `initialize` stops with the pending migration
   name until you apply it with `migrate deploy` (step 4 above). The document

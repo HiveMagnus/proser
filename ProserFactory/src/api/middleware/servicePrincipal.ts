@@ -13,6 +13,22 @@ const principalSchema = z.object({
   expiresAt: z.string().datetime(),
 }).strict();
 
+/**
+ * The configured, unexpired service principal a pnv_ token belongs to, or
+ * null. Only the token digest is checked (no route or caller rules), so the
+ * global rate limit can count a principal's requests together.
+ */
+export function knownServicePrincipalName(token: string): string | null {
+  if (!/^pnv_[A-Za-z0-9_-]{43}$/.test(token)) return null;
+  let raw: unknown;
+  try { raw = JSON.parse(process.env.PROSER_SERVICE_PRINCIPALS_JSON || '[]') as unknown; } catch { return null; }
+  const configured = z.array(principalSchema).safeParse(raw);
+  if (!configured.success) return null;
+  const digest = createHash('sha256').update(token).digest();
+  const principal = configured.data.find((p) => timingSafeEqual(digest, Buffer.from(p.sha256, 'hex')));
+  return principal && Date.parse(principal.expiresAt) > Date.now() ? principal.name : null;
+}
+
 export function resolveServicePrincipal(token: string, method: string, pathname: string, caller: string) {
   if (!/^pnv_[A-Za-z0-9_-]{43}$/.test(token)) return null;
   let raw: unknown;

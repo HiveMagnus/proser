@@ -181,13 +181,21 @@ short outage. Keep backups private, because they contain manuscripts and
 scripts/backup-compose.sh --env-file .env.compose
 ```
 
-`scripts/restore-compose.sh` verifies the checksums, asks for confirmation (or
-takes `--yes`), stops the application and Redis, recreates the `proser`
-database from the dump, replaces the Redis data and the Factory volumes, and
-starts the stack, which re-runs the `initialize` checks. It does not replace
-`.env.compose`; it notes when the file differs from the backup's copy. Restore
-with the image recorded in `backup.txt` so the schema matches the application,
-then upgrade as usual.
+`scripts/restore-compose.sh` verifies the checksums and checks that
+`pg_restore` can read the dump before it changes anything. It asks for
+confirmation (or takes `--yes`), stops the application and Redis, and stages
+the whole backup first: the dump is restored into a separate
+`proser_restore_<time>` database and each archive is extracted into a staging
+directory on its volume. Only when all of that succeeds does it rename the
+current database to `proser_previous_<time>`, put the restored one in its place
+and swap in the Redis data and Factory volumes; a failure while staging leaves
+the installation's data as it was. It then starts the stack, which re-runs the
+`initialize` checks. Drop `proser_previous_<time>` with `dropdb` once the
+restored installation checks out. The script does not replace `.env.compose`;
+it notes when the file differs from the backup's copy. It refuses a backup
+taken with an image other than `PROSER_IMAGE` unless you pass
+`--allow-image-mismatch`: restore with the image recorded in `backup.txt` so
+the schema matches the application, then upgrade as usual.
 
 ```bash
 scripts/restore-compose.sh --env-file .env.compose backups/proser-<timestamp>

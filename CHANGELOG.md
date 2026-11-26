@@ -38,6 +38,22 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
   deleted after 30 days; it stays until the writer recovers, downloads or
   discards it.
 
+### Backup and restore
+
+- `scripts/restore-compose.sh` checks that the dump is readable before
+  changing anything, restores into a staging database and staging directories,
+  and replaces the installation's data only when all of it was staged. The
+  previous database is kept as `proser_previous_<time>`. A backup taken with an
+  image other than `PROSER_IMAGE` is refused unless `--allow-image-mismatch` is
+  given.
+- `scripts/backup-compose.sh` stops if it cannot list the running services,
+  instead of copying while the writers keep running.
+- A configured `pnv_` service-principal token counts against its principal in
+  the global rate limit; unknown ones count against the client address.
+- Writing goals refuse impossible dates such as 2026-02-30, and writing
+  statistics refuse a time zone PostgreSQL does not know, with `422` instead
+  of a server error.
+
 ### Operations
 
 - Release images record their version; Factory reports it from `/health`,
@@ -116,8 +132,6 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
   that address are still accepted when the browser's `Origin` matches the
   `Host` the request reached. A reverse proxy that rewrites `Host` must pass
   `X-Forwarded-Host`, or `PROSER_ORIGIN` must name the address writers use.
-- Hermes agents that call Factory with a `pnv_` service-principal token now
-  share one rate-limit bucket per client address.
 - The Compose `worker` service now has a healthcheck. Use this release's
   `compose.yml` with its image; an older image has no healthcheck command and
   would show as unhealthy.

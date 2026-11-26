@@ -4,6 +4,7 @@ import redis from '@/lib/redis';
 import logger from '@/lib/logger';
 import { ErrorCodes, respondError } from '@/api/utils/response';
 import { verifiedBearerIdentity } from './auth';
+import { knownServicePrincipalName } from './servicePrincipal';
 
 const WINDOW_SECONDS = 60;
 const DEFAULT_PER_MINUTE = 1200;
@@ -20,13 +21,18 @@ export function apiRateLimitPerMinute(environment: NodeJS.ProcessEnv = process.e
 /**
  * The caller a request counts against. A bearer token whose signature and
  * claims verify counts against the identity it proves; Author signs a new
- * token for every request, so one writer's requests share a bucket. Anything
- * else (no token, a forged or expired token, or a service-principal token,
- * which is only checked later against the database) counts against the
- * client address, so a request claiming somebody else's identity cannot use
- * up that person's allowance.
+ * token for every request, so one writer's requests share a bucket. A pnv_
+ * token whose digest matches a configured, unexpired service principal counts
+ * against that principal. Anything else (no token, or a forged, unknown or
+ * expired token) counts against the client address, so a request claiming
+ * somebody else's identity cannot use up that caller's allowance.
  */
 export function apiRateLimitKey(req: Request): string {
+  const authorization = String(req.headers.authorization ?? '');
+  if (authorization.startsWith('Bearer pnv_')) {
+    const principal = knownServicePrincipalName(authorization.slice('Bearer '.length));
+    if (principal && SUBJECT.test(principal)) return `principal:${principal}`;
+  }
   const subject = verifiedBearerIdentity(req);
   if (subject && SUBJECT.test(subject)) return `subject:${subject}`;
   return `ip:${req.ip || req.socket.remoteAddress || 'unknown'}`;

@@ -1,5 +1,5 @@
 /// <reference types="jest" />
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import express from 'express';
 import Redis from 'ioredis';
 import jwt from 'jsonwebtoken';
@@ -82,11 +82,28 @@ describe('global API rate limit', () => {
     const req = (authorization?: string) => ({ headers: authorization ? { authorization } : {}, ip: '203.0.113.7', socket: {} }) as never;
     expect(apiRateLimitKey(req(token({ sub: 'iam:alice', githubId: 'iam:alice' })))).toBe('subject:iam:alice');
     expect(apiRateLimitKey(req(token({ sub: 42, githubId: 'github:42' })))).toBe('subject:github:42');
-    // Service-principal tokens are checked against the database later, so they count by address.
+    // Unknown service-principal tokens count by address.
     expect(apiRateLimitKey(req('Bearer pnv_secretvalue'))).toBe('ip:203.0.113.7');
     expect(apiRateLimitKey(req(token({ sub: 'has spaces', githubId: 'has spaces' })))).toBe('ip:203.0.113.7');
     expect(apiRateLimitKey(req('Bearer not-a-jwt'))).toBe('ip:203.0.113.7');
     expect(apiRateLimitKey(req())).toBe('ip:203.0.113.7');
+  });
+
+  it('keys a configured service-principal token by its principal', () => {
+    const token = `pnv_${'A'.repeat(43)}`;
+    const other = `pnv_${'B'.repeat(43)}`;
+    const previous = process.env.PROSER_SERVICE_PRINCIPALS_JSON;
+    const principal = (sha: string, expiresAt: string) => ({ sha256: sha, name: 'nova-proser', ownerGithubId: 'owner', scopes: ['content:read'], callers: ['senti'], expiresAt });
+    const req = (authorization: string) => ({ headers: { authorization }, ip: '203.0.113.7', socket: {} }) as never;
+    try {
+      process.env.PROSER_SERVICE_PRINCIPALS_JSON = JSON.stringify([principal(createHash('sha256').update(token).digest('hex'), new Date(Date.now() + 60_000).toISOString())]);
+      expect(apiRateLimitKey(req(`Bearer ${token}`))).toBe('principal:nova-proser');
+      expect(apiRateLimitKey(req(`Bearer ${other}`))).toBe('ip:203.0.113.7');
+      process.env.PROSER_SERVICE_PRINCIPALS_JSON = JSON.stringify([principal(createHash('sha256').update(token).digest('hex'), new Date(Date.now() - 60_000).toISOString())]);
+      expect(apiRateLimitKey(req(`Bearer ${token}`))).toBe('ip:203.0.113.7');
+    } finally {
+      if (previous === undefined) delete process.env.PROSER_SERVICE_PRINCIPALS_JSON; else process.env.PROSER_SERVICE_PRINCIPALS_JSON = previous;
+    }
   });
 
   it('does not let an unverified token claim somebody else\'s allowance', () => {

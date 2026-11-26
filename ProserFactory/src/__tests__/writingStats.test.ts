@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import app from '../index';
 import { databaseService } from '../lib/database';
-import { addDays, localDate, summarizeWriting, validTimeZone, type DaySnapshot } from '../services/writingStatsService';
+import { addDays, localDate, requireDatabaseTimeZone, summarizeWriting, validTimeZone, type DaySnapshot } from '../services/writingStatsService';
 
 const scene = (sceneId: number, revisionId: string, wordCount: number) => ({ sceneId, revisionId, wordCount });
 
@@ -110,6 +110,11 @@ describe('writing statistics routes', () => {
     expect((await as(owner)(request(app).get(`/api/books/${bookId}/writing-stats`).query({ tz: 'Mars/Olympus' }))).status).toBe(422);
     expect((await as(owner)(request(app).get(`/api/books/${bookId}/writing-stats`).query({ days: 3 }))).status).toBe(422);
     expect((await as(owner)(request(app).put(`/api/books/${bookId}/writing-goal`).send({ targetWords: -5, deadline: null, dailyWords: null }))).status).toBe(422);
+    expect((await as(owner)(request(app).put(`/api/books/${bookId}/writing-goal`).send({ targetWords: 1000, deadline: '2026-02-30', dailyWords: null }))).status).toBe(422);
+    expect((await as(owner)(request(app).put(`/api/books/${bookId}/writing-goal`).send({ targetWords: 1000, deadline: '2028-02-29', dailyWords: null }))).status).toBe(200);
+    // A zone the runtime knows but PostgreSQL does not is refused, not a server error.
+    await expect(requireDatabaseTimeZone('Europe/Paris')).resolves.toBeUndefined();
+    await expect(requireDatabaseTimeZone('Fixture/Unknown')).rejects.toThrow('tz is not a time zone the database knows');
     expect((await request(app).get(`/api/books/${bookId}/writing-stats`)).status).toBe(401);
   });
 
