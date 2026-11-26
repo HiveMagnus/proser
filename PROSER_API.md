@@ -238,6 +238,7 @@ Book history and resolved profiles are under `/books/:bookId/editorial-*`.
 | ------------------------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
 | `GET`, `POST`                  | `/books`                                               | List or create books                                                                              |
 | `GET`, `PUT`, `DELETE`         | `/books/:id`                                           | Read, update, or soft-delete a book                                                               |
+| `GET`                          | `/books/trash`                                         | Deleted books and the revision that restores each one                                             |
 | `GET`, `POST`                  | `/books/:bookId/structure`                             | Read or replace the structure tree                                                                |
 | `POST`                         | `/books/:bookId/reorder-acts`                          | Reorder acts                                                                                      |
 | `POST`, `PUT`, `DELETE`        | `/books/:bookId/acts...`                               | Create/update/delete acts and chapters                                                            |

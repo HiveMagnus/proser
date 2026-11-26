@@ -165,6 +165,7 @@ The rate-limit column is sourced from the same constants used by rate-limited ru
 | PUT | `/api/books/{id}` | Bearer JWT | JSON: documentPreconditions?, title?, genre?, targetAudience?, summary?, tagline?, storyOutline?, draftStatus?, … | No route-specific limit | Update book |
 | GET | `/api/books/document-capabilities` | Bearer JWT | — | No route-specific limit | Authenticated document capabilities before first-book creation |
 | GET | `/api/books/document-creation-operations/{operationId}` | Bearer JWT | — | No route-specific limit | Recover an owned book creation acknowledgement without repeating the mutation |
+| GET | `/api/books/trash` | Bearer JWT | — | No route-specific limit | List deleted books with the revision each can be restored to |
 | POST | `/api/chapters/{chapterId}/apply-feedback` | Bearer JWT | JSON: recommendations? | No route-specific limit | Apply feedback to chapter |
 | DELETE | `/api/codex/{id}` | Bearer JWT | — | No route-specific limit | Delete codex entry |
 | GET | `/api/codex/{id}` | Bearer JWT | — | No route-specific limit | Hermes-supported API operation |

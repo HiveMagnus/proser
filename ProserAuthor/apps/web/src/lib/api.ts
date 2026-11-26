@@ -1796,3 +1796,34 @@ export async function getStoryArchetypes(signal?: AbortSignal) {
   });
   return data.archetypes;
 }
+
+// ── Trash ─────────────────────────────────────────────────────────────
+
+export interface DeletedBook {
+  id: number;
+  title: string;
+  deletedAt: string;
+  /** The book revision that recorded the deletion. */
+  revisionId: string;
+  /** The book revision just before the deletion, which restoring returns to. */
+  restoreRevisionId: string;
+}
+
+export async function listDeletedBooks(signal?: AbortSignal) {
+  const data = await requestFactory<{ books: DeletedBook[] }>('/api/books/trash', { signal });
+  return data.books;
+}
+
+export function restoreDeletedBook(book: DeletedBook, expectedUserId: string) {
+  return requestFactory<{ revisionId: string }>(
+    `/api/books/${encodeURIComponent(String(book.id))}/document-revisions/${encodeURIComponent(book.restoreRevisionId)}/restore`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        operationId: crypto.randomUUID(),
+        expectedRevisionId: book.revisionId,
+      }),
+      headers: { 'X-Proser-Expected-User': encodeURIComponent(expectedUserId) },
+    },
+  );
+}

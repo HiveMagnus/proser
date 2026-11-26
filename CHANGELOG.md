@@ -43,6 +43,14 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
   installation of the previous release to the candidate image before
   publishing it.
 
+### Trash
+
+- The Dashboard lists deleted books under **Deleted books** and restores one
+  with **Restore**, back to the revision just before it was deleted (scenes,
+  Story Bible and layout). `GET /api/books/trash` lists them with the revision
+  to pass to the existing book-revision restore route. Installs with document
+  authority off still delete books outright.
+
 ### Changes
 
 - New [Writing with Proser](docs/WRITING_WITH_PROSER.md) guide for writers,

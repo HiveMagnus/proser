@@ -754,6 +754,16 @@ registerPath({
   responses: { 200: successEnvelope(z.object({ archetypes: z.array(z.object({ id: z.string(), name: z.string(), description: z.string() })) }), 'Story archetypes'), 401: errorResponse('Authentication required', 401) },
 });
 
+registerPath({
+  method: 'get', path: '/api/books/trash', summary: 'List deleted books with the revision each can be restored to', tags: ['Books'],
+  description: 'Restore a book with POST /api/books/{bookId}/document-revisions/{restoreRevisionId}/restore and expectedRevisionId set to revisionId. Empty when document authority is off.',
+  security: authHeader,
+  responses: {
+    200: successEnvelope(z.object({ books: z.array(z.object({ id: z.number(), title: z.string(), deletedAt: z.string(), revisionId: z.string(), restoreRevisionId: z.string() })) }), 'Deleted books, newest first'),
+    401: errorResponse('Authentication required', 401),
+  },
+});
+
 // ── Metrics ────────────────────────────────────────────────────
 
 registerPath({

@@ -33,6 +33,7 @@ vi.mock('@/hooks/queries/use-writing-stats', () => ({
   useWritingStats: () => ({ data: undefined }),
   useRecommendations: () => ({ data: undefined }),
 }));
+vi.mock('@/components/dashboard/book-trash', () => ({ BookTrash: () => null }));
 vi.mock('@/hooks/use-document-book-catalog', () => ({
   useDocumentBookCatalog: () => ({
     prepare: mocks.prepare,

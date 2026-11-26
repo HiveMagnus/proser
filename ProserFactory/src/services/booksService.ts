@@ -154,6 +154,33 @@ class BooksService {
     }
   }
 
+  /**
+   * Books this writer deleted, newest first. Deletion records a book revision,
+   * so each book can be restored to the revision just before it with
+   * POST /api/books/:bookId/document-revisions/:restoreRevisionId/restore.
+   * Installs without document authority delete books outright and have none.
+   */
+  async listDeletedBooks(userId: number) {
+    if (!documentAuthorityEnabled()) return [];
+    const books = await databaseService.client.book.findMany({
+      where: { userId, deletedAt: { not: null } },
+      select: { id: true, title: true, deletedAt: true },
+      orderBy: { deletedAt: 'desc' },
+      take: 200,
+    });
+    const heads = await databaseService.client.bookDocumentHead.findMany({ where: { bookId: { in: books.map((book) => book.id) } }, select: { bookId: true, revisionId: true } });
+    const revisions = await databaseService.client.bookDocumentRevision.findMany({ where: { id: { in: heads.map((head) => head.revisionId) } }, select: { id: true, parentRevisionId: true } });
+    const parents = new Map(revisions.map((revision) => [revision.id, revision.parentRevisionId]));
+    const headOf = new Map(heads.map((head) => [head.bookId, head.revisionId]));
+    return books.flatMap((book) => {
+      const revisionId = headOf.get(book.id);
+      const restoreRevisionId = revisionId ? parents.get(revisionId) : undefined;
+      return revisionId && restoreRevisionId
+        ? [{ id: book.id, title: book.title || 'Untitled Book', deletedAt: book.deletedAt!.toISOString(), revisionId, restoreRevisionId }]
+        : [];
+    });
+  }
+
   async deleteBook(userId: number, bookId: number, expected?: DocumentMutationPreconditions) {
     const existing = await databaseService.client.book.findFirst({ where: { id: bookId, userId, deletedAt: documentAuthorityEnabled() ? {} : null } });
     if (!existing) throw new NotFoundError('Book not found');

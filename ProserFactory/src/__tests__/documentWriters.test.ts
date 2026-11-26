@@ -276,6 +276,27 @@ describe('revision guarded scene compatibility writers', () => {
     expect((await documentService.scope(userId, bookId, 'canon')).content.entries.find((item) => item.id === entry.id)?.deletedAt).toBeTruthy();
     expect((await documentService.read(userId, bookId, sceneId)).revisionId).toBe(source.revisionId);
   });
+  test('lists a deleted book in the trash with the revision that restores it', async () => {
+    const before = await documentService.manifest(userId, bookId);
+    expect((await auth(request(app).get('/api/books/trash'))).body.data.books.some((book: { id: number }) => book.id === bookId)).toBe(false);
+    const deleted = await booksService.deleteBook(userId, bookId, await conditions());
+    if (!deleted) throw new Error('Missing lifecycle receipt');
+    const trash = await auth(request(app).get('/api/books/trash'));
+    expect(trash.status).toBe(200);
+    const entry = trash.body.data.books.find((book: { id: number }) => book.id === bookId);
+    expect(entry).toMatchObject({ title: 'Disposable writer fixture', revisionId: deleted.revisionId, restoreRevisionId: before.revisionId });
+    const restored = await auth(request(app).post(`/api/books/${bookId}/document-revisions/${entry.restoreRevisionId}/restore`)).send({ operationId: randomUUID(), expectedRevisionId: entry.revisionId });
+    expect(restored.status).toBe(200);
+    expect((await auth(request(app).get('/api/books/trash'))).body.data.books.some((book: { id: number }) => book.id === bookId)).toBe(false);
+    const otherUser = await db().user.create({ data: { githubId: `trash-other-${randomUUID()}`, username: 'Other writer' } });
+    try {
+      await booksService.deleteBook(userId, bookId, await conditions());
+      const foreign = await request(app).get('/api/books/trash').set('x-user-id', String(otherUser.id)).set('x-github-id', otherUser.githubId).set('x-username', 'Other writer');
+      expect(foreign.body.data.books).toEqual([]);
+    } finally {
+      await db().user.delete({ where: { id: otherUser.id } });
+    }
+  });
   test('book deletion records a restorable lifecycle revision and permits exact receipt recovery for its owner', async () => {
     const source = await documentService.read(userId, bookId, sceneId); const initial = await documentService.manifest(userId, bookId);
     const expected = await conditions(); const deleted = await booksService.deleteBook(userId, bookId, expected);

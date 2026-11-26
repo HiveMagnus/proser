@@ -46,6 +46,12 @@ or discard it. When you sign out and the browser still holds unsaved drafts,
 Proser lists them and lets you download them, remove them from this browser
 (do this on a shared or borrowed computer), or keep them for next time.
 
+## Get a deleted book back
+
+Deleting a book from the Dashboard moves it to **Deleted books** at the bottom
+of the Dashboard. **Restore** brings it back with its scenes, Story Bible and
+layout as they were when it was deleted.
+
 ## Import a Word manuscript
 
 Go to **Publish**, find **Import a DOCX manuscript** and choose **Choose DOCX
