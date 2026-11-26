@@ -114,7 +114,7 @@ function hermesAgentAudience(): string {
 
 // Cache recently resolved token identities to avoid a DB round-trip on every request.
 // Entries expire after 5 minutes so deleted users are detected within that window.
-const _verifiedUsers = new Map<string, { userId: number; verifiedAt: number }>();
+const _verifiedUsers = new Map<string, { userId: number; verifiedAt: number; githubId?: string }>();
 const VERIFY_CACHE_TTL_MS = 5 * 60 * 1000;
 
 interface BackendTokenPayload {
@@ -128,6 +128,8 @@ interface BackendTokenPayload {
   iat?: number;
   exp?: number;
   ownerGithubId?: string;
+  /** Oathweave's stable user ID (the OIDC `sub`) when the session signed in through Oathweave OIDC. */
+  oathweaveSubject?: string;
   /** Seconds since the epoch at which the browser session was signed in. */
   sessionIssuedAt?: number;
 }
@@ -157,6 +159,8 @@ interface ResolvedTokenIdentity {
   username: string;
   email?: string;
   avatarUrl?: string;
+  /** Only from Author-signed tokens: agent and legacy tokens cannot claim an Oathweave account. */
+  oathweaveSubject?: string;
 }
 
 function normalizeIdentityHandle(value: string | undefined | null): string {
@@ -179,6 +183,9 @@ function resolveTokenIdentity(payload: BackendTokenPayload): ResolvedTokenIdenti
   const githubId = String(payload.githubId || (jwtUserId === null ? sub : '') || '').trim();
   const username = String(payload.username || githubId || 'Unknown').trim() || 'Unknown';
 
+  const subject = typeof payload.oathweaveSubject === 'string' ? payload.oathweaveSubject.trim() : '';
+  const oathweaveSubject = tokenSources.get(payload) === 'author' && subject && subject.length <= 255 ? subject : undefined;
+
   return {
     sub,
     jwtUserId,
@@ -186,19 +193,24 @@ function resolveTokenIdentity(payload: BackendTokenPayload): ResolvedTokenIdenti
     username,
     email: payload.email,
     avatarUrl: payload.avatarUrl,
+    ...(oathweaveSubject ? { oathweaveSubject } : {}),
   };
 }
 
 function verifiedUserCacheKey(identity: ResolvedTokenIdentity): string | null {
+  if (identity.oathweaveSubject) return `oathweave:${identity.oathweaveSubject}`;
   if (identity.githubId) return `github:${identity.githubId}`;
   if (identity.jwtUserId !== null) return `id:${identity.jwtUserId}`;
   return null;
 }
 
-function cacheVerifiedUser(identity: ResolvedTokenIdentity, userId: number, verifiedAt: number): void {
+function cacheVerifiedUser(identity: ResolvedTokenIdentity, userId: number, verifiedAt: number, githubId?: string): void {
   const cacheKey = verifiedUserCacheKey(identity);
-  if (cacheKey) _verifiedUsers.set(cacheKey, { userId, verifiedAt });
+  if (cacheKey) _verifiedUsers.set(cacheKey, { userId, verifiedAt, ...(githubId ? { githubId } : {}) });
 }
+
+/** The handle of the account an Oathweave subject resolved to, when it differs from the token's. */
+const resolvedAccountHandles = new WeakMap<BackendTokenPayload, string>();
 
 /** Extract a JWT from the Authorization header. */
 function extractToken(req: Request): string | null {
@@ -326,7 +338,7 @@ function setUserFromToken(req: AuthenticatedRequest, payload: BackendTokenPayloa
   const identity = resolveTokenIdentity(payload);
   req.user = {
     id: userId,
-    githubId: identity.githubId,
+    githubId: resolvedAccountHandles.get(payload) ?? identity.githubId,
     username: identity.username,
     email: identity.email,
     avatarUrl: identity.avatarUrl,
@@ -403,6 +415,74 @@ async function setAuthenticatedIdentity(req: AuthenticatedRequest, payload: Back
   return true;
 }
 
+function isUniqueConstraintError(error: unknown): boolean {
+  return Boolean(error && typeof error === 'object' && (error as { code?: unknown }).code === 'P2002');
+}
+
+/**
+ * Resolve an Oathweave OIDC session to its account, keyed on the Oathweave
+ * subject. The first OIDC sign-in links the account the password relay created
+ * for the same username (`iam:<username>`), which keeps its handle so relay
+ * sign-ins and agent delegations still reach it. A username whose account is
+ * already linked to another subject (a renamed or reused Oathweave username) is
+ * never handed over: that subject gets an account of its own.
+ */
+async function ensureOathweaveUser(payload: BackendTokenPayload, identity: ResolvedTokenIdentity, subject: string, attempt = 0): Promise<number | null> {
+  const cacheKey = verifiedUserCacheKey(identity)!;
+  const now = Date.now();
+  const cached = _verifiedUsers.get(cacheKey);
+  if (cached && now - cached.verifiedAt < VERIFY_CACHE_TTL_MS) {
+    if (cached.githubId) resolvedAccountHandles.set(payload, cached.githubId);
+    return cached.userId;
+  }
+  const resolved = (user: { id: number; githubId: string }): number => {
+    resolvedAccountHandles.set(payload, user.githubId);
+    cacheVerifiedUser(identity, user.id, now, user.githubId);
+    return user.id;
+  };
+
+  try {
+    const prisma = databaseService.client;
+    const bySubject = await prisma.user.findUnique({ where: { oathweaveSubject: subject } });
+    if (bySubject) return resolved(bySubject);
+
+    const byHandle = identity.githubId ? await prisma.user.findUnique({ where: { githubId: identity.githubId } }) : null;
+    if (byHandle && byHandle.oathweaveSubject === null) {
+      const linked = await prisma.user.updateMany({ where: { id: byHandle.id, oathweaveSubject: null }, data: { oathweaveSubject: subject } });
+      if (linked.count === 1) {
+        logger.info({ userId: byHandle.id, githubId: byHandle.githubId }, 'Linked account to its Oathweave subject on first OIDC sign-in');
+        return resolved(byHandle);
+      }
+      // Linked concurrently: resolve again from the stored subject.
+      return attempt === 0 ? ensureOathweaveUser(payload, identity, subject, 1) : null;
+    }
+
+    const githubId = byHandle || !identity.githubId ? `oathweave:${subject}` : identity.githubId;
+    if (byHandle) {
+      logger.warn({ existingUserId: byHandle.id, githubId: byHandle.githubId }, 'Oathweave username belongs to an account linked to another subject; using a separate account');
+    }
+    try {
+      const created = await prisma.user.create({
+        data: {
+          githubId,
+          username: identity.username,
+          email: identity.email || null,
+          avatarUrl: identity.avatarUrl || null,
+          oathweaveSubject: subject,
+        },
+      });
+      logger.info({ userId: created.id, githubId }, 'Created account for a new Oathweave OIDC user');
+      return resolved(created);
+    } catch (error) {
+      if (isUniqueConstraintError(error) && attempt === 0) return ensureOathweaveUser(payload, identity, subject, 1);
+      throw error;
+    }
+  } catch (err) {
+    logger.error({ err, sub: payload.sub }, 'ensureOathweaveUser check failed');
+    return null;
+  }
+}
+
 /**
  * Ensure the user referenced by the JWT actually exists in the database.
  * After a DB reset the NextAuth session cookie may still carry a valid but
@@ -415,6 +495,7 @@ async function setAuthenticatedIdentity(req: AuthenticatedRequest, payload: Back
  */
 async function ensureUserExists(payload: BackendTokenPayload): Promise<number | null> {
   const identity = resolveTokenIdentity(payload);
+  if (identity.oathweaveSubject) return ensureOathweaveUser(payload, identity, identity.oathweaveSubject);
   const jwtUserId = identity.jwtUserId;
   // If sub is not numeric (e.g. "dev-admin" fallback), resolve by githubId
   const lookupById = jwtUserId !== null;

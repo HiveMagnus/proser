@@ -1,4 +1,5 @@
 import { Feather } from 'lucide-react';
+import { signInMethods } from '@/auth';
 import { safeCallbackPath } from '@/lib/safe-callback-path';
 import { SignInForm } from './sign-in-form';
 
@@ -41,10 +42,14 @@ export default async function SignInPage(props: {
             </p>
           </div>
 
-          <SignInForm callbackUrl={callbackUrl} serverError={error} />
+          <SignInForm callbackUrl={callbackUrl} serverError={error} methods={signInMethods} />
 
           <div className="mt-6 text-center">
-            <p className="text-[length:--text-xs] text-text-muted">Authenticated via Magnus IAM</p>
+            <p className="text-[length:--text-xs] text-text-muted">
+              {signInMethods.oathweave
+                ? 'Authenticated via Oathweave'
+                : 'Authenticated via Magnus IAM'}
+            </p>
           </div>
         </div>
       </div>

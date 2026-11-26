@@ -274,6 +274,9 @@ importers:
       cmdk:
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      jose:
+        specifier: 6.2.14
+        version: 6.2.14
       lucide-react:
         specifier: ^1.66.0
         version: 1.66.0(@types/react@19.3.0)(react@19.3.1)

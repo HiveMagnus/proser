@@ -330,6 +330,55 @@ describe('Factory API proxy', () => {
     await expect(response.text()).resolves.toContain('"entries":[]');
   });
 
+  it('sends Oathweave OIDC sessions with the relay handle and their subject', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ ok: true }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { GET } = await import('@/app/api/[...path]/route');
+    const { NextRequest } = await import('next/server');
+    const claims = async () => {
+      const init = fetchMock.mock.calls.at(-1)![1] as RequestInit;
+      const header = (init.headers as Headers).get('authorization')!;
+      return JSON.parse(Buffer.from(header.split('.')[1]!, 'base64url').toString('utf8')) as Record<
+        string,
+        unknown
+      >;
+    };
+
+    authMock.mockResolvedValue({
+      user: {
+        id: 'oathweave-user-uuid',
+        username: 'Fixture-Author',
+        provider: 'oathweave',
+        oathweaveSubject: 'oathweave-user-uuid',
+      },
+    });
+    await GET(new NextRequest('https://author.example/api/books'));
+    expect(await claims()).toMatchObject({
+      sub: 'iam:fixture-author',
+      githubId: 'iam:fixture-author',
+      username: 'fixture-author',
+      oathweaveSubject: 'oathweave-user-uuid',
+    });
+
+    // Relay and local sessions are sent exactly as before, without a subject.
+    authMock.mockResolvedValue({
+      user: { id: 'oathweave-user-uuid', username: 'fixture-author', provider: 'iam' },
+    });
+    await GET(new NextRequest('https://author.example/api/books'));
+    const relay = await claims();
+    expect(relay).toMatchObject({ sub: 'iam:fixture-author', githubId: 'iam:fixture-author' });
+    expect(relay).not.toHaveProperty('oathweaveSubject');
+
+    // An OIDC session without its subject is not sent to Factory at all.
+    fetchMock.mockClear();
+    authMock.mockResolvedValue({
+      user: { id: 'x', username: 'fixture-author', provider: 'oathweave' },
+    });
+    const refused = await GET(new NextRequest('https://author.example/api/books'));
+    expect(refused.status).toBe(401);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('allows only public readiness without forwarding browser credentials', async () => {
     authMock.mockResolvedValue(null);
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));

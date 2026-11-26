@@ -6,6 +6,29 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 
 ## Unreleased
 
+### Sign-in
+
+- Proser can sign writers in through Oathweave with OpenID Connect
+  (authorization code with S256 PKCE and a nonce). Passwords and second
+  factors are entered at Oathweave and never reach Proser. Author verifies the
+  ID token's signature against Oathweave's published keys and keeps no
+  Oathweave tokens in its session. Configure it with `OATHWEAVE_OIDC_ISSUER`
+  and `OATHWEAVE_OIDC_CLIENT_ID`, plus a discovery URL or explicit endpoints.
+  Oathweave's native discovery needs `IAM_PUBLIC_URL` on the Oathweave side.
+  See [the Oathweave OIDC guide](docs/OATHWEAVE_OIDC.md) for the client
+  registration.
+- Factory keys Oathweave OIDC accounts on the Oathweave `sub`. The first OIDC
+  sign-in links the account the password relay created for the same username,
+  so existing books stay with the writer. Later sign-ins survive an Oathweave
+  username change. An account linked to one Oathweave user is never handed to
+  another user who reuses its username.
+- The password relay (`IAM_CORE_URL`) keeps working as a fallback and stays on
+  by default. `OATHWEAVE_PASSWORD_RELAY=false` turns it off once OIDC is
+  configured, and is ignored while OIDC is not. Local and GitHub accounts are
+  unchanged.
+- A refused Oathweave or GitHub sign-in now returns to the Proser sign-in page
+  with a message instead of the Auth.js error page.
+
 ### Security
 
 - Author refuses `POST`, `PUT`, `PATCH` and `DELETE` requests to `/api/*` whose

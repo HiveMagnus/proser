@@ -97,6 +97,8 @@ model User {
   updatedAt            DateTime?                     @default(now()) @updatedAt @map("updated_at")
   /// Browser sessions signed in before this instant are refused.
   sessionsRevokedBefore DateTime?                    @map("sessions_revoked_before")
+  /// Oathweave's user ID (the OIDC `sub`) once the account has signed in through Oathweave OIDC.
+  oathweaveSubject     String?                       @unique @map("oathweave_subject")
   books                Book[]
   generationHistory    GenerationHistory[]
   images               ImageAsset[]

@@ -168,11 +168,22 @@ async function buildAuthorizationHeader(expectedIdentity: string | null) {
   const provider = String(user.provider ?? 'session');
   const rawUsername = String(user.username ?? user.name ?? user.email ?? 'author');
   const providerKey = provider.toLowerCase();
-  const username = providerKey === 'iam' ? normalizeIamUsername(rawUsername) : rawUsername;
+  // Oathweave OIDC sessions use the same `iam:<username>` handle as the
+  // password relay, so the account stays reachable through either. The OIDC
+  // subject comes with it: Factory keys the account on the subject and links
+  // it to the relay's account on the first OIDC sign-in.
+  const oathweave = providerKey === 'oathweave';
+  const username =
+    providerKey === 'iam' || oathweave ? normalizeIamUsername(rawUsername) : rawUsername;
+  const oathweaveSubject =
+    oathweave && typeof user.oathweaveSubject === 'string' && user.oathweaveSubject
+      ? user.oathweaveSubject
+      : undefined;
+  if (oathweave && (!oathweaveSubject || !username)) return null;
   const githubId =
     providerKey === 'github'
       ? `github:${userId || username}`
-      : providerKey === 'iam'
+      : providerKey === 'iam' || oathweave
         ? `iam:${username}`
         : `${providerKey}:${username || userId || 'author'}`;
   const now = Math.floor(Date.now() / 1000);
@@ -183,6 +194,7 @@ async function buildAuthorizationHeader(expectedIdentity: string | null) {
       // Factory resolves the canonical local DB user from this stable handle.
       sub: githubId,
       githubId,
+      ...(oathweaveSubject ? { oathweaveSubject } : {}),
       username,
       email: typeof user.email === 'string' ? user.email : undefined,
       avatarUrl: typeof user.image === 'string' ? user.image : undefined,

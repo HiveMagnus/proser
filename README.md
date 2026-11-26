@@ -41,6 +41,7 @@ For a source build or an upgrade of an existing installation, follow the
 | `WEBUI_FORGE_URL`                                        | Connect a compatible image provider.                                                                                  |
 | `PROSER_WEB_PORT`, `PROSER_ORIGIN`                       | Select a different web port and update the browser URL to match.                                                      |
 | `LOCAL_AUTH_USERNAME`, `LOCAL_AUTH_PASSWORD`             | Change the local login credentials.                                                                                   |
+| `OATHWEAVE_OIDC_ISSUER`, `OATHWEAVE_OIDC_CLIENT_ID`      | Sign in through Oathweave with OpenID Connect; see the [Oathweave OIDC guide](docs/OATHWEAVE_OIDC.md).                |
 
 The generated config enables direct Factory access at `http://127.0.0.1:3001`
 for API and agent clients. Use the base Compose file to keep Factory internal.
