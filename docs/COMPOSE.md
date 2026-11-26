@@ -10,6 +10,14 @@ fonts. Configure text and image models separately if you need generation.
 Use the [prebuilt-image quick start](../README.md#quick-start) for the released
 `linux/amd64` image. Use the checkout matching the image's GitHub release tag.
 
+Releases after v1.0.7 can also generate `.env.compose` from the image, so a
+prebuilt install needs only Docker and the release's `compose.yml` and
+`compose.factory-api.yml` (from a checkout or downloaded from the release tag):
+
+```bash
+(umask 077; docker run --rm ghcr.io/hivemagnus/proser:<version> node scripts/init-compose-env.mjs - > .env.compose)
+```
+
 Open `http://localhost:3000` and sign in with `LOCAL_AUTH_USERNAME` and
 `LOCAL_AUTH_PASSWORD` from the owner-only `.env.compose` file. Keep that file
 with the deployment and its backups. The initialization script creates distinct
@@ -126,6 +134,11 @@ curl -fsS http://127.0.0.1:3001/api/readiness
 ```
 
 The initializer exits successfully after preparing or verifying the database.
+Author, Factory and the worker each report `healthy` in `ps`. The worker is
+healthy once its queue consumers publish the heartbeat that Factory readiness
+needs, so an unhealthy worker explains a Factory readiness of `503`.
+`curl -fsS http://127.0.0.1:3001/health` and the Settings page show the running
+release version and revision.
 The Factory host URL is available when the Factory override is selected. For
 startup failures, inspect the service logs.
 

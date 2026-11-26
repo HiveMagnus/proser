@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 const fixtureUrl = process.env.REDIS_URL;
 if (
   !fixtureUrl ||
@@ -11,6 +14,10 @@ if (
   );
 }
 process.env.BULLMQ_PREFIX = `proser-document-check-${randomUUID()}`;
+process.env.PROSER_WORKER_INSTANCE_FILE = join(
+  mkdtempSync(join(tmpdir(), "proser-worker-")),
+  "instance",
+);
 const require = createRequire(
   new URL("../ProserFactory/package.json", import.meta.url),
 );
@@ -19,6 +26,7 @@ const redis = require("./dist/lib/redis").default;
 const {
   startWorkerHeartbeat,
   workersReady,
+  workerInstanceReady,
   requiredWorkerQueues,
 } = require("./dist/workers/heartbeat");
 const workers = [];
@@ -58,6 +66,20 @@ try {
     true,
     "Ready consumers must publish fresh receipts.",
   );
+  const instance = readFileSync(
+    process.env.PROSER_WORKER_INSTANCE_FILE,
+    "utf8",
+  ).trim();
+  assert.equal(
+    await workerInstanceReady(instance),
+    true,
+    "The container healthcheck must see this process's receipt.",
+  );
+  assert.equal(
+    await workerInstanceReady(randomUUID()),
+    false,
+    "Another instance's receipt must not satisfy the healthcheck.",
+  );
   for (const [index, queue] of queues.entries()) {
     const receipt = randomUUID();
     const job = await queue.add("disposable-acceptance", { receipt });
@@ -71,6 +93,11 @@ try {
     await workersReady(),
     false,
     "Paused consumers must not establish readiness.",
+  );
+  assert.equal(
+    await workerInstanceReady(instance),
+    false,
+    "A paused consumer must fail the container healthcheck.",
   );
   await stop();
   stop = undefined;
@@ -86,6 +113,7 @@ try {
         "fresh receipts",
         "both queue consumers",
         "paused consumer",
+        "container healthcheck",
         "withdrawal",
       ],
       fixturePrefix: process.env.BULLMQ_PREFIX,

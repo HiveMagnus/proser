@@ -34,6 +34,14 @@ jobs:
           [[ "$GITHUB_REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
           revision=$(git rev-parse HEAD)
           git merge-base --is-ancestor "$revision" refs/remotes/origin/main
+          # The packages must name the release, so source checkouts report it too.
+          for manifest in package.json ProserFactory/package.json; do
+            declared=$(node -p "require('./$manifest').version")
+            if [ "$declared" != "${GITHUB_REF_NAME#v}" ]; then
+              echo "$manifest declares $declared; set it to ${GITHUB_REF_NAME#v} before tagging" >&2
+              exit 1
+            fi
+          done
           printf 'revision=%s\nversion=%s\n' "$revision" "${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
       - name: Wait for verification and Gitleaks on the release tag
         env:
@@ -58,7 +66,7 @@ jobs:
   publish:
     needs: acceptance
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 60
     permissions:
       contents: read
       packages: write
@@ -73,6 +81,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.acceptance.outputs.revision }}
+          # Release tags give the upgrade test the previous release's Compose files.
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -80,7 +90,7 @@ jobs:
           package-manager-cache: false
       - name: Build the versioned linux/amd64 image
         run: |
-          docker build --platform linux/amd64 --build-arg PROSER_REVISION="$REVISION" \
+          docker build --platform linux/amd64 --build-arg PROSER_REVISION="$REVISION" --build-arg PROSER_VERSION="$VERSION" \
             --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
             --label "org.opencontainers.image.version=$VERSION" \
             --label org.opencontainers.image.title=Proser \
@@ -93,6 +103,18 @@ jobs:
           bash scripts/check-release-image.sh "$IMAGE:$VERSION"
       - name: Start and verify the prebuilt image with fresh volumes
         run: bash scripts/smoke-compose-image.sh "$IMAGE:$VERSION" "$REVISION"
+      - name: Rehearse backup and restore with the image
+        run: bash scripts/test-compose-backup.sh "$IMAGE:$VERSION"
+      - name: Upgrade a previous release installation to the image
+        run: |
+          set -euo pipefail
+          previous=$(git tag --list 'v*' --sort=v:refname | grep -Ex 'v[0-9]+\.[0-9]+\.[0-9]+' | grep -B1 -Fx "v$VERSION" | head -1)
+          if [ -z "$previous" ] || [ "$previous" = "v$VERSION" ]; then
+            echo "No earlier release to upgrade from" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          docker pull --platform linux/amd64 "$IMAGE:${previous#v}"
+          bash scripts/smoke-compose-upgrade.sh "$previous" "$IMAGE:${previous#v}" "$IMAGE:$VERSION"
       - name: Push the verified image
         id: push
         env:

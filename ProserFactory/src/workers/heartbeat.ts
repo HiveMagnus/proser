@@ -1,4 +1,7 @@
 import { randomUUID } from 'node:crypto';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import type { Worker } from 'bullmq';
 import { CONFIG } from '@/core/config';
 import redis from '@/lib/redis';
@@ -15,6 +18,21 @@ export function validWorkerHeartbeat(value: unknown, now: number, revision: stri
     && record.timestamp <= now + 5000 && record.timestamp > now - ttlMs
     && Array.isArray(record.queues) && record.queues.every((queue) => typeof queue === 'string')
     && (!revision || record.revision === revision);
+}
+/** Where a worker process records its heartbeat instance for its container healthcheck. */
+export function workerInstanceFile(environment: NodeJS.ProcessEnv = process.env): string {
+  return environment.PROSER_WORKER_INSTANCE_FILE || path.join(os.tmpdir(), 'proser-worker-instance');
+}
+/** Whether one worker process has a fresh receipt covering every required queue. */
+export async function workerInstanceReady(instanceId: string, now = Date.now()): Promise<boolean> {
+  if (!/^[0-9a-f-]{36}$/.test(instanceId)) return false;
+  try {
+    const record: unknown = JSON.parse((await redis.get(`${heartbeatKey}:${instanceId}`)) ?? 'null');
+    return validWorkerHeartbeat(record, now, CONFIG.GIT_COMMIT ?? CONFIG.COMMIT_SHA ?? null)
+      && requiredWorkerQueues.every((name) => record.queues.includes(name));
+  } catch {
+    return false;
+  }
 }
 export async function workersReady(now = Date.now()): Promise<boolean> {
   const instances = await redis.zrangebyscore(heartbeatKey, now, '+inf', 'LIMIT', 0, 32);
@@ -57,6 +75,11 @@ export async function startWorkerHeartbeat(workers: Worker[]): Promise<() => Pro
     return inFlight;
   };
   await write();
+  try {
+    fs.writeFileSync(workerInstanceFile(), `${instanceId}\n`, { mode: 0o600 });
+  } catch (error) {
+    logger.warn({ error: error instanceof Error ? error.message : String(error) }, 'Worker healthcheck instance file unavailable');
+  }
   const timer = setInterval(() => { void write(); }, 5000); timer.unref();
   return async () => {
     stopped = true; clearInterval(timer);

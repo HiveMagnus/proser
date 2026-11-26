@@ -35,6 +35,22 @@ describe('settings routes', () => {
     });
   });
 
+  it('reports the running release version and revision to signed-in writers', async () => {
+    expect((await request(app).get('/api/settings/about')).status).toBe(401);
+    const res = await request(app)
+      .get('/api/settings/about')
+      .set('x-user-id', '21')
+      .set('x-github-id', 'jest-settings-about')
+      .set('x-username', 'fixture-author');
+    expect(res.status).toBe(200);
+    const manifest = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf8')) as { version: string };
+    expect(res.body.data.version).toBe(manifest.version);
+    expect(res.body.data).toHaveProperty('revision');
+
+    const health = await request(app).get('/health');
+    expect(health.body.version).toBe(manifest.version);
+  });
+
   it('persists profile and writing settings by user', async () => {
     const saveRes = await request(app)
       .put('/api/settings')

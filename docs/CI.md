@@ -94,10 +94,22 @@ PRs. Validation reuse is limited to the release-tag case above.
 already be on main. The workflow waits for `Verify Proser` and `Gitleaks`
 to pass on that exact tag and commit.
 
+Before tagging, set the `version` in the root and `ProserFactory/package.json`
+files to the release version; the workflow refuses a tag the packages do not
+name. The image records the tag version in `/opt/proser/factory/VERSION`, and
+Factory reports it from `/health`, `GET /api` and the Settings page.
+
 It builds the `linux/amd64` image, checks image layers and scans first-party
 application files for secrets, then starts a fresh Compose stack. The smoke
-test covers local sign-in, saving and reopening a structured draft, and direct
-authenticated Factory API access. The workflow publishes
+test covers local sign-in, saving and reopening a structured draft, direct
+authenticated Factory API access, the reported version and a healthy worker.
+The workflow then rehearses `scripts/backup-compose.sh` and
+`scripts/restore-compose.sh` on a disposable project, and runs
+`scripts/smoke-compose-upgrade.sh`: it starts the previous release image with
+that release's Compose files, saves a book, applies the candidate's migrations
+with the documented `migrate deploy`, starts the candidate, and checks the
+document guards, every healthcheck, readiness, the version and the saved book.
+The workflow publishes
 `ghcr.io/hivemagnus/proser:MAJOR.MINOR.PATCH` and attests the image digest.
 An existing version tag cannot be overwritten by the workflow.
 

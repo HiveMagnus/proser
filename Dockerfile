@@ -33,7 +33,7 @@ ENV NODE_ENV=production \
 COPY --from=build /opt/proser/factory /opt/proser/factory
 COPY ProserFactory/scripts/install-publication-fonts.mjs ./factory/scripts/
 COPY ProserFactory/deploy/document-authority/enforcement.sql ./factory/deploy/document-authority/
-COPY scripts/initialize-compose-database.mjs ./factory/scripts/
+COPY scripts/initialize-compose-database.mjs scripts/init-compose-env.mjs ./factory/scripts/
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl openssl lbzip2 xz-utils \
     && cd factory && node node_modules/playwright/cli.js install --with-deps chromium \
     && node scripts/install-publication-fonts.mjs /opt/proser/fonts \
@@ -45,9 +45,15 @@ RUN cd /opt/proser/author/apps/web/.next \
     && chown node:node . server prerender-manifest.json server/preview-props.json \
         server/server-reference-manifest.json server/server-reference-manifest.js
 ARG PROSER_REVISION
+# Release builds pass the tag version; source builds report the package version.
+ARG PROSER_VERSION=
 LABEL org.opencontainers.image.revision=$PROSER_REVISION
 RUN test "${#PROSER_REVISION}" -eq 40 && printf '%s\n' "$PROSER_REVISION" | grep -Eq '^[a-f0-9]{40}$' \
-    && printf '%s\n' "$PROSER_REVISION" > /opt/proser/factory/REVISION
+    && printf '%s\n' "$PROSER_REVISION" > /opt/proser/factory/REVISION \
+    && if [ -n "$PROSER_VERSION" ]; then \
+        printf '%s\n' "$PROSER_VERSION" | grep -Eq '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$' \
+        && printf '%s\n' "$PROSER_VERSION" > /opt/proser/factory/VERSION; \
+    fi
 USER node
 WORKDIR /opt/proser/factory
 CMD ["node", "dist/index.js"]

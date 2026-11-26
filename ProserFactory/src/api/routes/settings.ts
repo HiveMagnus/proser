@@ -6,6 +6,7 @@ import { updateSettingsBody } from '../schemas/settings';
 import { ErrorCodes, respondError, respondSuccess } from '../utils/response';
 import { userSettingsService, type UserSettingsPatch } from '../../services/userSettingsService';
 import logger from '../../lib/logger';
+import { CONFIG, PROSER_VERSION } from '../../core/config';
 
 const router = Router();
 
@@ -20,6 +21,11 @@ router.get('/', (req: AuthenticatedRequest, res: Response): void => {
 
   logger.info({ userId: user.id }, 'Retrieved user settings');
   respondSuccess(res, settings);
+});
+
+// The release this installation runs, for the Settings page.
+router.get('/about', (_req: AuthenticatedRequest, res: Response): void => {
+  respondSuccess(res, { version: PROSER_VERSION, revision: CONFIG.GIT_COMMIT || CONFIG.COMMIT_SHA || null });
 });
 
 router.put('/', zBody(updateSettingsBody), (req: AuthenticatedRequest, res: Response): void => {

@@ -87,6 +87,28 @@ export async function validateCorpus(): Promise<{ valid: boolean; suiteKey: stri
   };
 }
 
+const CORPUS_VALIDATION_TTL_MS = 5 * 60_000;
+let corpusValidation: { until: number; pending: ReturnType<typeof validateCorpus> } | undefined;
+
+/**
+ * validateCorpus for frequent probes such as /api/readiness. The corpus ships
+ * with the image, so a successful check is reused for five minutes; a failed
+ * check is retried on the next call.
+ */
+export function cachedCorpusValidation(now = Date.now()): ReturnType<typeof validateCorpus> {
+  if (corpusValidation && corpusValidation.until > now) return corpusValidation.pending;
+  const pending = validateCorpus();
+  corpusValidation = { until: now + CORPUS_VALIDATION_TTL_MS, pending };
+  pending.catch(() => {
+    if (corpusValidation?.pending === pending) corpusValidation = undefined;
+  });
+  return pending;
+}
+
+export function clearCorpusValidationCacheForTests(): void {
+  corpusValidation = undefined;
+}
+
 export async function loadBenchmarkBaseline(): Promise<{
   suiteKey: string;
   suiteVersion: string;

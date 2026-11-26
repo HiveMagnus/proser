@@ -1,6 +1,7 @@
 import { runDocumentBenchmark } from '@/services/editorial/qualityLab/documentBenchmark';
 import { scoreBenchmark } from '@/services/editorial/qualityLab/benchmarkScoring';
-import { loadCorpus, loadHiddenExpected, validateCorpus } from '@/services/editorial/qualityLab/corpusLoader';
+import fs from 'node:fs/promises';
+import { cachedCorpusValidation, clearCorpusValidationCacheForTests, loadCorpus, loadHiddenExpected, validateCorpus } from '@/services/editorial/qualityLab/corpusLoader';
 
 describe('editorial Quality Lab', () => {
   it('passes the complete pinned structured-document corpus without provider access', async () => {
@@ -14,6 +15,28 @@ describe('editorial Quality Lab', () => {
     const corpus = await loadCorpus();
     expect(JSON.stringify(corpus.cases)).not.toContain('expectedVerdict');
     expect((await loadHiddenExpected(corpus.cases[0].id)).expectedVerdict).toMatch(/wins/);
+  });
+
+  it('reuses a successful corpus check for readiness probes and retries a failed one', async () => {
+    clearCorpusValidationCacheForTests();
+    const read = jest.spyOn(fs, 'readFile');
+    try {
+      const first = await cachedCorpusValidation(1_000);
+      const reads = read.mock.calls.length;
+      expect(first.valid).toBe(true);
+      expect(await cachedCorpusValidation(2_000)).toEqual(first);
+      expect(read.mock.calls.length).toBe(reads);
+      await cachedCorpusValidation(1_000 + 5 * 60_000 + 1);
+      expect(read.mock.calls.length).toBeGreaterThan(reads);
+
+      clearCorpusValidationCacheForTests();
+      read.mockRejectedValueOnce(new Error('corpus unreadable'));
+      await expect(cachedCorpusValidation(10_000)).rejects.toThrow('corpus unreadable');
+      expect((await cachedCorpusValidation(10_001)).valid).toBe(true);
+    } finally {
+      read.mockRestore();
+      clearCorpusValidationCacheForTests();
+    }
   });
 
   it('computes release and evaluator-gaming metrics deterministically', () => {

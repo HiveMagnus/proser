@@ -15,7 +15,7 @@ import logger from './lib/logger';
 import { errorHandler } from './lib/errors';
 import redis from './lib/redis';
 import { databaseService } from './lib/database';
-import { CONFIG, inferenceKeyWarning } from './core/config';
+import { CONFIG, PROSER_VERSION, inferenceKeyWarning } from './core/config';
 import { isBullmqEnabled } from './queues/featureFlag';
 import { getWorkflowQueue } from './queues/workflowQueue';
 import { shutdownWorkflowQueue } from './queues/workflowQueue';
@@ -110,10 +110,8 @@ export function createApp() {
     const health = {
       status: 'ok',
       timestamp: new Date().toISOString(),
-      version: process.env.npm_package_version || '1.0.0',
-      commit: CONFIG.GIT_COMMIT || CONFIG.COMMIT_SHA || (() => {
-        try { return fs.readFileSync('REVISION', 'utf8').trim() || undefined; } catch { return undefined; }
-      })(),
+      version: PROSER_VERSION,
+      commit: CONFIG.GIT_COMMIT || CONFIG.COMMIT_SHA || undefined,
       build: CONFIG.BUILD_ID,
       services: { database: dbHealth, redis: redisHealth }
     };

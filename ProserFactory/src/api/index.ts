@@ -18,13 +18,13 @@ import { getInferenceOutcomeCounts } from '../metrics/inference';
 import { getGenerationOperationMetrics } from '../metrics/generationOperations';
 import { databaseService } from '../lib/database';
 import redis from '../lib/redis';
-import { CONFIG } from '../core/config';
+import { CONFIG, PROSER_VERSION } from '../core/config';
 import { openApiSpec } from './docs/openapi';
 import { aiRequestQueue } from '../lib/ai/requestQueue';
 import editorialRouter, { editorialBookRouter } from './routes/editorial';
 import sharedResourceOperationsRouter from './routes/sharedResourceOperations';
 import { validatePassRegistry } from '../services/editorial/passRegistry';
-import { validateCorpus } from '../services/editorial/qualityLab/corpusLoader';
+import { cachedCorpusValidation } from '../services/editorial/qualityLab/corpusLoader';
 import { editorialMetricsSnapshot } from '../services/editorial/metrics';
 import { requireMetricsToken } from './middleware/metricsAuth';
 import { publicReadinessView } from './readinessView';
@@ -43,7 +43,8 @@ router.get('/', (req, res) => {
     success: true,
     data: {
       service: 'Proser Backend API',
-      version: '1.0.0',
+      version: PROSER_VERSION,
+      revision: CONFIG.GIT_COMMIT || CONFIG.COMMIT_SHA || null,
       environment: process.env.NODE_ENV || 'development',
       timestamp: new Date().toISOString(),
       endpoints: {
@@ -107,7 +108,7 @@ router.get('/readiness', async (req, res) => {
     }
   }
   const editorialRegistry = validatePassRegistry();
-  const editorialCorpus = await validateCorpus().catch((error) => ({ valid: false, error: error instanceof Error ? error.message : String(error) }));
+  const editorialCorpus = await cachedCorpusValidation().catch((error) => ({ valid: false, error: error instanceof Error ? error.message : String(error) }));
   const readiness = publicReadinessView({
     databaseReady: db.status === 'healthy', redisStatus: redisStatus.status,
     editorialRegistryReady: editorialRegistry.valid, editorialCorpusReady: editorialCorpus.valid,
