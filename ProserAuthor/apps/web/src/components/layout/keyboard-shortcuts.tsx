@@ -39,6 +39,7 @@ const shortcutGroups: ShortcutGroup[] = [
       { keys: ['⌘', 'I'], description: 'Italic' },
       { keys: ['⌘', 'Z'], description: 'Undo' },
       { keys: ['⌘', '⇧', 'Z'], description: 'Redo' },
+      { keys: ['⌘', '⇧', 'F'], description: 'Focus mode in the Manuscript' },
     ],
   },
 ];

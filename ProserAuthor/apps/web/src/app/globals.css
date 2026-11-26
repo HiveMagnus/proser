@@ -415,7 +415,15 @@
 .proser-manuscript-heading {
   display: flex;
   align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
   padding-bottom: 12px;
+}
+
+.proser-writing-view {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
 }
 .proser-book-picker {
   display: flex;
