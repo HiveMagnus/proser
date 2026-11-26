@@ -13,7 +13,7 @@ test.describe('Auth Flow', () => {
   });
 
   test('unauthenticated user redirects to sign-in', async ({ page }) => {
-    await page.goto('/analytics');
+    await page.goto('/plot');
     await page.waitForLoadState('networkidle');
     expect(page.url()).toMatch(/auth/);
   });

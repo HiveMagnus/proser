@@ -23,6 +23,7 @@ x-factory-env: &factory-env
   INFERENCE_BACKEND: ${INFERENCE_BACKEND:-llamacpp}
   INFERENCE_HOST: ${INFERENCE_HOST:-http://127.0.0.1:8000}
   INFERENCE_API_KEY: ${INFERENCE_API_KEY:-}
+  INFERENCE_REQUIRE_API_KEY: ${INFERENCE_REQUIRE_API_KEY:-false}
   OLLAMA_MODEL: ${INFERENCE_MODEL:-qwen3.6-35b}
   VLLM_MODEL: ${INFERENCE_MODEL:-qwen3.6-35b}
   WEBUI_FORGE_URL: ${WEBUI_FORGE_URL:-http://127.0.0.1:7861}
@@ -71,6 +72,8 @@ services:
     environment: *factory-env
     networks: [default, data]
     volumes: *factory-volumes
+    # Lets INFERENCE_HOST and WEBUI_FORGE_URL address providers on the Docker host.
+    extra_hosts: ["host.docker.internal:host-gateway"]
     depends_on:
       initialize:
         condition: service_completed_successfully
@@ -90,6 +93,7 @@ services:
     environment: *factory-env
     networks: [default, data]
     volumes: *factory-volumes
+    extra_hosts: ["host.docker.internal:host-gateway"]
     depends_on:
       initialize:
         condition: service_completed_successfully

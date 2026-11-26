@@ -22,6 +22,7 @@
 
 # Local runtime data and certificates
 ProserFactory/data/
+/backups/
 ProserAuthor/certs/
 
 # OS and editor-local state

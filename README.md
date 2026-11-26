@@ -33,12 +33,12 @@ For a source build or an upgrade of an existing installation, follow the
 
 ## Initial configuration
 
-| Setting                                                  | When to change it                                                   |
-| -------------------------------------------------------- | ------------------------------------------------------------------- |
-| `INFERENCE_HOST`, `INFERENCE_API_KEY`, `INFERENCE_MODEL` | Connect a reachable OpenAI-compatible endpoint for text generation. |
-| `WEBUI_FORGE_URL`                                        | Connect a compatible image provider.                                |
-| `PROSER_WEB_PORT`, `PROSER_ORIGIN`                       | Select a different web port and update the browser URL to match.    |
-| `LOCAL_AUTH_USERNAME`, `LOCAL_AUTH_PASSWORD`             | Change the local login credentials.                                 |
+| Setting                                                  | When to change it                                                                                                     |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `INFERENCE_HOST`, `INFERENCE_API_KEY`, `INFERENCE_MODEL` | Connect a reachable OpenAI-compatible endpoint for text generation; the key is optional for a keyless private server. |
+| `WEBUI_FORGE_URL`                                        | Connect a compatible image provider.                                                                                  |
+| `PROSER_WEB_PORT`, `PROSER_ORIGIN`                       | Select a different web port and update the browser URL to match.                                                      |
+| `LOCAL_AUTH_USERNAME`, `LOCAL_AUTH_PASSWORD`             | Change the local login credentials.                                                                                   |
 
 The generated config enables direct Factory access at `http://127.0.0.1:3001`
 for API and agent clients. Use the base Compose file to keep Factory internal.

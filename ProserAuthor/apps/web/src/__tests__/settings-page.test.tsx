@@ -40,16 +40,11 @@ describe('SettingsPage', () => {
         if (method === 'PUT') {
           const body = JSON.parse(String(init?.body ?? '{}')) as {
             profile?: { displayName?: string };
-            ai?: { openaiKey?: string; anthropicKey?: string };
             writing?: { defaultGenre?: string; writingStyle?: string; targetAudience?: string };
           };
           return createJsonResponse({
             data: {
               profile: { displayName: body.profile?.displayName ?? '' },
-              ai: {
-                openaiKey: body.ai?.openaiKey ?? '',
-                anthropicKey: body.ai?.anthropicKey ?? '',
-              },
               writing: {
                 defaultGenre: body.writing?.defaultGenre ?? '',
                 writingStyle: body.writing?.writingStyle ?? '',
@@ -61,7 +56,6 @@ describe('SettingsPage', () => {
         return createJsonResponse({
           data: {
             profile: { displayName: '' },
-            ai: { openaiKey: '', anthropicKey: '' },
             writing: { defaultGenre: '', writingStyle: '', targetAudience: '' },
           },
         });
@@ -110,6 +104,16 @@ describe('SettingsPage', () => {
     expect(
       screen.queryByRole('button', { name: /Save Inference Settings/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it('offers no per-user cloud provider key fields', async () => {
+    render(<SettingsPage />);
+    await userEvent.setup().click(screen.getByRole('tab', { name: /AI Config/i }));
+
+    await screen.findByDisplayValue('http://127.0.0.1:8000');
+    expect(screen.queryByText(/Cloud API Keys/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/API Key/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Save Keys/i })).not.toBeInTheDocument();
   });
 
   it('tests only the operator-configured inference connection', async () => {

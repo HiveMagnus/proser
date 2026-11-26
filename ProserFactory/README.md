@@ -57,9 +57,12 @@ The root Compose initializer applies the schema before Factory starts. In a
 split deployment, update Factory before Author.
 [Plot Threads guide](../ProserAuthor/docs/PLOT_THREADS.md)
 
-For a non-loopback production inference provider, set `INFERENCE_API_KEY`.
+Set `INFERENCE_API_KEY` when the inference provider expects a bearer key.
 Factory sends it as a bearer credential on inference requests. Keep it in the
-deployment's private environment.
+deployment's private environment. A keyless non-loopback provider (for example
+Ollama on a private network) only logs a startup warning; set
+`INFERENCE_REQUIRE_API_KEY=true` to refuse to start without a key of at least
+32 characters.
 
 Native releases use the validated installed `REVISION` file for both health
 metadata and worker heartbeat revision checks. Historical `GIT_COMMIT` or
@@ -214,7 +217,8 @@ Inference defaults:
 
 - INFERENCE_BACKEND: Active inference backend label (default: llamacpp)
 - INFERENCE_HOST: URL to the OpenAI-compatible inference endpoint (default: http://127.0.0.1:8000)
-- INFERENCE_API_KEY: bearer credential required for any non-loopback production inference endpoint
+- INFERENCE_API_KEY: optional bearer credential sent to the inference endpoint
+- INFERENCE_REQUIRE_API_KEY: `true` refuses to start without a 32+ character key for a non-loopback endpoint (default: false)
 - OLLAMA_BASE_URL: Compatibility alias for the inference endpoint (default: http://127.0.0.1:8000)
 - OLLAMA_MODEL: Compatibility alias for the served model name (default: qwen3.6-35b)
 

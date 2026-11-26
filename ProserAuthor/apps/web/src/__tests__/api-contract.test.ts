@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   exportBook,
@@ -5,9 +7,6 @@ import {
   listImages,
   generateProseBatch,
   generateBookSummary,
-  getExportHistory,
-  getRecommendations,
-  getWritingStats,
   startFullBook,
   startGuidedImprove,
   startImproveQuality,
@@ -326,43 +325,51 @@ describe('API route contracts', () => {
 
     expect(result.items[0]?.url).toBe('/api/images/17/content');
   });
+});
 
-  it('falls back cleanly when optional analytics and recommendation routes are unavailable', async () => {
-    fetchMock
-      .mockResolvedValueOnce(
-        createJsonResponse(
-          { success: false, error: { message: 'Endpoint not found' } },
-          false,
-          404,
-        ),
-      )
-      .mockResolvedValueOnce(
-        createJsonResponse(
-          { success: false, error: { message: 'Endpoint not found' } },
-          false,
-          404,
-        ),
-      )
-      .mockResolvedValueOnce(
-        createJsonResponse(
-          { success: false, error: { message: 'Endpoint not found' } },
-          false,
-          404,
-        ),
+// Factory routes that exist but are not yet in the generated API reference.
+const UNDOCUMENTED_FACTORY_ROUTES = new Set([
+  '/api/books/*/editorial-profile/activate',
+  '/api/editorial/proposals/*/undo',
+  '/api/prose/traces/*',
+]);
+
+function documentedFactoryRoutes(): string[][] {
+  const reference = readFileSync(
+    resolve(process.cwd(), '../../../PROSER_API.generated.md'),
+    'utf8',
+  );
+  return [...reference.matchAll(/^\| (?:GET|POST|PUT|PATCH|DELETE) \| `(\/api\/[^`]+)`/gm)].map(
+    (match) => match[1]!.replace(/\{[^}]+\}/g, '*').split('/'),
+  );
+}
+
+function clientFactoryPaths(): string[] {
+  const source = readFileSync(resolve(process.cwd(), 'src/lib/api.ts'), 'utf8');
+  const paths = new Set<string>();
+  for (const match of source.matchAll(/[`'](\/api\/[^`'?]*)/g)) {
+    const path = match[1]!.replace(/\$\{[^}]*\}/g, '*').replace(/\/+$/, '');
+    if (path !== '/api') paths.add(path);
+  }
+  return [...paths];
+}
+
+describe('Author to Factory route contract', () => {
+  it('only calls Factory routes that exist', () => {
+    const documented = documentedFactoryRoutes();
+    expect(documented.length).toBeGreaterThan(50);
+    const missing = clientFactoryPaths().filter((path) => {
+      if (UNDOCUMENTED_FACTORY_ROUTES.has(path)) return false;
+      const segments = path.split('/');
+      return !documented.some(
+        (route) =>
+          route.length === segments.length &&
+          route.every((part, index) => {
+            const own = segments[index]!;
+            return part === own || part === '*' || own.includes('*');
+          }),
       );
-
-    const stats = await getWritingStats('11', 30);
-    const recommendations = await getRecommendations('11');
-    const history = await getExportHistory('11');
-
-    expect(stats.data).toEqual({
-      daily: [],
-      totalWords: 0,
-      dailyAverage: 0,
-      bestDay: null,
-      streakDays: 0,
     });
-    expect(recommendations.data).toEqual([]);
-    expect(history.data).toEqual([]);
+    expect(missing).toEqual([]);
   });
 });
