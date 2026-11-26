@@ -68,6 +68,10 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 - The release workflow rehearses backup and restore and upgrades an
   installation of the previous release to the candidate image before
   publishing it.
+- Release images are published for `linux/arm64` as well as `linux/amd64`.
+  Each architecture is built and tested on a native runner, and the version
+  tag is a manifest list, so `docker pull` picks the host's architecture.
+  Running the publish workflow by hand is a dry run that publishes nothing.
 
 ### Trash
 
@@ -137,6 +141,10 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
   would show as unhealthy.
 - Releases must set the root and `ProserFactory/package.json` versions to the
   tag before tagging; the publish workflow checks it.
+- Release image tags are now manifest lists covering `linux/amd64` and
+  `linux/arm64`; the version tag's digest is the list's digest. Pin that
+  digest, not a `-amd64` or `-arm64` staging tag. Pi-class and Apple-silicon
+  hosts can use releases after v1.0.7.
 - **Database migration:** `20261126000000_book_writing_goals` adds the
   `book_writing_goals` table. Existing Compose installs stop at `initialize`
   until it is applied with the documented `migrate deploy` command.

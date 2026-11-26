@@ -99,19 +99,33 @@ files to the release version; the workflow refuses a tag the packages do not
 name. The image records the tag version in `/opt/proser/factory/VERSION`, and
 Factory reports it from `/health`, `GET /api` and the Settings page.
 
-It builds the `linux/amd64` image, checks image layers and scans first-party
-application files for secrets, then starts a fresh Compose stack. The smoke
-test covers local sign-in, saving and reopening a structured draft, direct
-authenticated Factory API access, the reported version and a healthy worker.
-The workflow then rehearses `scripts/backup-compose.sh` and
+It builds the image natively for `linux/amd64` on `ubuntu-24.04` and for
+`linux/arm64` on `ubuntu-24.04-arm`. Each architecture checks image layers and
+scans first-party application files for secrets, then starts a fresh Compose
+stack. The smoke test covers local sign-in, saving and reopening a structured
+draft, direct authenticated Factory API access, the reported version and a
+healthy worker. The workflow then rehearses `scripts/backup-compose.sh` and
 `scripts/restore-compose.sh` on a disposable project, and runs
 `scripts/smoke-compose-upgrade.sh`: it starts the previous release image with
 that release's Compose files, saves a book, applies the candidate's migrations
 with the documented `migrate deploy`, starts the candidate, and checks the
 document guards, every healthcheck, readiness, the version and the saved book.
-The workflow publishes
-`ghcr.io/hivemagnus/proser:MAJOR.MINOR.PATCH` and attests the image digest.
-An existing version tag cannot be overwritten by the workflow.
+Releases up to v1.0.7 exist only for `linux/amd64`, so the `linux/arm64`
+upgrade test is skipped, with a note in the run summary, until the previous
+release has an arm64 image.
+
+When both architectures pass, each pushes a staging tag
+(`MAJOR.MINOR.PATCH-amd64`, `MAJOR.MINOR.PATCH-arm64`), and the publish job
+combines them into one multi-architecture manifest list at
+`ghcr.io/hivemagnus/proser:MAJOR.MINOR.PATCH` and attests the manifest list
+digest. Install from the version tag; the staging tags are build inputs. An
+existing version tag cannot be overwritten by the workflow. A failed
+architecture can be re-run; its staging tag is replaced until the version tag
+exists.
+
+Run the workflow manually (`gh workflow run publish-image.yml --ref main`) for
+a dry run: it builds and tests both architectures at the selected commit, using
+the version its packages declare, and publishes nothing.
 
 Verify anonymous pulls and the attestation before advertising a release.
 GHCR package visibility is configured separately from repository visibility.
