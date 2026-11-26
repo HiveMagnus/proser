@@ -51,7 +51,10 @@ scripts/restore-compose.sh -p "$project" --env-file "$env_file" \
 [[ "$(psql -c 'SELECT v FROM backup_rehearsal')" == before ]]
 [[ "$(redis GET proser:backup-rehearsal)" == before ]]
 [[ "$(factory_sh 'cat /opt/proser/factory/data/backup-rehearsal.txt')" == before ]]
-! factory_sh 'test -e /opt/proser/factory/public/images/after-backup.bin'
+if factory_sh 'test -e /opt/proser/factory/public/images/after-backup.bin'; then
+  echo "Restore kept a file written after the backup" >&2
+  exit 1
+fi
 curl -fsS "http://127.0.0.1:$factory/api/readiness" >/dev/null
 curl -fsS "http://127.0.0.1:$web/api/readiness" >/dev/null
 echo "Backup and restore rehearsal passed for $image"
