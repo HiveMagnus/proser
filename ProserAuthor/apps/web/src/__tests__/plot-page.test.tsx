@@ -28,7 +28,20 @@ vi.mock('@/contexts/motion-context', () => ({
 }));
 
 vi.mock('@/hooks/queries/use-books', () => ({
-  useBooks: () => ({ data: [{ id: 'book-1', title: 'Test Book', genre: 'fantasy' }] }),
+  useBooks: () => ({
+    data: [{ id: 'book-1', title: 'Test Book', genre: 'fantasy', archetype: 'the-quest' }],
+  }),
+}));
+
+vi.mock('@/hooks/queries/use-writing-stats', () => ({
+  useStoryArchetypes: () => ({
+    data: [
+      { id: 'the-quest', name: 'The Quest', description: 'A journey to obtain a vital prize.' },
+      { id: 'rebirth', name: 'Rebirth', description: 'Redeemed and renewed.' },
+    ],
+    isLoading: false,
+    error: null,
+  }),
 }));
 
 function renderPage() {
@@ -46,10 +59,11 @@ describe('PlotStudioPage', () => {
     expect(screen.getByText('Plot Studio')).toBeInTheDocument();
   });
 
-  it('shows only plot threads, with no archetype or beat-map panels', () => {
+  it('shows the book archetype from Factory next to the plot threads, with no demo beat map', () => {
     renderPage();
     expect(screen.getByText('The Exile Returns')).toBeInTheDocument();
-    expect(screen.queryByText('Archetypes')).not.toBeInTheDocument();
+    expect(screen.getByText(/Test Book follows The Quest/)).toBeInTheDocument();
+    expect(screen.getByText('All 2 archetypes')).toBeInTheDocument();
     expect(screen.queryByText('Beat Map')).not.toBeInTheDocument();
   });
 });

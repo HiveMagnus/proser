@@ -11,6 +11,7 @@ import authRouter from './routes/auth';
 import adapterRouter from './routes/adapter';
 import proseRouter from './routes/prose';
 import settingsRouter from './routes/settings';
+import plotRouter from './routes/plot';
 import workflowsRouter, { workflowBookRouter, workflowReviewRouter, workflowFindingRouter } from './routes/workflows';
 import swaggerUi from 'swagger-ui-express';
 import { getSummary, getTimings } from '../lib/metrics';
@@ -162,6 +163,7 @@ router.use('/models', modelsRouter);
 // Backward-compat alias: /api/ollama/models → /api/models
 router.use('/ollama', modelsRouter);
 router.use('/settings', settingsRouter);
+router.use('/plot', plotRouter);
 router.use('/codex', codexRouter);
 router.use('/auth', authRouter);
 router.use('/prose', proseRouter);

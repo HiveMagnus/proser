@@ -31,6 +31,10 @@ vi.mock('@/hooks/queries/use-books', () => ({
     retryCreation: vi.fn(),
   }),
 }));
+vi.mock('@/hooks/queries/use-writing-stats', () => ({
+  useWritingStats: () => ({ data: undefined }),
+  useRecommendations: () => ({ data: undefined }),
+}));
 vi.mock('@/hooks/use-document-book-catalog', () => ({
   useDocumentBookCatalog: () => ({
     prepare: mocks.prepare,

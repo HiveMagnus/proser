@@ -142,9 +142,22 @@ model Book {
   editorialPreferences EditorialPreferenceEvidence[]
   styleFingerprints    StyleFingerprint[]
   evaluationRuns       EvaluationRun[]
+  writingGoal          BookWritingGoal?
 
   @@index([userId], map: "idx_books_user_id")
   @@map("books")
+}
+
+/// The writer's word-count target, deadline and daily goal for one book.
+model BookWritingGoal {
+  bookId      Int       @id @map("book_id")
+  targetWords Int?      @map("target_words")
+  deadline    DateTime? @db.Date
+  dailyWords  Int?      @map("daily_words")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  book        Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@map("book_writing_goals")
 }
 
 model NovaResourceClaim {

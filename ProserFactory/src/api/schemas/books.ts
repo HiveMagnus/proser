@@ -198,3 +198,21 @@ export const readExportArtifactQuery = z.object({
 
 // Re-export shared params for convenience
 export { bookIdParams, idParams, paginationQuery };
+
+export const writingStatsQuery = z.object({
+  days: z.coerce.number().int().min(7).max(365).optional(),
+  tz: z.string().max(64).optional(),
+}).strict();
+
+const nullableGoalInt = (name: string, max: number) =>
+  z.number({ error: `${name} must be a whole number or null` }).int(`${name} must be a whole number`).min(1, `${name} must be at least 1`).max(max, `${name} must not exceed ${max}`).nullable();
+
+export const writingGoalBody = z.object({
+  targetWords: nullableGoalInt('targetWords', 10_000_000),
+  deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'deadline must be a YYYY-MM-DD date').nullable(),
+  dailyWords: nullableGoalInt('dailyWords', 1_000_000),
+}).strict();
+
+export const recommendationsQuery = z.object({
+  tz: z.string().max(64).optional(),
+}).strict();

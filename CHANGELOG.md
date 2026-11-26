@@ -60,6 +60,25 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
   workspace packages are named `@hivemagnus/proser-*`, and two stray Factory
   scripts were removed.
 
+### New features
+
+- **Writing statistics and goals.** The Analytics page (back in the sidebar)
+  shows words in the book, words written per day over 7, 30 and 90 days, the
+  best day and the writing streak, from the saved book revisions in the
+  writer's time zone. Words from imports, AI and workflows are counted
+  separately. A book can have a length target, a deadline and a daily goal;
+  Analytics shows the pace needed and the Dashboard shows the streak.
+- **Next steps.** The Dashboard and a banner suggest what to do next for the
+  open book (first scene, empty scenes, today's goal, deadline pace, Story
+  Bible, archetype).
+- **Story archetypes.** Plot Studio shows the book's archetype and the full
+  list from Factory. Author now reads a book's archetype from Factory's
+  `storyArchetypeKey`, so the Dashboard shows it. The unused demo page at
+  `/plot/<id>` with sample beats is removed.
+- New Factory routes: `GET /api/books/:bookId/writing-stats`,
+  `PUT /api/books/:bookId/writing-goal`,
+  `GET /api/books/:bookId/recommendations` and `GET /api/plot/archetypes`.
+
 ### Upgrade notes
 
 - If writers open Proser at an address other than `PROSER_ORIGIN`, writes from
@@ -73,3 +92,6 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
   would show as unhealthy.
 - Releases must set the root and `ProserFactory/package.json` versions to the
   tag before tagging; the publish workflow checks it.
+- **Database migration:** `20261126000000_book_writing_goals` adds the
+  `book_writing_goals` table. Existing Compose installs stop at `initialize`
+  until it is applied with the documented `migrate deploy` command.

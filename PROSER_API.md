@@ -251,6 +251,16 @@ Book history and resolved profiles are under `/books/:bookId/editorial-*`.
 | `DELETE`                       | `/books/:bookId/export-artifacts/:artifactId`          | Delete artifact                                                                                   |
 | `GET`                          | `/books/:bookId/prose/quality`                         | Local prose-quality overview                                                                      |
 | `POST`                         | `/books/:bookId/reset`                                 | Delete workflow/revision/memory/skill/structure state while preserving the book, codex, and notes |
+| `GET`                          | `/books/:bookId/writing-stats?days=30&tz=Area/City`    | Daily words written, totals, streaks and goal pacing                                              |
+| `PUT`                          | `/books/:bookId/writing-goal`                          | Set or clear the length target, deadline and daily goal                                           |
+| `GET`                          | `/books/:bookId/recommendations?tz=Area/City`          | Next writing steps for the book                                                                   |
+| `GET`                          | `/plot/archetypes`                                     | Story archetypes a book's `storyArchetypeKey` can name                                            |
+
+Writing statistics read the last saved book revision of each day in the
+requested time zone (`tz`, default UTC; `days` 7–365, default 30). Changes in
+scenes saved by hand count as `written`; text from imports, AI generation and
+workflows is `other` and never fills a goal or streak. Installs with document
+authority off have no book revisions, so their statistics stay empty.
 
 Export artifacts are revision-bound. A stale artifact is removed and must be recreated. `read` accepts stable chapter/scene IDs or unambiguous numbers with `offset` and `maxChars`.
 

@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Map,
   PenTool,
+  BarChart3,
   FileOutput,
   Settings,
   ChevronLeft,
@@ -34,6 +35,7 @@ const navItems: NavItem[] = [
   { label: 'Manuscript', href: '/manuscript', icon: PenTool, segment: 'manuscript' },
   { label: 'Book Factory', href: '/workflows', icon: Workflow, segment: 'workflows' },
   { label: 'Editorial', href: '/editorial', icon: BookOpenCheck, segment: 'editorial' },
+  { label: 'Analytics', href: '/analytics', icon: BarChart3, segment: 'analytics' },
   { label: 'Publish', href: '/publish', icon: FileOutput, segment: 'publish' },
 ];
 

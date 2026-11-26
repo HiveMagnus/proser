@@ -425,7 +425,7 @@ export async function listBooks(expectedUserId?: string): Promise<{ data: Book[]
       id: stringId(book.id),
       title: typeof book.title === 'string' && book.title.trim() ? book.title : 'Untitled Book',
       genre: typeof book.genre === 'string' ? book.genre : undefined,
-      archetype: typeof book.archetype === 'string' ? book.archetype : undefined,
+      archetype: storyArchetype(book),
       draftStatus: typeof book.draftStatus === 'string' ? book.draftStatus : 'draft',
       wordCount: typeof book.wordCount === 'number' ? book.wordCount : 0,
       summary: typeof book.summary === 'string' ? book.summary : null,
@@ -458,13 +458,19 @@ export async function createBook(
       id: stringId(data.id),
       title: typeof data.title === 'string' && data.title.trim() ? data.title : 'Untitled Book',
       genre: typeof data.genre === 'string' ? data.genre : undefined,
-      archetype: typeof data.archetype === 'string' ? data.archetype : undefined,
+      archetype: storyArchetype(data),
       draftStatus: typeof data.draftStatus === 'string' ? data.draftStatus : 'draft',
       wordCount: typeof data.wordCount === 'number' ? data.wordCount : 0,
       summary: typeof data.summary === 'string' ? data.summary : null,
       updatedAt: typeof data.updatedAt === 'string' ? data.updatedAt : undefined,
     },
   };
+}
+
+/** Factory stores a book's archetype as storyArchetypeKey. */
+function storyArchetype(book: Record<string, unknown>): string | undefined {
+  const value = book.storyArchetypeKey ?? book.archetype;
+  return typeof value === 'string' && value ? value : undefined;
 }
 
 export async function updateBook(
@@ -499,7 +505,7 @@ export async function updateBook(
       id: stringId(data.id),
       title: typeof data.title === 'string' && data.title.trim() ? data.title : 'Untitled Book',
       genre: typeof data.genre === 'string' ? data.genre : undefined,
-      archetype: typeof data.archetype === 'string' ? data.archetype : undefined,
+      archetype: storyArchetype(data),
       draftStatus: typeof data.draftStatus === 'string' ? data.draftStatus : 'draft',
       wordCount: typeof data.wordCount === 'number' ? data.wordCount : 0,
       summary: typeof data.summary === 'string' ? data.summary : null,
@@ -1697,4 +1703,96 @@ export function startEditorialBenchmark(
     body: JSON.stringify(input),
     timeoutMs: 120_000,
   });
+}
+
+// ── Writing statistics, goals, next steps and archetypes ─────────────
+
+export interface WritingDay {
+  date: string;
+  /** Net words changed in scenes saved by hand. */
+  written: number;
+  /** Net words changed by imports, AI generation and workflows. */
+  other: number;
+  totalWords: number;
+}
+
+export interface WritingGoal {
+  targetWords: number | null;
+  deadline: string | null;
+  dailyWords: number | null;
+}
+
+export interface WritingStats {
+  bookId: number;
+  timeZone: string;
+  today: string;
+  totalWords: number;
+  days: WritingDay[];
+  writtenInPeriod: number;
+  dailyAverage: number;
+  bestDay: { date: string; written: number } | null;
+  streak: { current: number; longest: number };
+  goal: WritingGoal | null;
+  pacing: {
+    remainingWords: number;
+    daysLeft: number | null;
+    wordsPerDayNeeded: number | null;
+    todayRemaining: number | null;
+  } | null;
+}
+
+export interface Recommendation {
+  id: string;
+  title: string;
+  detail: string;
+  href: string;
+}
+
+export interface StoryArchetype {
+  id: string;
+  name: string;
+  description: string;
+}
+
+/** The writer's own time zone, so "today" and streaks follow their calendar. */
+export function browserTimeZone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
+  }
+}
+
+export function getWritingStats(bookId: string, days = 30, signal?: AbortSignal) {
+  return requestFactory<WritingStats>(
+    `/api/books/${encodeURIComponent(bookId)}/writing-stats?days=${days}&tz=${encodeURIComponent(browserTimeZone())}`,
+    { signal },
+  );
+}
+
+export async function setWritingGoal(bookId: string, goal: WritingGoal, expectedUserId: string) {
+  const data = await requestFactory<{ goal: WritingGoal | null }>(
+    `/api/books/${encodeURIComponent(bookId)}/writing-goal`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(goal),
+      headers: { 'X-Proser-Expected-User': encodeURIComponent(expectedUserId) },
+    },
+  );
+  return data.goal;
+}
+
+export async function getRecommendations(bookId: string, signal?: AbortSignal) {
+  const data = await requestFactory<{ recommendations: Recommendation[] }>(
+    `/api/books/${encodeURIComponent(bookId)}/recommendations?tz=${encodeURIComponent(browserTimeZone())}`,
+    { signal },
+  );
+  return data.recommendations;
+}
+
+export async function getStoryArchetypes(signal?: AbortSignal) {
+  const data = await requestFactory<{ archetypes: StoryArchetype[] }>('/api/plot/archetypes', {
+    signal,
+  });
+  return data.archetypes;
 }

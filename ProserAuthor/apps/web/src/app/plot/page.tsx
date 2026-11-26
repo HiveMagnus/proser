@@ -1,6 +1,7 @@
 'use client';
 
 import { PlotThreadWorkflow } from '@/components/plot/plot-thread-workflow';
+import { StoryArchetypePanel } from '@/components/plot/story-archetype-panel';
 import { PageTransition } from '@/components/motion/primitives';
 
 export default function PlotStudioPage() {
@@ -13,10 +14,11 @@ export default function PlotStudioPage() {
             Plot Studio
           </h1>
           <p className="mt-1 text-[length:--text-sm] text-text-secondary">
-            Track and resolve your story&apos;s plot threads.
+            Choose your story&apos;s shape and track its plot threads.
           </p>
         </div>
 
+        <StoryArchetypePanel />
         <PlotThreadWorkflow />
       </div>
     </PageTransition>

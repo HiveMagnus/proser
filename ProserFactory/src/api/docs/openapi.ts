@@ -711,6 +711,49 @@ registerPath({
   },
 });
 
+// ── Writing statistics, goals, next steps and archetypes ───────
+
+const writingGoalSchema = z.object({ targetWords: z.number().int().nullable(), deadline: z.string().nullable(), dailyWords: z.number().int().nullable() });
+
+registerPath({
+  method: 'get', path: '/api/books/{bookId}/writing-stats', summary: 'Daily words written, totals, streaks and goal pacing for a book', tags: ['Books'],
+  description: 'Built from the last saved book revision of each local day. Words in scenes saved by hand count as written; imports, AI and workflows are reported as other.',
+  security: authHeader,
+  request: { params: z.object({ bookId: z.string() }), query: z.object({ days: z.number().int().min(7).max(365).optional(), tz: z.string().optional() }) },
+  responses: {
+    200: successEnvelope(z.object({
+      bookId: z.number(), timeZone: z.string(), today: z.string(), totalWords: z.number(),
+      days: z.array(z.object({ date: z.string(), written: z.number(), other: z.number(), totalWords: z.number() })),
+      writtenInPeriod: z.number(), dailyAverage: z.number(),
+      bestDay: z.object({ date: z.string(), written: z.number() }).nullable(),
+      streak: z.object({ current: z.number(), longest: z.number() }),
+      goal: writingGoalSchema.nullable(),
+      pacing: z.object({ remainingWords: z.number(), daysLeft: z.number().nullable(), wordsPerDayNeeded: z.number().nullable(), todayRemaining: z.number().nullable() }).nullable(),
+    }), 'Writing statistics'),
+    401: errorResponse('Authentication required', 401), 404: errorResponse('Book not found', 404), 422: errorResponse('Invalid days or time zone', 422),
+  },
+});
+
+registerPath({
+  method: 'put', path: '/api/books/{bookId}/writing-goal', summary: 'Set or clear the book word-count target, deadline and daily goal', tags: ['Books'],
+  security: authHeader,
+  request: { params: z.object({ bookId: z.string() }), body: { content: { 'application/json': { schema: writingGoalSchema } } } },
+  responses: { 200: successEnvelope(z.object({ goal: writingGoalSchema.nullable() }), 'Stored goal; null after clearing every field'), 401: errorResponse('Authentication required', 401), 404: errorResponse('Book not found', 404), 422: errorResponse('Invalid goal', 422) },
+});
+
+registerPath({
+  method: 'get', path: '/api/books/{bookId}/recommendations', summary: 'Next writing steps derived from the saved book, goals and Story Bible', tags: ['Books'],
+  security: authHeader,
+  request: { params: z.object({ bookId: z.string() }), query: z.object({ tz: z.string().optional() }) },
+  responses: { 200: successEnvelope(z.object({ recommendations: z.array(z.object({ id: z.string(), title: z.string(), detail: z.string(), href: z.string() })) }), 'Recommendations, most useful first'), 401: errorResponse('Authentication required', 401), 404: errorResponse('Book not found', 404) },
+});
+
+registerPath({
+  method: 'get', path: '/api/plot/archetypes', summary: 'List the story archetypes a book can follow', tags: ['Books'],
+  security: authHeader,
+  responses: { 200: successEnvelope(z.object({ archetypes: z.array(z.object({ id: z.string(), name: z.string(), description: z.string() })) }), 'Story archetypes'), 401: errorResponse('Authentication required', 401) },
+});
+
 // ── Metrics ────────────────────────────────────────────────────
 
 registerPath({
