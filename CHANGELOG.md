@@ -26,6 +26,12 @@ includes every v1.2.0 change listed below.
   that no package manager is present. Compose commands, including the
   documented `migrate deploy`, are unchanged. (#52)
 
+### Release workflow
+
+- The image workflow's upgrade test starts from the newest earlier release
+  whose image was published, so it skips the unpublished v1.2.0 tag instead of
+  failing to pull it.
+
 ## v1.2.0 (2026-11-26)
 
 ### Sign-in

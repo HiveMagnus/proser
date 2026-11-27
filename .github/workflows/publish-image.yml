@@ -55,10 +55,18 @@ jobs:
             publish=false
             echo "Dry run of $version at $revision: nothing is published" >> "$GITHUB_STEP_SUMMARY"
           fi
-          # The upgrade test starts from the newest release before this version.
-          previous=$(git tag --list 'v*' | grep -Ex 'v[0-9]+\.[0-9]+\.[0-9]+' | { cat; echo "v$version"; } \
-            | sort -uV | grep -B1 -Fx "v$version" | head -1)
-          [ "$previous" != "v$version" ] || previous=
+          # The upgrade test starts from the newest published release before this
+          # version. A release tag whose image was never published is skipped.
+          previous=
+          while read -r tag; do
+            if missing=$(docker manifest inspect "ghcr.io/hivemagnus/proser:${tag#v}" 2>&1 >/dev/null); then
+              previous=$tag
+              break
+            fi
+            grep -q 'manifest unknown' <<<"$missing" || { echo "$missing" >&2; exit 1; }
+            echo "$tag has no published image; the upgrade test starts from an earlier release" >> "$GITHUB_STEP_SUMMARY"
+          done < <(git tag --list 'v*' | grep -Ex 'v[0-9]+\.[0-9]+\.[0-9]+' | { cat; echo "v$version"; } \
+            | sort -uV | awk -v current="v$version" '$0 == current { exit } { print }' | sort -rV)
           printf 'revision=%s\nversion=%s\nprevious=%s\npublish=%s\n' "$revision" "$version" "$previous" "$publish" >> "$GITHUB_OUTPUT"
       - name: Wait for verification and Gitleaks on the release tag
         if: github.event_name == 'push'
