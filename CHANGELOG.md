@@ -15,7 +15,16 @@ includes every v1.2.0 change listed below.
   relay's callback `/api/auth/callback/iam` answers `410 Gone` with the JSON
   error code `PASSWORD_RELAY_REMOVED` and a link to the sign-in page, instead
   of redirecting to a configuration error. It does not read the submitted
-  credentials. Oathweave OIDC and local password sign-in are unchanged.
+  credentials. Oathweave OIDC and local password sign-in are unchanged. (#51)
+
+### Container image
+
+- The runtime image no longer ships the base image's npm, npx, Corepack and
+  Yarn. Nothing in the image runs a package manager, and their bundled
+  dependencies (`brace-expansion` 5.0.9 and `undici` 6.28.0 under npm) carried
+  six fixable HIGH vulnerability findings. The image release workflow checks
+  that no package manager is present. Compose commands, including the
+  documented `migrate deploy`, are unchanged.
 
 ## v1.2.0 (2026-11-26)
 

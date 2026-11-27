@@ -128,6 +128,9 @@ jobs:
         run: |
           docker run --rm --network none --entrypoint sh "$IMAGE:$VERSION" \
             -c 'test -s /opt/proser/LICENSE && test -s /opt/proser/NOTICE'
+          # The runtime image ships no package manager.
+          docker run --rm --network none --entrypoint sh "$IMAGE:$VERSION" \
+            -c 'for tool in npm npx corepack yarn yarnpkg; do if command -v "$tool"; then exit 1; fi; done; test ! -e /usr/local/lib/node_modules'
           bash scripts/check-release-image.sh "$IMAGE:$VERSION"
       - name: Start and verify the prebuilt image with fresh volumes
         run: bash scripts/smoke-compose-image.sh "$IMAGE:$VERSION" "$REVISION"

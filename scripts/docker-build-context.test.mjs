@@ -98,3 +98,35 @@ test("the context filter follows Docker's last-match rule", () => {
     ["a", "b", "c"],
   );
 });
+
+test("the runtime stage removes the base image package managers", () => {
+  const stages = readFileSync("Dockerfile", "utf8")
+    .replace(/\\\n/g, " ")
+    .split(/^FROM\s/m);
+  const runtime = stages.find((stage) => /\sAS runtime\s/.test(stage));
+  assert(runtime, "no runtime stage found");
+  const removal = runtime
+    .split("\n")
+    .find((line) => /^RUN\s+rm\s/.test(line))
+    ?.split(/\s+/);
+  assert(removal, "the runtime stage removes no files");
+  for (const path of [
+    "/usr/local/lib/node_modules",
+    "/opt/yarn-v*",
+    "/usr/local/bin/npm",
+    "/usr/local/bin/npx",
+    "/usr/local/bin/corepack",
+    "/usr/local/bin/yarn",
+    "/usr/local/bin/yarnpkg",
+  ])
+    assert(removal.includes(path), `${path} stays in the runtime image`);
+  const commands = runtime
+    .split("\n")
+    .filter((line) => /^(RUN|CMD|ENTRYPOINT)\s/.test(line))
+    .join("\n");
+  assert.doesNotMatch(
+    commands,
+    /(^|[\s;&|"\[])(npm|npx|corepack|yarn|pnpm)[\s"\]]/,
+    "the runtime stage runs a removed package manager",
+  );
+});

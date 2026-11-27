@@ -23,6 +23,11 @@ RUN cd author && corepack pnpm install --frozen-lockfile && corepack pnpm build 
     && node apps/web/scripts/container-runtime.mjs --prepare
 
 FROM node:24.22.3-slim@sha256:dc26ae92c9fb15cf6b1d63e20f0944b2efe0f115b20e00be48fb23fceb061c54 AS runtime
+# Nothing in the runtime image runs a package manager, so the base image's npm,
+# npx, Corepack and Yarn are removed with the vulnerability findings they bring.
+RUN rm -rf /usr/local/lib/node_modules /opt/yarn-v* \
+    && rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+        /usr/local/bin/yarn /usr/local/bin/yarnpkg
 WORKDIR /opt/proser
 COPY LICENSE NOTICE ./
 ENV NODE_ENV=production \
