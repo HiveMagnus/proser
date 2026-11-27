@@ -100,8 +100,10 @@ name. The image records the tag version in `/opt/proser/factory/VERSION`, and
 Factory reports it from `/health`, `GET /api` and the Settings page.
 
 It builds the image natively for `linux/amd64` on `ubuntu-24.04` and for
-`linux/arm64` on `ubuntu-24.04-arm`. Each architecture checks image layers and
-scans first-party application files for secrets, then starts a fresh Compose
+`linux/arm64` on `ubuntu-24.04-arm`. Each architecture checks image layers,
+checks that the runtime image ships no package manager (the base image's npm,
+npx, Corepack and Yarn are removed because nothing runs them), and scans
+first-party application files for secrets, then starts a fresh Compose
 stack. The smoke test covers local sign-in, saving and reopening a structured
 draft, direct authenticated Factory API access, the reported version and a
 healthy worker. The workflow then rehearses `scripts/backup-compose.sh` and
