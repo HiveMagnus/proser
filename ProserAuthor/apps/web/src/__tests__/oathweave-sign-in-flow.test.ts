@@ -8,7 +8,9 @@ import { calculateJwkThumbprint, exportJWK, generateKeyPair, SignJWT } from 'jos
  * authorization redirect, the code exchange with PKCE, ID-token checks and
  * the resulting session. Local accounts are exercised through the same
  * handlers to show they keep working next to OIDC, and Oathweave passwords are
- * shown never to be relayed.
+ * shown never to be relayed: the retired relay callback answers 410 Gone.
+ * Requests go through the route module, so the tests also show that every
+ * other Auth.js route behaves as before.
  */
 
 const ORIGIN = 'https://proser.example.test';
@@ -55,7 +57,9 @@ async function loadAuth(environment: Record<string, string>) {
   for (const name of managedNames) delete process.env[name];
   Object.assign(process.env, environment);
   vi.resetModules();
-  return import('@/auth');
+  const auth = await import('@/auth');
+  const route = await import('@/app/api/auth/[...nextauth]/route');
+  return { ...auth, handlers: { GET: route.GET, POST: route.POST } };
 }
 
 type Handlers = Awaited<ReturnType<typeof loadAuth>>['handlers'];
@@ -78,8 +82,10 @@ async function call(
   });
   const response = await (method === 'GET' ? handlers.GET : handlers.POST)(request);
   remember(jar, response);
+  lastRequest = request;
   return response;
 }
+let lastRequest: NextRequest | undefined;
 
 async function csrf(handlers: Handlers, jar: Jar) {
   const response = await call(handlers, jar, '/api/auth/csrf');
@@ -272,11 +278,30 @@ describe('Oathweave OIDC sign-in through Auth.js', () => {
   async function passwordSignIn(handlers: Handlers, username: string, password: string) {
     const jar: Jar = new Map();
     const csrfToken = await csrf(handlers, jar);
-    await call(handlers, jar, '/api/auth/callback/iam', {
+    const response = await call(handlers, jar, '/api/auth/callback/iam', {
       method: 'POST',
       form: { csrfToken, username, password, callbackUrl: '/' },
     });
-    return { jar, signedIn: await session(handlers, jar) };
+    const callbackRequest = lastRequest;
+    return { jar, response, callbackRequest, signedIn: await session(handlers, jar) };
+  }
+
+  async function expectRelayRemoved(response: Response, request: NextRequest | undefined) {
+    expect(response.status).toBe(410);
+    expect(response.headers.get('location')).toBeNull();
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(response.headers.getSetCookie()).toEqual([]);
+    expect(await response.json()).toEqual({
+      ok: false,
+      success: false,
+      error: {
+        code: 'PASSWORD_RELAY_REMOVED',
+        message: expect.stringContaining('Sign in with Oathweave'),
+        signInUrl: '/auth/signin',
+      },
+    });
+    // The submitted credentials are never read.
+    expect(request?.bodyUsed).toBe(false);
   }
 
   const iamRequests = () =>
@@ -289,10 +314,43 @@ describe('Oathweave OIDC sign-in through Auth.js', () => {
   it('never posts a password to Oathweave on an Oathweave installation', async () => {
     const { handlers, signInMethods } = await loadAuth({ ...baseEnvironment, IAM_CORE_URL: IAM });
     expect(signInMethods).toEqual({ oathweave: true, password: false });
-    const { jar, signedIn } = await passwordSignIn(handlers, 'writer', 'fixture-password');
+    const { jar, response, callbackRequest, signedIn } = await passwordSignIn(
+      handlers,
+      'writer',
+      'fixture-password',
+    );
+    await expectRelayRemoved(response, callbackRequest);
     expect(signedIn).toBeNull();
     expect(sessionCookie(jar)).toBeUndefined();
     expect(iamRequests()).toEqual([]);
+  });
+
+  it('answers the retired relay callback with 410 Gone for GET and POST', async () => {
+    const { handlers } = await loadAuth({ ...baseEnvironment, IAM_CORE_URL: IAM });
+    const jar: Jar = new Map();
+    const get = await call(
+      handlers,
+      jar,
+      '/api/auth/callback/iam?username=writer&password=fixture-password',
+    );
+    await expectRelayRemoved(get, lastRequest);
+    const post = await call(handlers, jar, '/api/auth/callback/iam', {
+      method: 'POST',
+      form: { username: 'writer', password: 'fixture-password' },
+    });
+    await expectRelayRemoved(post, lastRequest);
+    expect(jar.size).toBe(0);
+    expect(fetch).not.toHaveBeenCalled();
+
+    // The other Auth.js routes are still served by Auth.js.
+    const providers = (await (await call(handlers, jar, '/api/auth/providers')).json()) as Record<
+      string,
+      unknown
+    >;
+    expect(Object.keys(providers)).toEqual(['oathweave']);
+    const unknownCallback = await call(handlers, jar, '/api/auth/callback/unknown');
+    expect(unknownCallback.status).toBe(302);
+    expect(unknownCallback.headers.get('location')).toContain('/auth/signin?error=');
   });
 
   it('ignores the retired OATHWEAVE_PASSWORD_RELAY setting', async () => {
@@ -306,7 +364,12 @@ describe('Oathweave OIDC sign-in through Auth.js', () => {
     expect(warn).toHaveBeenCalledWith(
       expect.stringContaining('OATHWEAVE_PASSWORD_RELAY is no longer used'),
     );
-    const { jar } = await passwordSignIn(handlers, 'writer', 'fixture-password');
+    const { jar, response, callbackRequest } = await passwordSignIn(
+      handlers,
+      'writer',
+      'fixture-password',
+    );
+    await expectRelayRemoved(response, callbackRequest);
     expect(sessionCookie(jar)).toBeUndefined();
     expect(iamRequests()).toEqual([]);
   });
@@ -323,7 +386,12 @@ describe('Oathweave OIDC sign-in through Auth.js', () => {
     expect(error).toHaveBeenCalledWith(
       expect.stringContaining('Oathweave OIDC sign-in is not configured'),
     );
-    const { jar } = await passwordSignIn(handlers, 'writer', 'fixture-password');
+    const { jar, response, callbackRequest } = await passwordSignIn(
+      handlers,
+      'writer',
+      'fixture-password',
+    );
+    await expectRelayRemoved(response, callbackRequest);
     expect(sessionCookie(jar)).toBeUndefined();
     expect(iamRequests()).toEqual([]);
   });
@@ -336,7 +404,13 @@ describe('Oathweave OIDC sign-in through Auth.js', () => {
       LOCAL_AUTH_PASSWORD: 'fixture-local-password',
     });
     expect(signInMethods).toEqual({ oathweave: true, password: true });
-    const { signedIn } = await passwordSignIn(handlers, 'author', 'fixture-local-password');
+    // Without IAM_CORE_URL the iam callback is local password sign-in.
+    const { response, signedIn } = await passwordSignIn(
+      handlers,
+      'author',
+      'fixture-local-password',
+    );
+    expect(response.status).toBe(302);
     expect(signedIn?.user).toMatchObject({
       id: 'local-author',
       username: 'author',
