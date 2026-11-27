@@ -24,7 +24,7 @@ includes every v1.2.0 change listed below.
   dependencies (`brace-expansion` 5.0.9 and `undici` 6.28.0 under npm) carried
   six fixable HIGH vulnerability findings. The image release workflow checks
   that no package manager is present. Compose commands, including the
-  documented `migrate deploy`, are unchanged.
+  documented `migrate deploy`, are unchanged. (#52)
 
 ## v1.2.0 (2026-11-26)
 
