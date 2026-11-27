@@ -109,7 +109,8 @@ draft, direct authenticated Factory API access, the reported version and a
 healthy worker. The workflow then rehearses `scripts/backup-compose.sh` and
 `scripts/restore-compose.sh` on a disposable project, and runs
 `scripts/smoke-compose-upgrade.sh`: it starts the previous release image with
-that release's Compose files, saves a book, applies the candidate's migrations
+that release's Compose files (the newest earlier release tag whose image was
+published; a tag without an image is skipped with a note in the run summary), saves a book, applies the candidate's migrations
 with the documented `migrate deploy`, starts the candidate, and checks the
 document guards, every healthcheck, readiness, the version and the saved book.
 Releases up to v1.0.7 exist only for `linux/amd64`, so the `linux/arm64`
