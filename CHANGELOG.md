@@ -6,11 +6,22 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 
 ## Unreleased
 
-v1.2.0 was tagged but never published. The next release supersedes it and
-includes every v1.2.0 change listed below.
+Nothing yet.
+
+## v1.2.1 (2026-11-27)
+
+v1.2.0 was tagged but never published: no v1.2.0 image or GitHub release
+exists. v1.2.1 supersedes it and contains every v1.2.0 change, so the notes
+below are complete for an upgrade from v1.1.0. Install v1.2.1, not v1.2.0.
 
 ### Sign-in
 
+- The Oathweave password relay is removed. Proser no longer takes an
+  Oathweave writer's password or posts it to Oathweave's login API: Oathweave
+  writers sign in only through Oathweave OpenID Connect (authorization code with
+  S256 PKCE), where passwords, second factors and passkeys are entered at
+  Oathweave. `OATHWEAVE_PASSWORD_RELAY` has no effect and Author warns while it
+  is set. Local and GitHub accounts are unchanged. (#49)
 - On an Oathweave installation (`IAM_CORE_URL` set), the removed password
   relay's callback `/api/auth/callback/iam` answers `410 Gone` with the JSON
   error code `PASSWORD_RELAY_REMOVED` and a link to the sign-in page, instead
@@ -26,13 +37,43 @@ includes every v1.2.0 change listed below.
   that no package manager is present. Compose commands, including the
   documented `migrate deploy`, are unchanged. (#52)
 
+### Dependencies
+
+- The Compose `postgres` service uses a refreshed `postgres:17-alpine` digest.
+  (#47)
+
 ### Release workflow
 
 - The image workflow's upgrade test starts from the newest earlier release
   whose image was published, so it skips the unpublished v1.2.0 tag instead of
-  failing to pull it.
+  failing to pull it. (#53)
 
-## v1.2.0 (2026-11-26)
+### Upgrade notes (from v1.1.0)
+
+- **Oathweave OIDC is the only Oathweave sign-in.** An installation that sets
+  `IAM_CORE_URL` must configure `OATHWEAVE_OIDC_*` before upgrading, or
+  Oathweave writers cannot sign in (Author logs the reason at startup). Keep
+  `IAM_CORE_URL` set: without it Author offers the local credentials from
+  `LOCAL_AUTH_*`. Remove `OATHWEAVE_PASSWORD_RELAY`. Installations that already
+  set `OATHWEAVE_PASSWORD_RELAY=false` with OIDC see no change. See
+  [Upgrading from the password relay](docs/OATHWEAVE_OIDC.md#upgrading-from-the-password-relay).
+- **Existing accounts keep their books.** Accounts the relay created
+  (`iam:<username>`) and already linked to an Oathweave `sub` resolve by that
+  `sub` as before. A relay account not yet linked is linked on its writer's
+  first OIDC sign-in by Oathweave username. Sessions signed in through the
+  relay stay valid until they expire or are revoked.
+- **Relay callback:** anything that still posts a username and password to
+  `/api/auth/callback/iam` on an Oathweave installation now gets
+  `410 Gone` (`PASSWORD_RELAY_REMOVED`). Point it at Oathweave OIDC sign-in.
+- **No package manager in the image:** scripts that run `npm`, `npx`,
+  `corepack` or `yarn` inside a Proser container must call `node` directly, as
+  the documented Compose commands do.
+- **No database migration** and no change to the document enforcement guards.
+  Rolling back to v1.1.0 is a matter of running its image with its settings.
+
+## v1.2.0 (2026-11-26, tagged, not published)
+
+This tag has no image or GitHub release. Its changes ship in v1.2.1.
 
 ### Sign-in
 
