@@ -188,6 +188,12 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
   }
 }
 
+/**
+ * On an Oathweave installation the `iam` callback was the retired password
+ * relay. It now answers 410 Gone without reading the request.
+ */
+export const passwordRelayRetired = oathweaveInstallation;
+
 /** Which sign-in controls the sign-in page shows. */
 export const signInMethods = {
   oathweave: oidcConfig !== null,

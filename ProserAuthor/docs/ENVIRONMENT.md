@@ -47,6 +47,8 @@ are entered at Oathweave instead of in Proser. The first OIDC sign-in links the
 writer's existing account by Oathweave username, and later sign-ins use the
 Oathweave `sub`. Proser never takes an Oathweave password: the former password
 relay was removed, and `OATHWEAVE_PASSWORD_RELAY` has no effect. With
+`IAM_CORE_URL` set, its former callback `/api/auth/callback/iam` answers
+`410 Gone` (`PASSWORD_RELAY_REMOVED`) without reading the request. With
 `IAM_CORE_URL` set and OIDC not configured, Oathweave writers cannot sign in,
 and Author logs why at startup. Client registration and every OIDC setting are
 described in the [Oathweave OIDC guide](../../docs/OATHWEAVE_OIDC.md).

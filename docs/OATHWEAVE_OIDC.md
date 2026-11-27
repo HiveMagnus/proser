@@ -195,6 +195,12 @@ keep their books: the first OIDC sign-in links each relay account by its
 Oathweave username. Sessions signed in through the relay stay valid until they
 expire or are revoked.
 
+On an Oathweave installation the relay's former callback,
+`/api/auth/callback/iam`, answers `410 Gone` with the JSON error code
+`PASSWORD_RELAY_REMOVED` and a link to the sign-in page. It does not read the
+submitted credentials. A client that still posts passwords there must switch to
+Oathweave sign-in.
+
 ## Rollback
 
 To roll back, run the earlier Proser image with its settings. Every linked

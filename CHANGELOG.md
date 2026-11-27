@@ -6,7 +6,16 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 
 ## Unreleased
 
-Nothing yet.
+v1.2.0 was tagged but never published. The next release supersedes it and
+includes every v1.2.0 change listed below.
+
+### Sign-in
+
+- On an Oathweave installation (`IAM_CORE_URL` set), the removed password
+  relay's callback `/api/auth/callback/iam` answers `410 Gone` with the JSON
+  error code `PASSWORD_RELAY_REMOVED` and a link to the sign-in page, instead
+  of redirecting to a configuration error. It does not read the submitted
+  credentials. Oathweave OIDC and local password sign-in are unchanged.
 
 ## v1.2.0 (2026-11-26)
 
