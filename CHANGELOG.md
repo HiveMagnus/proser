@@ -36,6 +36,9 @@ below are complete for an upgrade from v1.1.0. Install v1.2.1, not v1.2.0.
   six fixable HIGH vulnerability findings. The image release workflow checks
   that no package manager is present. Compose commands, including the
   documented `migrate deploy`, are unchanged. (#52)
+- The runtime image applies the Debian security updates published after its
+  base image was built. This fixes the HIGH `linux-pam` finding CVE-2025-6020
+  (`libpam*` 1.5.2-6+deb12u3). (#55)
 
 ### Dependencies
 

@@ -39,7 +39,10 @@ COPY --from=build /opt/proser/factory /opt/proser/factory
 COPY ProserFactory/scripts/install-publication-fonts.mjs ./factory/scripts/
 COPY ProserFactory/deploy/document-authority/enforcement.sql ./factory/deploy/document-authority/
 COPY scripts/initialize-compose-database.mjs scripts/init-compose-env.mjs ./factory/scripts/
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl openssl lbzip2 xz-utils \
+# Debian security updates published after the base image was built (for
+# example linux-pam 1.5.2-6+deb12u3) are applied to the runtime image.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && apt-get install -y --no-install-recommends ca-certificates curl openssl lbzip2 xz-utils \
     && cd factory && node node_modules/playwright/cli.js install --with-deps chromium \
     && node scripts/install-publication-fonts.mjs /opt/proser/fonts \
     && install -d -o node -g node -m 0700 data public/images \
