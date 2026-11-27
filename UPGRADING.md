@@ -20,17 +20,31 @@ a newer release. The general procedure (back up, switch the checkout and
 5. Check `docker compose ps` (Author, Factory and the worker are `healthy`),
    both readiness URLs, and the version on the Settings page.
 
-## v1.2.0
+## v1.2.1
+
+v1.2.0 was tagged but never published, so upgrade from v1.1.0 straight to
+v1.2.1. These notes cover the whole step from v1.1.0.
 
 - **Oathweave sign-in:** the password relay is removed. If `IAM_CORE_URL` is
   set, configure Oathweave OIDC (`OATHWEAVE_OIDC_*`,
-  [guide](docs/OATHWEAVE_OIDC.md)) before upgrading, and remove
-  `OATHWEAVE_PASSWORD_RELAY`. Installations already on OIDC with the relay off
-  need no change. Accounts already linked to an Oathweave `sub` keep their
-  books; unlinked relay accounts are linked by username on the first OIDC
-  sign-in.
+  [guide](docs/OATHWEAVE_OIDC.md)) before upgrading, keep `IAM_CORE_URL` set,
+  and remove `OATHWEAVE_PASSWORD_RELAY`. Installations already on OIDC with
+  the relay off need no change. Accounts already linked to an Oathweave `sub`
+  keep their books; unlinked relay accounts are linked by username on the
+  first OIDC sign-in.
+- **Relay callback:** on an installation that sets `IAM_CORE_URL`, a request
+  to the removed relay's callback `/api/auth/callback/iam` gets `410 Gone`
+  (`PASSWORD_RELAY_REMOVED`). Move anything that still posts passwords there
+  to Oathweave OIDC sign-in.
+- **Container image:** npm, npx, Corepack and Yarn are no longer in the image.
+  Commands you run inside a Proser container must call `node` directly, as the
+  documented `migrate deploy` does.
 - **Database:** no migration in this release; the document enforcement guards
-  are unchanged.
+  are unchanged. To roll back, run the v1.1.0 image with its settings.
+
+## v1.2.0 (not published)
+
+This tag has no image. Use v1.2.1, whose notes include its changes.
 
 ## v1.1.0
 
