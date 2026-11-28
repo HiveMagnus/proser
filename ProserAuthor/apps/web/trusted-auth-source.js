@@ -1,48 +1,42 @@
-const { BlockList, isIP } = require('node:net');
+const { normalizeIpAddress, trustedProxies } = require('@hivemagnus/hive-common/rate-limit');
 
 function trustedProxyHopCount(rawValue) {
   return Math.min(5, Math.max(0, Number.parseInt(rawValue || '0', 10) || 0));
 }
 
+/** A plain IP address (IPv4-mapped IPv6 as IPv4, zone dropped), or '' when it is not one. */
 function normalizeIp(value) {
-  const withoutZone = String(value || '')
-    .trim()
-    .split('%')[0];
-  const mapped = withoutZone.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i);
-  return mapped && isIP(mapped[1]) === 4 ? mapped[1] : withoutZone;
+  return normalizeIpAddress(String(value ?? '')) ?? '';
+}
+
+let parsedPeers = { config: undefined, proxies: undefined };
+
+/**
+ * The configured proxy allowlist, parsed once per distinct value. Any entry
+ * that is not an IP address or CIDR range makes the whole list trust nothing.
+ */
+function configuredProxies(configuredPeers) {
+  const config = String(configuredPeers || '');
+  if (parsedPeers.config !== config) {
+    const entries = config
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+    let proxies;
+    try {
+      proxies = entries.length ? trustedProxies(entries) : undefined;
+    } catch {
+      proxies = undefined;
+    }
+    parsedPeers = { config, proxies };
+  }
+  return parsedPeers.proxies;
 }
 
 function trustedProxyPeerAllowed(remoteAddress, configuredPeers) {
   const peer = normalizeIp(remoteAddress);
-  const peerFamily = isIP(peer);
-  const entries = String(configuredPeers || '')
-    .split(',')
-    .map((value) => value.trim())
-    .filter(Boolean);
-  if (!peerFamily || entries.length === 0) return false;
-
-  const blockList = new BlockList();
-  try {
-    for (const entry of entries) {
-      const [rawAddress, rawPrefix, extra] = entry.split('/');
-      if (extra !== undefined) return false;
-      const address = normalizeIp(rawAddress);
-      const family = isIP(address);
-      if (!family) return false;
-      const type = family === 4 ? 'ipv4' : 'ipv6';
-      if (rawPrefix === undefined) {
-        blockList.addAddress(address, type);
-        continue;
-      }
-      const prefix = Number(rawPrefix);
-      if (!Number.isInteger(prefix) || prefix < 0 || prefix > (family === 4 ? 32 : 128))
-        return false;
-      blockList.addSubnet(address, prefix, type);
-    }
-  } catch {
-    return false;
-  }
-  return blockList.check(peer, peerFamily === 4 ? 'ipv4' : 'ipv6');
+  const proxies = configuredProxies(configuredPeers);
+  return Boolean(peer && proxies && proxies.has(peer));
 }
 
 function resolveTrustedAuthSource(req, configuredHops, configuredPeers) {
@@ -55,7 +49,7 @@ function resolveTrustedAuthSource(req, configuredHops, configuredPeers) {
   const rawForwarded = req.headers['x-forwarded-for'];
   if (typeof rawForwarded !== 'string') return { valid: false, source: socketPeer };
   const forwarded = rawForwarded.split(',').map((value) => normalizeIp(value));
-  if (forwarded.length < trustedProxyHops || forwarded.some((value) => !value || !isIP(value))) {
+  if (forwarded.length < trustedProxyHops || forwarded.some((value) => !value)) {
     return { valid: false, source: socketPeer };
   }
   return { valid: true, source: forwarded[forwarded.length - trustedProxyHops] };

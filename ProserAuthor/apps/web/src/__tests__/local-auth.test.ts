@@ -7,6 +7,7 @@ import {
 } from '../../trusted-auth-source.js';
 
 import {
+  clearLocalAuthFailures,
   constantTimeLocalCredentialsMatch,
   localAuthAccount,
   localAuthFailureAllowed,
@@ -142,5 +143,82 @@ describe('local authentication hardening', () => {
       ),
     ).toBe(false);
     expect(localAuthFailureAllowed(source, account, 61_001)).toBe(true);
+  });
+
+  it('refills one failed attempt at a time and clears both keys after a success', () => {
+    const source = localAuthSource(
+      new Request('https://proser.example/auth', {
+        headers: { 'x-proser-auth-source': '192.0.2.20' },
+      }),
+    );
+    const account = localAuthAccount('author');
+    for (let attempt = 0; attempt < 5; attempt += 1) recordLocalAuthFailure(source, account, 1_000);
+    expect(localAuthFailureAllowed(source, account, 12_999)).toBe(false);
+    // Five attempts per minute: one more every 12 seconds.
+    expect(localAuthFailureAllowed(source, account, 13_000)).toBe(true);
+    recordLocalAuthFailure(source, account, 13_000);
+    expect(localAuthFailureAllowed(source, account, 13_000)).toBe(false);
+    clearLocalAuthFailures(source, account);
+    expect(localAuthFailureAllowed(source, account, 13_000)).toBe(true);
+  });
+
+  it('keeps a blocked source blocked while it cycles usernames past the table bound', () => {
+    const source = localAuthSource(
+      new Request('https://proser.example/auth', {
+        headers: { 'x-proser-auth-source': '192.0.2.45' },
+      }),
+    );
+    for (let attempt = 0; attempt < 12_000; attempt += 1) {
+      recordLocalAuthFailure(source, localAuthAccount(`guess-${attempt}`), 1_000);
+    }
+    expect(localAuthFailureAllowed(source, localAuthAccount('fresh'), 1_000)).toBe(false);
+  });
+
+  it('groups IPv6 sources by /64 and keeps IPv4 sources apart', () => {
+    const sourceOf = (address: string) =>
+      localAuthSource(
+        new Request('https://proser.example/auth', {
+          headers: { 'x-proser-auth-source': address },
+        }),
+      );
+    expect(sourceOf('2001:db8:1:2::1')).toBe(sourceOf('2001:db8:1:2:ffff::9'));
+    expect(sourceOf('2001:db8:1:2::1')).not.toBe(sourceOf('2001:db8:1:3::1'));
+    expect(sourceOf('192.0.2.1')).not.toBe(sourceOf('192.0.2.2'));
+  });
+
+  it('counts exactly the configured hops, so client-written entries further left are never used', () => {
+    const proxied = (forwardedFor: string, remoteAddress = '10.0.0.3') => ({
+      socket: { remoteAddress },
+      headers: { 'x-forwarded-for': forwardedFor, 'x-proser-auth-source': '' } as Record<
+        string,
+        string
+      >,
+    });
+    const forged = proxied('203.0.113.99, 192.0.2.10');
+    expect(attachTrustedAuthSource(forged, '1', '10.0.0.0/24')).toBe(true);
+    expect(forged.headers['x-proser-auth-source']).toBe('192.0.2.10');
+
+    // A hop inside the allowlist is still one of the counted hops, not skipped.
+    const inRange = proxied('192.0.2.10, 10.0.0.2');
+    expect(attachTrustedAuthSource(inRange, '1', '10.0.0.0/24')).toBe(true);
+    expect(inRange.headers['x-proser-auth-source']).toBe('10.0.0.2');
+
+    const mapped = proxied('::ffff:192.0.2.10', '::ffff:10.0.0.3');
+    expect(attachTrustedAuthSource(mapped, '1', '10.0.0.0/24')).toBe(true);
+    expect(mapped.headers['x-proser-auth-source']).toBe('192.0.2.10');
+
+    expect(
+      attachTrustedAuthSource(proxied('garbage, 192.0.2.10, 10.0.0.2'), '2', '10.0.0.0/24'),
+    ).toBe(false);
+    expect(attachTrustedAuthSource(proxied('192.0.2.10'), '1', '')).toBe(true);
+  });
+
+  it('accepts IPv6 and named ranges in the peer allowlist and trusts nothing for an invalid list', () => {
+    expect(trustedProxyPeerAllowed('::1', '127.0.0.1, ::1')).toBe(true);
+    expect(trustedProxyPeerAllowed('fd00::5', 'fc00::/7')).toBe(true);
+    expect(trustedProxyPeerAllowed('172.18.0.1', 'private')).toBe(true);
+    expect(trustedProxyPeerAllowed('172.18.0.1', 'private, 10.0.0.0/33')).toBe(false);
+    expect(trustedProxyPeerAllowed('172.18.0.1', '172.18.0.0/16/1')).toBe(false);
+    expect(trustedProxyPeerAllowed('not-an-address', '0.0.0.0/0')).toBe(false);
   });
 });
