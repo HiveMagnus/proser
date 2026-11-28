@@ -29,7 +29,7 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 
   Nothing to do when upgrading.
 
-- Author is on `@hivemagnus/hive-common` 0.11.0, and the sign-in source behind
+- Author is on `@hivemagnus/hive-common` 0.11.1, and the sign-in source behind
   `LOCAL_AUTH_TRUSTED_PROXY_HOPS` is now picked by its `resolveClientAddress()`
   hop count. A trusted proxy that sends no `X-Forwarded-For`, a chain shorter
   than the hop count, or a counted hop that is not an address is still refused
