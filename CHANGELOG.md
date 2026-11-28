@@ -6,10 +6,14 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 
 ## Unreleased
 
+Nothing yet.
+
+## v1.2.2 (2026-11-28)
+
 ### Sign-in
 
 - Local sign-in throttling and its trusted-proxy source address now use
-  `@hivemagnus/hive-common` 0.10.0 `/rate-limit` in Author. The settings
+  `@hivemagnus/hive-common` `/rate-limit` in Author. The settings
   (`LOCAL_AUTH_TRUSTED_PROXY_HOPS`, `LOCAL_AUTH_TRUSTED_PROXY_PEERS`) and the
   limit (5 failed attempts per source and per account a minute) are unchanged,
   and the hop count still picks the source exactly as before. What differs:
@@ -27,7 +31,7 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
     being refused with `400`. Any invalid entry still makes the whole list
     trust nothing.
 
-  Nothing to do when upgrading.
+  Nothing to do when upgrading. (#56)
 
 - Author is on `@hivemagnus/hive-common` 0.11.1, and the sign-in source behind
   `LOCAL_AUTH_TRUSTED_PROXY_HOPS` is now picked by its `resolveClientAddress()`
@@ -37,7 +41,14 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
   the client wrote further left that is not an address is ignored. With two
   hops, `garbage, 192.0.2.10, 10.0.0.2` now signs in from `192.0.2.10`; it used
   to be refused with `400`. The client could only refuse its own request that
-  way, and which address is used was never affected.
+  way, and which address is used was never affected. (#57)
+
+### Upgrade notes (from v1.2.1)
+
+- **Nothing to configure.** The local sign-in settings and limits are
+  unchanged; the differences above apply on their own.
+- **No database migration** and no change to the document enforcement guards.
+  Rolling back to v1.2.1 is a matter of running its image with its settings.
 
 ## v1.2.1 (2026-11-27)
 

@@ -20,6 +20,16 @@ a newer release. The general procedure (back up, switch the checkout and
 5. Check `docker compose ps` (Author, Factory and the worker are `healthy`),
    both readiness URLs, and the version on the Settings page.
 
+## v1.2.2
+
+- **Local sign-in:** throttling and the trusted-proxy source address now come
+  from `@hivemagnus/hive-common`. `LOCAL_AUTH_TRUSTED_PROXY_HOPS`,
+  `LOCAL_AUTH_TRUSTED_PROXY_PEERS` and the limits are unchanged, so there is
+  nothing to configure. The behavior differences are listed in
+  [CHANGELOG.md](CHANGELOG.md#v122-2026-11-28).
+- **Database:** no migration in this release; the document enforcement guards
+  are unchanged. To roll back, run the v1.2.1 image with its settings.
+
 ## v1.2.1
 
 v1.2.0 was tagged but never published, so upgrade from v1.1.0 straight to
