@@ -209,8 +209,8 @@ importers:
   apps/web:
     dependencies:
       '@hivemagnus/hive-common':
-        specifier: 0.10.0
-        version: 0.10.0
+        specifier: 0.11.1
+        version: 0.11.1
       '@hivemagnus/proser-contracts':
         specifier: workspace:^
         version: link:../../packages/contracts
@@ -616,8 +616,8 @@ packages:
   '@hivemagnus/canvas-word-engine@1.2.2':
     resolution: {integrity: sha512-im32Ndcv8Mc0A+m0AdNaNFI8TcqZ4HidJgHbhjSbmCorW1oxx3/ZeZLfohOWDmh7s8fSKDAQScFzWN+tzZc6bw==}
 
-  '@hivemagnus/hive-common@0.10.0':
-    resolution: {integrity: sha512-NYngiEoGEVUfZUaxev0t3iB+uFPHIsAdBALo3NZEYJIKBJ4mgWjR5V96poXPvW+hMKXtWw5ZIZcC+nTcYhHx0w==}
+  '@hivemagnus/hive-common@0.11.1':
+    resolution: {integrity: sha512-HWPhuSg6wpO1YSCRirsKSWuBM0lvGi8U0hYg7iSMGxBsdQUPzR59uNP1v+ntH/gA6Ud6cKdqdQpgHHZrfhlaPw==}
     engines: {node: ^24.22.3 || ^26.13.1}
     peerDependencies:
       hono: ^4.13.18
@@ -3064,7 +3064,7 @@ snapshots:
 
   '@hivemagnus/canvas-word-engine@1.2.2': {}
 
-  '@hivemagnus/hive-common@0.10.0':
+  '@hivemagnus/hive-common@0.11.1':
     dependencies:
       jose: 6.2.18
 

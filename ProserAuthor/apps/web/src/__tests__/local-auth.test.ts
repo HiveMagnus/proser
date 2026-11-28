@@ -207,9 +207,32 @@ describe('local authentication hardening', () => {
     expect(attachTrustedAuthSource(mapped, '1', '10.0.0.0/24')).toBe(true);
     expect(mapped.headers['x-proser-auth-source']).toBe('192.0.2.10');
 
-    expect(
-      attachTrustedAuthSource(proxied('garbage, 192.0.2.10, 10.0.0.2'), '2', '10.0.0.0/24'),
-    ).toBe(false);
+    // Garbage the client wrote left of the counted hops is ignored, not refused.
+    const garbageLeft = proxied('garbage, 192.0.2.10, 10.0.0.2');
+    expect(attachTrustedAuthSource(garbageLeft, '2', '10.0.0.0/24')).toBe(true);
+    expect(garbageLeft.headers['x-proser-auth-source']).toBe('192.0.2.10');
+
+    // A counted hop that is not an address, or no chain at all, is refused (400).
+    const garbageCounted = proxied('192.0.2.10, garbage, 10.0.0.2');
+    expect(attachTrustedAuthSource(garbageCounted, '2', '10.0.0.0/24')).toBe(false);
+    expect(garbageCounted.headers['x-proser-auth-source']).toBe('10.0.0.3');
+    expect(attachTrustedAuthSource(proxied('192.0.2.10, '), '1', '10.0.0.0/24')).toBe(false);
+    expect(attachTrustedAuthSource(proxied(' '), '1', '10.0.0.0/24')).toBe(false);
+    const noHeader = {
+      socket: { remoteAddress: '10.0.0.3' },
+      headers: {} as Record<string, string>,
+    };
+    expect(attachTrustedAuthSource(noHeader, '1', '10.0.0.0/24')).toBe(false);
+    expect(noHeader.headers['x-proser-auth-source']).toBe('10.0.0.3');
+
+    // No socket address: the source is 'unknown', whatever the header says.
+    const noPeer = {
+      socket: {},
+      headers: { 'x-forwarded-for': '192.0.2.10' } as Record<string, string>,
+    };
+    expect(attachTrustedAuthSource(noPeer, '1', '0.0.0.0/0')).toBe(true);
+    expect(noPeer.headers['x-proser-auth-source']).toBe('unknown');
+
     expect(attachTrustedAuthSource(proxied('192.0.2.10'), '1', '')).toBe(true);
   });
 

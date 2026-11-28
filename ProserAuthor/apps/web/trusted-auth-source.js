@@ -1,4 +1,8 @@
-const { normalizeIpAddress, trustedProxies } = require('@hivemagnus/hive-common/rate-limit');
+const {
+  normalizeIpAddress,
+  resolveClientAddress,
+  trustedProxies,
+} = require('@hivemagnus/hive-common/rate-limit');
 
 function trustedProxyHopCount(rawValue) {
   return Math.min(5, Math.max(0, Number.parseInt(rawValue || '0', 10) || 0));
@@ -39,20 +43,24 @@ function trustedProxyPeerAllowed(remoteAddress, configuredPeers) {
   return Boolean(peer && proxies && proxies.has(peer));
 }
 
-function resolveTrustedAuthSource(req, configuredHops, configuredPeers) {
-  const trustedProxyHops = trustedProxyHopCount(configuredHops);
-  const socketPeer = normalizeIp(req.socket.remoteAddress) || 'unknown';
-  if (trustedProxyHops === 0 || !trustedProxyPeerAllowed(socketPeer, configuredPeers)) {
-    return { valid: true, source: socketPeer };
-  }
+const TRUSTS_NOTHING = trustedProxies(undefined);
+// A trusted proxy that sent no X-Forwarded-For, a chain shorter than the hop
+// count, or a counted hop that is not an address is refused (400).
+const REFUSED = new Set(['proxy_without_forwarding', 'invalid_forwarding']);
 
-  const rawForwarded = req.headers['x-forwarded-for'];
-  if (typeof rawForwarded !== 'string') return { valid: false, source: socketPeer };
-  const forwarded = rawForwarded.split(',').map((value) => normalizeIp(value));
-  if (forwarded.length < trustedProxyHops || forwarded.some((value) => !value)) {
-    return { valid: false, source: socketPeer };
-  }
-  return { valid: true, source: forwarded[forwarded.length - trustedProxyHops] };
+/**
+ * The sign-in source: the socket peer, or the hop-th X-Forwarded-For entry
+ * from the right when the peer is an allowed proxy. Only the counted hops are
+ * read; entries further left were written by the client and are ignored.
+ */
+function resolveTrustedAuthSource(req, configuredHops, configuredPeers) {
+  const client = resolveClientAddress({
+    peer: req.socket.remoteAddress,
+    forwardedFor: req.headers['x-forwarded-for'],
+    trusted: configuredProxies(configuredPeers) ?? TRUSTS_NOTHING,
+    trustedHops: trustedProxyHopCount(configuredHops),
+  });
+  return { valid: !REFUSED.has(client.decision), source: client.address };
 }
 
 function attachTrustedAuthSource(
