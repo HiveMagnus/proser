@@ -6,7 +6,28 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 
 ## Unreleased
 
-Nothing yet.
+### Sign-in
+
+- Local sign-in throttling and its trusted-proxy source address now use
+  `@hivemagnus/hive-common` 0.10.0 `/rate-limit` in Author. The settings
+  (`LOCAL_AUTH_TRUSTED_PROXY_HOPS`, `LOCAL_AUTH_TRUSTED_PROXY_PEERS`) and the
+  limit (5 failed attempts per source and per account a minute) are unchanged,
+  and the hop count still picks the source exactly as before. What differs:
+  - Failed attempts refill one at a time (one every 12 seconds) instead of all
+    at once a minute after the first failure. A successful sign-in still clears
+    both counters.
+  - IPv6 sources are throttled per /64 prefix rather than per address, so a
+    host cannot rotate addresses inside its prefix. IPv4 is unchanged.
+  - A source that keeps failing while cycling usernames stays blocked when the
+    failure table (10 000 entries) is full; previously its entry could be the
+    one dropped.
+  - `LOCAL_AUTH_TRUSTED_PROXY_PEERS` also accepts the named ranges `loopback`,
+    `private` and `linklocal`. Forwarded addresses written with a port
+    (`203.0.113.7:51234`) or in brackets are read as that address instead of
+    being refused with `400`. Any invalid entry still makes the whole list
+    trust nothing.
+
+  Nothing to do when upgrading.
 
 ## v1.2.1 (2026-11-27)
 

@@ -1,9 +1,25 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 
+import { addressKey, createRateLimiter } from '@hivemagnus/hive-common/rate-limit';
+
 const FAILURE_LIMIT = 5;
 const FAILURE_WINDOW_MS = 60_000;
 const MAX_SOURCES = 10_000;
-const failures = new Map<string, { count: number; resetAt: number }>();
+
+// Callers pass the time explicitly (tests); the limiter reads it through this clock.
+let clock = Date.now();
+/**
+ * Failed sign-ins per hashed source and per hashed account: a token bucket of
+ * FAILURE_LIMIT that refills over FAILURE_WINDOW_MS. Only failures spend from
+ * it; a successful sign-in resets both keys. At most MAX_SOURCES keys are held,
+ * and a key that keeps being refused is the last one dropped.
+ */
+const failures = createRateLimiter({
+  limit: FAILURE_LIMIT,
+  windowMs: FAILURE_WINDOW_MS,
+  maxKeys: MAX_SOURCES,
+  now: () => clock,
+});
 
 function digest(value: string): Buffer {
   return createHash('sha256').update(value).digest();
@@ -21,44 +37,15 @@ export function constantTimeLocalCredentialsMatch(
 }
 
 export function localAuthSource(request: Request): string {
-  const source = request.headers.get('x-proser-auth-source') || 'unresolved-socket-peer';
+  // IPv6 sources are grouped by /64, so one host cannot rotate addresses within its prefix.
+  const source = addressKey(
+    request.headers.get('x-proser-auth-source') || 'unresolved-socket-peer',
+  );
   return createHash('sha256').update(source).digest('hex').slice(0, 24);
 }
 
 export function localAuthAccount(username: string): string {
   return createHash('sha256').update(username).digest('hex').slice(0, 24);
-}
-
-/** Keep the table bounded on every insertion, whichever path adds the entry. */
-function setBounded(key: string, state: { count: number; resetAt: number }, now: number): void {
-  if (!failures.has(key) && failures.size >= MAX_SOURCES) {
-    for (const [candidate, entry] of failures) {
-      if (entry.resetAt <= now) failures.delete(candidate);
-    }
-    if (failures.size >= MAX_SOURCES) {
-      const oldest = failures.keys().next().value;
-      if (oldest) failures.delete(oldest);
-    }
-  }
-  failures.set(key, state);
-}
-
-function throttleAllowed(key: string, now: number): boolean {
-  const state = failures.get(key);
-  if (!state || state.resetAt <= now) {
-    setBounded(key, { count: 0, resetAt: now + FAILURE_WINDOW_MS }, now);
-    return true;
-  }
-  return state.count < FAILURE_LIMIT;
-}
-
-function recordFailure(key: string, now: number): void {
-  const state = failures.get(key);
-  if (!state || state.resetAt <= now) {
-    setBounded(key, { count: 1, resetAt: now + FAILURE_WINDOW_MS }, now);
-    return;
-  }
-  state.count += 1;
 }
 
 export function localAuthFailureTableSizeForTests(): number {
@@ -70,17 +57,22 @@ export function localAuthFailureAllowed(
   account: string,
   now = Date.now(),
 ): boolean {
-  return throttleAllowed(`source:${source}`, now) && throttleAllowed(`account:${account}`, now);
+  clock = now;
+  return (
+    failures.peek(`source:${source}`).remaining >= 1 &&
+    failures.peek(`account:${account}`).remaining >= 1
+  );
 }
 
 export function recordLocalAuthFailure(source: string, account: string, now = Date.now()): void {
-  recordFailure(`source:${source}`, now);
-  recordFailure(`account:${account}`, now);
+  clock = now;
+  failures.consume(`source:${source}`);
+  failures.consume(`account:${account}`);
 }
 
 export function clearLocalAuthFailures(source: string, account: string): void {
-  failures.delete(`source:${source}`);
-  failures.delete(`account:${account}`);
+  failures.reset(`source:${source}`);
+  failures.reset(`account:${account}`);
 }
 
 export function resetLocalAuthFailuresForTests(): void {

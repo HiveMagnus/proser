@@ -61,7 +61,10 @@ wrong passwords. The custom Node ingress overwrites its private auth-source
 header from the socket peer. Keep `LOCAL_AUTH_TRUSTED_PROXY_HOPS=0` for direct
 TLS or the default loopback Compose deployment. A positive bounded hop count also requires
 `LOCAL_AUTH_TRUSTED_PROXY_PEERS`; forwarding data is used only when the socket
-peer matches that IP/CIDR allowlist. Malformed or too-short chains from an
+peer matches that IP/CIDR allowlist (the named ranges `loopback`, `private`
+and `linklocal` are accepted too; any invalid entry makes the list trust
+nothing). The hop count picks the source: with N hops it is the Nth address
+from the right of `X-Forwarded-For`. Malformed or too-short chains from an
 approved peer are rejected with `400`, while forwarding headers from any other
 peer are ignored in favor of its socket address. Client-provided
 `X-Forwarded-For` and `X-Real-IP` are never consumed directly by local auth.
