@@ -12,7 +12,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@hivemagnus/hive-common": "0.10.0",
+    "@hivemagnus/hive-common": "0.11.0",
     "@hivemagnus/proser-contracts": "workspace:^",
     "@hivemagnus/proser-editor": "workspace:^",
     "@radix-ui/react-accordion": "^1.3.1",

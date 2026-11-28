@@ -29,6 +29,16 @@ are in the [Compose guide](docs/COMPOSE.md#upgrades-and-recovery).
 
   Nothing to do when upgrading.
 
+- Author is on `@hivemagnus/hive-common` 0.11.0, and the sign-in source behind
+  `LOCAL_AUTH_TRUSTED_PROXY_HOPS` is now picked by its `resolveClientAddress()`
+  hop count. A trusted proxy that sends no `X-Forwarded-For`, a chain shorter
+  than the hop count, or a counted hop that is not an address is still refused
+  with `400`. One difference: only the counted hops are read now, so an entry
+  the client wrote further left that is not an address is ignored. With two
+  hops, `garbage, 192.0.2.10, 10.0.0.2` now signs in from `192.0.2.10`; it used
+  to be refused with `400`. The client could only refuse its own request that
+  way, and which address is used was never affected.
+
 ## v1.2.1 (2026-11-27)
 
 v1.2.0 was tagged but never published: no v1.2.0 image or GitHub release
